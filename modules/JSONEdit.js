@@ -12,7 +12,7 @@ MapScript.loadModule("JSONEdit", {
 	show : function(o) {
 		var i;
 		o = Object(o);
-		var name = o.rootname ? o.rootname : "根";
+		var name = o.rootname ? o.rootname : Intl.get("jsonEdit.root");
 		var data = o.source;
 		if (data === null) {
 			return false;
@@ -33,7 +33,7 @@ MapScript.loadModule("JSONEdit", {
 			return o instanceof Object;
 		};
 		if (!this.isObject(o.source)) {
-			this.showData("编辑“" + name + "”", data, function(newValue) {
+			this.showData(Intl.resolve("jsonEdit.edit", name), data, function(newValue) {
 				o.source = newValue;
 				if (o.update) o.update();
 			});
@@ -78,53 +78,54 @@ MapScript.loadModule("JSONEdit", {
 	},
 	main : function self() {
 		if (!self.menu) {
+			self.intl = Intl.getNamespace("jsonEdit.menu");
 			self.saveMenu = [{
-				text : "继续编辑",
-				description : "继续编辑JSON",
+				text : self.intl.continueEditing,
+				description : self.intl.continueEditingJSON,
 				onclick : function(v, tag) {
 					if (!JSONEdit.show(tag.par)) {
-						Common.toast("该JSON没有可以编辑的地方");
+						Common.toast(Intl.get("jsonEdit.noPlaceToEdit"));
 						return true;
 					}
 				}
 			},{
-				text : "复制",
-				description : "复制JSON",
+				text : self.intl.copy,
+				description : self.intl.copyJSON,
 				onclick : function(v, tag) {
 					Common.setClipboardText(JSON.stringify(tag.data, null, "\t"));
-					Common.toast("JSON已复制至剪贴板");
+					Common.toast(Intl.get("jsonEdit.copiedToClipboard"));
 				}
 			},{
-				text : "保存",
-				description : "将JSON的更改保存至之前的文件",
+				text : self.intl.save,
+				description : self.intl.saveToFile,
 				onclick : function(v, tag) {
 					if (tag.path) {
 						MapScript.saveJSON(tag.path, tag.data);
-						Common.toast("保存成功！");
+						Common.toast(Intl.get("jsonEdit.saveSuccessfully"));
 					} else {
-						Common.toast("请先另存为该文件");
+						Common.toast(Intl.get("jsonEdit.firstSaveAs"));
 					}
 					return true;
 				}
 			},{
-				text : "另存为",
-				description : "将JSON保存到一个新文件",
+				text : self.intl.saveAs,
+				description : self.intl.saveAsToNewFile,
 				onclick : function(v, tag) {
 					Common.showFileDialog({
 						type : 1,
 						callback : function(f) {
 							try {
 								MapScript.saveJSON(tag.path = f.result.getAbsolutePath(), tag.data);
-								Common.toast("另存为成功");
+								Common.toast(Intl.get("jsonEdit.saveAsSuccessfully"));
 							} catch(e) {
-								Common.toast("文件保存失败，无法保存\n" + e);
+								Common.toast(Intl.resolve("jsonEdit.saveFailed", e.toString());
 							}
 						}
 					});
 					return true;
 				}
 			},{
-				text : "关闭",
+				text : Intl.get("common.close"),
 				onclick : function(v, tag) {}
 			}];
 			self.menu = [{
