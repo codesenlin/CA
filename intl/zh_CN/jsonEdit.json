@@ -1,0 +1,21 @@
+{
+	"root": "根",
+	"edit": "编辑“%s”",
+	"noPlaceToEdit": "该JSON没有可以编辑的地方",
+	"copiedToClipboard": "JSON已复制至剪贴板",
+	"saveSuccessfully": "保存成功！",
+	"firstSaveAs": "请先另存为该文件",
+	"saveAsSuccessfully": "另存为成功",
+	"saveFailed": "文件保存失败，无法保存\n%s",
+
+	"menu": {
+		"continueEditing": "继续编辑",
+		"continueEditingJSON": "继续编辑JSON",
+		"copy": "复制",
+		"copyJSON": "复制JSON",
+		"save": "保存",
+		"saveToFile": "将JSON的更改保存至之前的文件",
+		"saveAs": "另存为",
+		"saveAsToNewFile": "将JSON保存到一个新文件"
+	}
+}

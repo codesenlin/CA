@@ -1,0 +1,21 @@
+{
+	"root": "Root",
+	"edit": "Edit “%s”",
+	"noPlaceToEdit": "The JSON has no place to edit",
+	"copiedToClipboard": "JSON has been copied to clipboard",
+	"saveSuccessfully": "Save successfully",
+	"firstSaveAs": "Please save it as this document first.",
+	"saveAsSuccessfully": "Save for success",
+	"saveFailed": "File save failed and could not be saved\n%s",
+
+	"menu": {
+		"continueEditing": "Continue Editing",
+		"continueEditingJSON": "Continue editing JSON",
+		"copy": "Copy",
+		"copyJSON": "Copy JSON",
+		"save": "Save",
+		"saveToFile": "Save JSON changes to previous files",
+		"saveAs": "Save as",
+		"saveAsToNewFile": "Save JSON to a new file"
+	}
+}
