@@ -522,8 +522,9 @@ MapScript.loadModule("JSONEdit", {
 	},
 	showItemAction : function self(name) {
 		if (!self.menu) {
+			self.intl = Intl.getNamespace("jsonEdit.menu");
 			self.menu = [{
-				text : "复制",
+				text : self.intl.copy,
 				onclick : function(v, tag) {
 					JSONEdit.clipboard = {
 						name : tag.name,
@@ -532,7 +533,7 @@ MapScript.loadModule("JSONEdit", {
 					JSONEdit.refresh();
 				}
 			},{
-				text : "剪切",
+				text : self.intl.shear,
 				onclick : function(v, tag) {
 					JSONEdit.clipboard = {
 						name : tag.name,
@@ -546,7 +547,7 @@ MapScript.loadModule("JSONEdit", {
 					JSONEdit.refresh();
 				}
 			},{
-				text : "替换",
+				text : self.intl.replace,
 				onclick : function(v, tag) {
 					JSONEdit.showNewItem(function(newItem) {
 						try {
@@ -558,7 +559,7 @@ MapScript.loadModule("JSONEdit", {
 					});
 				}
 			},{
-				text : "删除",
+				text : self.intl.delete,
 				onclick : function(v, tag) {
 					if (Array.isArray(tag.src)) {
 						tag.src.splice(parseInt(tag.name), 1);
@@ -568,7 +569,7 @@ MapScript.loadModule("JSONEdit", {
 					JSONEdit.refresh();
 				}
 			},{
-				text : "批量编辑",
+				text : self.intl.batch,
 				onclick : function(v, tag) {
 					JSONEdit.showBatchEdit(tag.data, function(v) {
 						try {
@@ -581,10 +582,10 @@ MapScript.loadModule("JSONEdit", {
 				}
 			}];
 			self.objMenu = [{
-				text : "重命名",
+				text : self.intl.rename,
 				onclick : function(v, tag) {
 					Common.showInputDialog({
-						title : "重命名",
+						title : self.intl.rename,
 						callback : function(s) {
 							try {
 								tag.src[s] = tag.src[tag.name];
@@ -599,7 +600,7 @@ MapScript.loadModule("JSONEdit", {
 				}
 			}].concat(self.menu);
 			self.arrMenu = [{
-				text : "插入（上方）",
+				text : self.intl.insert,
 				onclick : function(v, tag) {
 					JSONEdit.showNewItem(function(newItem) {
 						tag.src.splice(parseInt(tag.name), 0, newItem);
@@ -669,11 +670,11 @@ MapScript.loadModule("JSONEdit", {
 		try {
 			e = obj[propertyName];
 			if (Array.isArray(e)) {
-				return e.length ? e[0] + "等" + e.length + "个项目" : "0个项目";
+				return e.length ? Intl.resolve("jsonEdit.objectDesc", e[0], String(e.length)) : Intl.get("jsonEdit.zeroProjects").toString();
 			} else if (e instanceof Object && typeof e !== "function" && !(e instanceof java.lang.CharSequence)) {
-				return this.listItems(e).length + "个键值对";
+				return Intl.resolve("jsonEdit.key-valuePair", String(this.listItems(e).length)).toString();
 			} else if (e === null) {
-				return "空引用(null)";
+				return Intl.get("jsonEdit.null").toString();
 			} else return String(e);
 		} catch(er) {
 			Log.e(er);
@@ -703,7 +704,7 @@ MapScript.loadModule("JSONEdit", {
 	traceGlobal : function() {
 		this.show({
 			source : eval.call(null, "this"),
-			rootname : "全局对象",
+			rootname : Intl.get("globalObject").toString(),
 			showAll : true
 		});
 	},

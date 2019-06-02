@@ -19,6 +19,9 @@
 	"newNumber": "New number",
 	"newBoolean": "New boolean value",
 	"clipboardIsEmpty": "Clipboard is empty",
+	"key-valuePair": "%s key-value pair",
+	"zeroProjects": "0 projects",
+	"globalObject": "Global object",
 
 	"menu": {
 		"continueEditing": "Continue Editing",
@@ -31,7 +34,13 @@
 		"saveAsToNewFile": "Save JSON to a new file",
 		"createNew": "Create",
 		"createNewJSON": "Create a new JSON",
-		"openJSONFromFile": "Open a JSON from a file"
+		"openJSONFromFile": "Open a JSON from a file",
+		"shear": "Shear",
+		"replace": "Replace",
+		"delete": "Delete",
+		"insert": "Insert (above)",
+		"batch": "Batch editing",
+		"rename": "Rename"
 	},
 
 	"edit": {

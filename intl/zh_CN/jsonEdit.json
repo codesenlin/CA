@@ -19,6 +19,11 @@
 	"newNumber": "新建数字",
 	"newBoolean": "新建布尔值",
 	"clipboardIsEmpty": "剪贴板为空",
+	"null": "空引用(null)",
+	"key-valuePair": "%s 个键值对",
+	"zeroProjects": "0个项目",
+	"objectDesc": "%1 等 %2 个项目",
+	"globalObject": "全局对象",
 
 	"menu": {
 		"continueEditing": "继续编辑",
@@ -31,7 +36,13 @@
 		"saveAsToNewFile": "将JSON保存到一个新文件",
 		"createNew": "新建",
 		"createNewJSON": "新建一个JSON",
-		"openJSONFromFile": "从文件打开一个JSON"
+		"openJSONFromFile": "从文件打开一个JSON",
+		"shear": "剪切",
+		"replace": "替换",
+		"delete": "删除",
+		"insert": "插入（上方）",
+		"batch": "批量编辑",
+		"rename": "重命名"
 	},
 
 	"edit": {
