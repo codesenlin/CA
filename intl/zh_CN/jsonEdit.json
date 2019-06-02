@@ -12,6 +12,13 @@
 	"inputKeyName": "请输入键名",
 	"cannotEmpty": "键名不能为空",
 	"keyNameExists": "键名已存在",
+	"illegalDigitalFormat": "非法的数字格式",
+	"illegalJSON": "<非法JSON>",
+	"parsingJSONError": "解析JSON出错\n%s",
+	"newString": "新建字符串",
+	"newNumber": "新建数字",
+	"newBoolean": "新建布尔值",
+	"clipboardIsEmpty": "剪贴板为空",
 
 	"menu": {
 		"continueEditing": "继续编辑",
@@ -30,5 +37,24 @@
 	"edit": {
 		"back": "< 返回",
 		"add": "添加 / 粘贴 ..."
+	},
+
+	"type": {
+		"emptyObject": "空对象(默认)",
+		"emptyObject_desc": "{} : 用于存储键值对",
+		"emptyArray": "空数组",
+		"emptyArray_desc": "[] : 用于存储有序条目",
+		"string": "字符串",
+		"strnig_desc": "\"...\" : 用于存储文本",
+		"number": "数字",
+		"number_desc": "1234.5 : 用于存储数字",
+		"boolean": "布尔值",
+		"boolean_desc": "true / false : 用于存储一个表示是或否的值",
+		"null": "空引用",
+		"null_desc": "null : 用于存储一个表示不可用或不存在的值",
+		"paste": "从剪贴板粘贴",
+		"paste_desc": "从内置剪贴板中导入JSON",
+		"manualInput": "手动输入",
+		"manualInput_desc": "手动输入JSON"
 	}
 }

@@ -12,6 +12,13 @@
 	"inputKeyName": "Please enter the key name",
 	"cannotEmpty": "Keyname cannot be empty",
 	"keyNameExists": "Key name already exists",
+	"illegalDigitalFormat": "Illegal digital format",
+	"illegalJSON": "Illegal JSON",
+	"parsingJSONError": "Parsing JSON Errors\n%s",
+	"newString": "New string",
+	"newNumber": "New number",
+	"newBoolean": "New boolean value",
+	"clipboardIsEmpty": "Clipboard is empty",
 
 	"menu": {
 		"continueEditing": "Continue Editing",
@@ -30,5 +37,24 @@
 	"edit": {
 		"back": "< Back",
 		"add": "Add / Paste ..."
+	},
+
+	"type": {
+		"emptyObject": "Empty object (default)",
+		"emptyObject_desc": "{} : Used to store key-value pairs",
+		"emptyArray": "Empty array",
+		"emptyArray_desc": "[] : Used to store ordered entries",
+		"string": "String",
+		"string_desc": "\"...\" : Used to store text",
+		"number": "Number",
+		"number_desc": "1234.5 : Used to store numbers",
+		"boolean": "Boolean value",
+		"boolean_desc": "true / false : Used to store a value representing yes or no",
+		"null": "Null reference",
+		"null_desc": "null : Used to store a value that represents unavailability or nonexistence",
+		"paste": "Paste from Clipboard",
+		"paste_desc": "Import JSON from the built-in clipboard",
+		"manualInput": "Manual input",
+		"manualInput_desc": "Manual input JSON"
 	}
 }

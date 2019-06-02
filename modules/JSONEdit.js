@@ -391,7 +391,7 @@ MapScript.loadModule("JSONEdit", {
 					if (isFinite(t)) {
 						callback(t);
 					} else {
-						Common.toast("非法的数字格式");
+						Common.toast(Intl.get("jsonEdit.illegalDigitalFormat"));
 					}
 				} else {
 					callback(String(ret.getText()));
@@ -415,7 +415,7 @@ MapScript.loadModule("JSONEdit", {
 			return true;
 		}}));
 		ret = new G.EditText(ctx);
-		ret.setText(JSONEdit.showAll ? MapScript.toSource(data) : JSON.stringify(data, null, 4) || "<非法JSON>");
+		ret.setText(JSONEdit.showAll ? MapScript.toSource(data) : JSON.stringify(data, null, 4) || Intl.get("jsonEdit.illegalJSON"));
 		ret.setSingleLine(false);
 		ret.setGravity(G.Gravity.LEFT | G.Gravity.TOP);
 		ret.setLayoutParams(new G.LinearLayout.LayoutParams(-1, 0, 1.0));
@@ -423,7 +423,7 @@ MapScript.loadModule("JSONEdit", {
 		layout.addView(ret);
 		exit = new G.TextView(ctx);
 		exit.setLayoutParams(new G.LinearLayout.LayoutParams(-1, -2));
-		exit.setText("保存");
+		exit.setText(Intl.get("jsonEdit.menu.save"));
 		exit.setGravity(G.Gravity.CENTER);
 		exit.setPadding(10 * G.dp, 20 * G.dp, 10 * G.dp, 20 * G.dp);
 		Common.applyStyle(exit, "button_critical", 3);
@@ -434,7 +434,7 @@ MapScript.loadModule("JSONEdit", {
 					callback(JSON.parse(ret.getText()));
 					popup.exit();
 				} catch(e) {
-					Common.toast("解析JSON出错\n" + e);
+					Common.toast(Intl.resolve("jsonEdit.parsingJSONError", e.toString()));
 				}
 			}
 		} catch(e) {erp(e)}}}));
@@ -445,71 +445,72 @@ MapScript.loadModule("JSONEdit", {
 	} catch(e) {erp(e)}})},
 	showNewItem : function self(callback) {
 		if (!self.menu) {
+			self.intl = Intl.getNamespace("jsonEdit.type");
 			self.menu = [{
-				text : "空对象(默认)",
-				description : "{} : 用于存储键值对",
+				text : self.intl.emptyObject,
+				description : self.intl.emptyObject_desc,
 				onclick : function(v, tag) {
 					tag.callback({});
 				}
 			},{
-				text : "空数组",
-				description : "[] : 用于存储有序条目",
+				text : self.intl.emptyArray,
+				description : self.intl.emptyArray_desc,
 				onclick : function(v, tag) {
 					tag.callback([]);
 				}
 			},{
-				text : "字符串",
-				description : "\"...\" : 用于存储文本",
+				text : self.intl.string,
+				description : self.intl.string_desc,
 				onclick : function(v, tag) {
-					JSONEdit.showData("新建字符串", "", function(newValue) {
+					JSONEdit.showData(Intl.get("jsonEdit.newString"), "", function(newValue) {
 						tag.callback(newValue);
 					});
 				}
 			},{
-				text : "数字",
-				description : "1234.5 : 用于存储数字",
+				text : self.intl.number,
+				description : self.intl.number_desc,
 				onclick : function(v, tag) {
-					JSONEdit.showData("新建数字", 0, function(newValue) {
+					JSONEdit.showData(Intl.get("jsonEdit.newNumber"), 0, function(newValue) {
 						tag.callback(newValue);
 					});
 				}
 			},{
-				text : "布尔值",
-				description : "true / false : 用于存储一个表示是或否的值",
+				text : self.intl.boolean,
+				description : self.intl.boolean_desc,
 				onclick : function(v, tag) {
-					JSONEdit.showData("新建布尔值", true, function(newValue) {
+					JSONEdit.showData(Intl.get("jsonEdit.newBoolean"), true, function(newValue) {
 						tag.callback(newValue);
 					});
 				}
 			},{
-				text : "空引用",
-				description : "null : 用于存储一个表示不可用或不存在的值",
+				text : self.intl.null,
+				description : self.intl.null_desc,
 				onclick : function(v, tag) {
 					tag.callback(null);
 				}
 			},{
 				gap : G.dp * 10
 			},{
-				text : "从剪贴板粘贴",
-				description : "从内置剪贴板中导入JSON",
+				text : self.intl.paste,
+				description : self.intl.paste_desc,
 				onclick : function(v, tag) {
 					if (!JSONEdit.clipboard) {
-						Common.toast("剪贴板为空");
+						Common.toast(Intl.get("jsonEdit.clipboardIsEmpty"));
 						return true;
 					}
 					tag.callback(Object.copy(JSONEdit.clipboard.item));
 				}
 			},{
-				text : "手动输入",
-				description : "手动输入JSON",
+				text : self.intl.manualInput,
+				description : self.intl.manualInput_desc,
 				onclick : function(v, tag) {
 					Common.showInputDialog({
-						title : "手动输入JSON",
+						title : self.intl.manualInput_desc,
 						callback : function(s) {
 							try {
 								tag.callback(JSON.parse(s));
 							} catch(e) {
-								Common.toast("解析JSON出错\n" + e);
+								Common.toast(Intl.resolve("jsonEdit.parsingJSONError", e.toString()));
 							}
 						}
 					});
