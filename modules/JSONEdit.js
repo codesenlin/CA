@@ -33,7 +33,7 @@ MapScript.loadModule("JSONEdit", {
 			return o instanceof Object;
 		};
 		if (!this.isObject(o.source)) {
-			this.showData(Intl.resolve("jsonEdit.edit", name), data, function(newValue) {
+			this.showData(Intl.resolve(Intl.get("jsonEdit.edit"), name), data, function(newValue) {
 				o.source = newValue;
 				if (o.update) o.update();
 			});
@@ -118,7 +118,7 @@ MapScript.loadModule("JSONEdit", {
 								MapScript.saveJSON(tag.path = f.result.getAbsolutePath(), tag.data);
 								Common.toast(Intl.get("jsonEdit.saveAsSuccessfully"));
 							} catch(e) {
-								Common.toast(Intl.resolve("jsonEdit.saveFailed", e.toString()));
+								Common.toast(Intl.resolve(Intl.get("jsonEdit.saveFailed"), e.toString()));
 							}
 						}
 					});
@@ -166,7 +166,7 @@ MapScript.loadModule("JSONEdit", {
 									}
 								})) Common.showOperateDialog(self.saveMenu, o);
 							} catch(e) {
-								Common.toast(Intl.resolve("jsonEdit.JSONInvalid", e.toString()));
+								Common.toast(Intl.resolve(Intl.get("jsonEdit.JSONInvalid"), e.toString()));
 							}
 						}
 					});
@@ -296,7 +296,7 @@ MapScript.loadModule("JSONEdit", {
 						self.hscr.fullScroll(G.View.FOCUS_RIGHT);
 					} catch(e) {erp(e)}});
 				} else if (data != null) {
-					JSONEdit.showData(Intl.resolve("jsonEdit.edit", name), data, function(newValue) {
+					JSONEdit.showData(Intl.resolve(Intl.get("jsonEdit.edit"), name), data, function(newValue) {
 						JSONEdit.path[JSONEdit.path.length - 1].data[name] = newValue;
 						JSONEdit.refresh();
 					});
@@ -435,7 +435,7 @@ MapScript.loadModule("JSONEdit", {
 					callback(JSON.parse(ret.getText()));
 					popup.exit();
 				} catch(e) {
-					Common.toast(Intl.resolve("jsonEdit.parsingJSONError", e.toString()));
+					Common.toast(Intl.resolve(Intl.get("jsonEdit.parsingJSONError"), e.toString()));
 				}
 			}
 		} catch(e) {erp(e)}}}));
@@ -511,7 +511,7 @@ MapScript.loadModule("JSONEdit", {
 							try {
 								tag.callback(JSON.parse(s));
 							} catch(e) {
-								Common.toast(Intl.resolve("jsonEdit.parsingJSONError", e.toString()));
+								Common.toast(Intl.resolve(Intl.get("jsonEdit.parsingJSONError"), e.toString()));
 							}
 						}
 					});
@@ -670,9 +670,9 @@ MapScript.loadModule("JSONEdit", {
 		try {
 			e = obj[propertyName];
 			if (Array.isArray(e)) {
-				return e.length ? Intl.resolve("jsonEdit.objectDesc", e[0], String(e.length)) : Intl.get("jsonEdit.zeroProjects").toString();
+				return e.length ? Intl.resolve(Intl.get("jsonEdit.objectDesc"), e[0], String(e.length)).toString() : Intl.get("jsonEdit.zeroProjects").toString();
 			} else if (e instanceof Object && typeof e !== "function" && !(e instanceof java.lang.CharSequence)) {
-				return Intl.resolve("jsonEdit.keyvaluePair", String(this.listItems(e).length)).toString();
+				return Intl.resolve(Intl.get("jsonEdit.keyvaluePair"), String(this.listItems(e).length)).toString();
 			} else if (e === null) {
 				return Intl.get("jsonEdit.null").toString();
 			} else return String(e);
