@@ -378,7 +378,7 @@ MapScript.loadModule("JSONEdit", {
 		layout.addView(ret);
 		exit = new G.TextView(ctx);
 		exit.setLayoutParams(new G.LinearLayout.LayoutParams(-1, -2));
-		exit.setText(Intl.get("common.ok"));
+		exit.setText(Intl.get("common.ok").toString());
 		exit.setGravity(G.Gravity.CENTER);
 		exit.setPadding(10 * G.dp, 20 * G.dp, 10 * G.dp, 20 * G.dp);
 		Common.applyStyle(exit, "button_critical", 3);
