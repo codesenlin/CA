@@ -118,7 +118,7 @@ MapScript.loadModule("JSONEdit", {
 								MapScript.saveJSON(tag.path = f.result.getAbsolutePath(), tag.data);
 								Common.toast(Intl.get("jsonEdit.saveAsSuccessfully"));
 							} catch(e) {
-								Common.toast(Intl.resolve("jsonEdit.saveFailed", e.toString());
+								Common.toast(Intl.resolve("jsonEdit.saveFailed", e.toString()));
 							}
 						}
 					});
