@@ -19,6 +19,7 @@
 	"newNumber": "New number",
 	"newBoolean": "New boolean value",
 	"clipboardIsEmpty": "Clipboard is empty",
+	"null": "Null reference(null)",
 	"keyvaluePair": "%s key-value pair",
 	"zeroProjects": "0 projects",
 	"globalObject": "Global object",
