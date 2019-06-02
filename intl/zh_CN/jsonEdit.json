@@ -1,6 +1,6 @@
 {
 	"root": "根",
-	"edit": "编辑“%s”",
+	"edit": "编辑\"%s\"",
 	"noPlaceToEdit": "该JSON没有可以编辑的地方",
 	"copiedToClipboard": "JSON已复制至剪贴板",
 	"saveSuccessfully": "保存成功！",
@@ -20,7 +20,7 @@
 	"newBoolean": "新建布尔值",
 	"clipboardIsEmpty": "剪贴板为空",
 	"null": "空引用(null)",
-	"key-valuePair": "%s 个键值对",
+	"keyvaluePair": "%s 个键值对",
 	"zeroProjects": "0个项目",
 	"objectDesc": "%1 等 %2 个项目",
 	"globalObject": "全局对象",
@@ -45,7 +45,7 @@
 		"rename": "重命名"
 	},
 
-	"edit": {
+	"editMenu": {
 		"back": "< 返回",
 		"add": "添加 / 粘贴 ..."
 	},

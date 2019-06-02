@@ -181,7 +181,7 @@ MapScript.loadModule("JSONEdit", {
 
 	showEdit : function self() {G.ui(function() {try {
 		if (!self.main) {
-			self.intl = Intl.getNamespace("jsonEdit.edit");
+			self.intl = Intl.getNamespace("jsonEdit.editMenu");
 			self.drawDivider = function(height) {
 				var width = Math.floor(height / 2);
 				var bmp = G.Bitmap.createBitmap(width, height, G.Bitmap.Config.ARGB_8888);
@@ -672,7 +672,7 @@ MapScript.loadModule("JSONEdit", {
 			if (Array.isArray(e)) {
 				return e.length ? Intl.resolve("jsonEdit.objectDesc", e[0], String(e.length)) : Intl.get("jsonEdit.zeroProjects").toString();
 			} else if (e instanceof Object && typeof e !== "function" && !(e instanceof java.lang.CharSequence)) {
-				return Intl.resolve("jsonEdit.key-valuePair", String(this.listItems(e).length)).toString();
+				return Intl.resolve("jsonEdit.keyvaluePair", String(this.listItems(e).length)).toString();
 			} else if (e === null) {
 				return Intl.get("jsonEdit.null").toString();
 			} else return String(e);

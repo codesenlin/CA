@@ -1,6 +1,6 @@
 {
 	"root": "Root",
-	"edit": "Edit “%s”",
+	"edit": "Edit \"%s\"",
 	"noPlaceToEdit": "The JSON has no place to edit",
 	"copiedToClipboard": "JSON has been copied to clipboard",
 	"saveSuccessfully": "Save successfully",
@@ -19,7 +19,7 @@
 	"newNumber": "New number",
 	"newBoolean": "New boolean value",
 	"clipboardIsEmpty": "Clipboard is empty",
-	"key-valuePair": "%s key-value pair",
+	"keyvaluePair": "%s key-value pair",
 	"zeroProjects": "0 projects",
 	"globalObject": "Global object",
 
@@ -43,7 +43,7 @@
 		"rename": "Rename"
 	},
 
-	"edit": {
+	"editMenu": {
 		"back": "< Back",
 		"add": "Add / Paste ..."
 	},
