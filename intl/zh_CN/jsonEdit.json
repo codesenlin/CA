@@ -7,6 +7,11 @@
 	"firstSaveAs": "请先另存为该文件",
 	"saveAsSuccessfully": "另存为成功",
 	"saveFailed": "文件保存失败，无法保存\n%s",
+	"JSONInvalid": "不是正确的JSON\n%s",
+	"unableToInsert": "当前位置无法插入项目，请检查当前位置是否正确",
+	"inputKeyName": "请输入键名",
+	"cannotEmpty": "键名不能为空",
+	"keyNameExists": "键名已存在",
 
 	"menu": {
 		"continueEditing": "继续编辑",
@@ -16,6 +21,14 @@
 		"save": "保存",
 		"saveToFile": "将JSON的更改保存至之前的文件",
 		"saveAs": "另存为",
-		"saveAsToNewFile": "将JSON保存到一个新文件"
+		"saveAsToNewFile": "将JSON保存到一个新文件",
+		"createNew": "新建",
+		"createNewJSON": "新建一个JSON",
+		"openJSONFromFile": "从文件打开一个JSON"
+	},
+
+	"edit": {
+		"back": "< 返回",
+		"add": "添加 / 粘贴 ..."
 	}
 }

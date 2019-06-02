@@ -7,6 +7,11 @@
 	"firstSaveAs": "Please save it as this document first.",
 	"saveAsSuccessfully": "Save for success",
 	"saveFailed": "File save failed and could not be saved\n%s",
+	"JSONInvalid": "Not the right JSON",
+	"unableToInsert": "The current location cannot be inserted into the project. Please check that the current location is correct.",
+	"inputKeyName": "Please enter the key name",
+	"cannotEmpty": "Keyname cannot be empty",
+	"keyNameExists": "Key name already exists",
 
 	"menu": {
 		"continueEditing": "Continue Editing",
@@ -16,6 +21,14 @@
 		"save": "Save",
 		"saveToFile": "Save JSON changes to previous files",
 		"saveAs": "Save as",
-		"saveAsToNewFile": "Save JSON to a new file"
+		"saveAsToNewFile": "Save JSON to a new file",
+		"createNew": "Create",
+		"createNewJSON": "Create a new JSON",
+		"openJSONFromFile": "Open a JSON from a file"
+	},
+
+	"edit": {
+		"back": "< Back",
+		"add": "Add / Paste ..."
 	}
 }

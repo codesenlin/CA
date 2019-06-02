@@ -129,8 +129,8 @@ MapScript.loadModule("JSONEdit", {
 				onclick : function(v, tag) {}
 			}];
 			self.menu = [{
-				text : "新建",
-				description : "新建一个JSON",
+				text : self.intl.createNew,
+				description : self.intl.createNewJSON,
 				onclick : function() {
 					JSONEdit.create(function cb(o) {
 						Common.showOperateDialog(self.saveMenu, {
@@ -146,8 +146,8 @@ MapScript.loadModule("JSONEdit", {
 					});
 				}
 			},{
-				text : "打开",
-				description : "从文件打开一个JSON",
+				text : Intl.get("common.open"),
+				description : self.intl.openJSONFromFile,
 				onclick : function() {
 					Common.showFileDialog({
 						type : 0,
@@ -166,13 +166,13 @@ MapScript.loadModule("JSONEdit", {
 									}
 								})) Common.showOperateDialog(self.saveMenu, o);
 							} catch(e) {
-								Common.toast("不是正确的JSON\n" + e);
+								Common.toast(Intl.resolve("jsonEdit.JSONInvalid", e.toString()));
 							}
 						}
 					});
 				}
 			},{
-				text : "取消",
+				text : Intl.get("common.cancel"),
 				onclick : function(v, tag) {}
 			}];
 		}
@@ -181,6 +181,7 @@ MapScript.loadModule("JSONEdit", {
 
 	showEdit : function self() {G.ui(function() {try {
 		if (!self.main) {
+			self.intl = Intl.getNamespace("jsonEdit.edit");
 			self.drawDivider = function(height) {
 				var width = Math.floor(height / 2);
 				var bmp = G.Bitmap.createBitmap(width, height, G.Bitmap.Config.ARGB_8888);
@@ -210,7 +211,7 @@ MapScript.loadModule("JSONEdit", {
 			Common.applyStyle(self.header, "bar_float");
 
 			self.back = new G.TextView(ctx);
-			self.back.setText("< 返回");
+			self.back.setText(self.intl.back);
 			self.back.setLayoutParams(new G.LinearLayout.LayoutParams(-2, -2));
 			self.back.setPadding(10 * G.dp, 10 * G.dp, 10 * G.dp, 10 * G.dp);
 			Common.applyStyle(self.back, "button_critical", 2);
@@ -235,7 +236,7 @@ MapScript.loadModule("JSONEdit", {
 			self.main.addView(self.header);
 
 			self.create = new G.TextView(ctx);
-			self.create.setText("添加 / 粘贴 ...");
+			self.create.setText(self.intl.add);
 			self.create.setGravity(G.Gravity.CENTER);
 			self.create.setPadding(20 * G.dp, 20 * G.dp, 20 * G.dp, 20 * G.dp);
 			self.create.setLayoutParams(new G.AbsListView.LayoutParams(-1, -2));
@@ -254,12 +255,12 @@ MapScript.loadModule("JSONEdit", {
 							JSONEdit.refresh();
 						} else if (JSONEdit.isObject(data)) {
 							Common.showInputDialog({
-								title : "请输入键名",
+								title : Intl.get("jsonEdit.inputKeyName"),
 								callback : function(s) {
 									if (!s) {
-										Common.toast("键名不能为空");
+										Common.toast(Intl.get("jsonEdit.cannotEmpty"));
 									} else if (s in data) {
-										Common.toast("键名已存在");
+										Common.toast(Intl.get("jsonEdit.keyNameExists"));
 									} else {
 										try {
 											data[s] = newItem;
@@ -271,7 +272,7 @@ MapScript.loadModule("JSONEdit", {
 								}
 							});
 						} else {
-							Common.toast("当前位置无法插入项目，请检查当前位置是否正确");
+							Common.toast(Intl.get("jsonEdit.unableToInsert"));
 						}
 					});
 					return true;
@@ -295,7 +296,7 @@ MapScript.loadModule("JSONEdit", {
 						self.hscr.fullScroll(G.View.FOCUS_RIGHT);
 					} catch(e) {erp(e)}});
 				} else if (data != null) {
-					JSONEdit.showData("编辑“" + name + "”", data, function(newValue) {
+					JSONEdit.showData(Intl.resolve("jsonEdit.edit", name), data, function(newValue) {
 						JSONEdit.path[JSONEdit.path.length - 1].data[name] = newValue;
 						JSONEdit.refresh();
 					});
@@ -376,7 +377,7 @@ MapScript.loadModule("JSONEdit", {
 		layout.addView(ret);
 		exit = new G.TextView(ctx);
 		exit.setLayoutParams(new G.LinearLayout.LayoutParams(-1, -2));
-		exit.setText("确定");
+		exit.setText(Intl.get("common.ok"));
 		exit.setGravity(G.Gravity.CENTER);
 		exit.setPadding(10 * G.dp, 20 * G.dp, 10 * G.dp, 20 * G.dp);
 		Common.applyStyle(exit, "button_critical", 3);
