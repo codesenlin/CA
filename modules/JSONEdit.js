@@ -344,6 +344,7 @@ MapScript.loadModule("JSONEdit", {
 		JSONEdit.edit = null;
 	} catch(e) {erp(e)}})},
 	showData : function(msg, data, callback) {G.ui(function() {try {
+		if(msg instanceof Intl.Entry) msg = msg.toString();
 		var scr, layout, title, text, ret, exit, popup;
 		scr = new G.ScrollView(ctx);
 		Common.applyStyle(scr, "message_bg");
