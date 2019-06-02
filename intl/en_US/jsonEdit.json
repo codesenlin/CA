@@ -21,7 +21,7 @@
 	"clipboardIsEmpty": "Clipboard is empty",
 	"null": "Null reference(null)",
 	"keyvaluePair": "%s key-value pair",
-	"zeroProjects": "0 projects",
+	"zeroProjects": "Empty",
 	"globalObject": "Global object",
 
 	"menu": {
