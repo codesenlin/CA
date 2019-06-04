@@ -9,10 +9,13 @@ MapScript.loadModule("JSONEdit", {
 	isObject : function(o) {
 		return o instanceof Object;
 	},
+	onCreate : function() {
+		Intl.mapNamespace(this, "intl", "jsonEdit");
+	},
 	show : function(o) {
 		var i;
 		o = Object(o);
-		var name = o.rootname ? o.rootname : Intl.get("jsonEdit.root");
+		var name = o.rootname ? o.rootname : this.intl.root;
 		var data = o.source;
 		if (data === null) {
 			return false;
@@ -33,7 +36,7 @@ MapScript.loadModule("JSONEdit", {
 			return o instanceof Object;
 		};
 		if (!this.isObject(o.source)) {
-			this.showData(Intl.resolve(Intl.get("jsonEdit.edit"), name), data, function(newValue) {
+			this.showData(this.intl.resolve("editData", name), data, function(newValue) {
 				o.source = newValue;
 				if (o.update) o.update();
 			});
@@ -78,59 +81,62 @@ MapScript.loadModule("JSONEdit", {
 	},
 	main : function self() {
 		if (!self.menu) {
-			self.intl = Intl.getNamespace("jsonEdit.menu");
+			self.intl = Intl.getNamespace("jsonEdit.main");
 			self.saveMenu = [{
-				text : self.intl.continueEditing,
-				description : self.intl.continueEditingJSON,
+				text : self.intl.edit,
+				description : self.intl.edit_desc,
 				onclick : function(v, tag) {
 					if (!JSONEdit.show(tag.par)) {
-						Common.toast(Intl.get("jsonEdit.noPlaceToEdit"));
+						Common.toast(self.intl.nowhereEditable);
 						return true;
 					}
 				}
-			},{
+			}, {
 				text : self.intl.copy,
-				description : self.intl.copyJSON,
+				description : self.intl.copy_desc,
 				onclick : function(v, tag) {
 					Common.setClipboardText(JSON.stringify(tag.data, null, "\t"));
-					Common.toast(Intl.get("jsonEdit.copiedToClipboard"));
+					Common.toast(self.intl.copy_success);
 				}
-			},{
+			}, {
 				text : self.intl.save,
-				description : self.intl.saveToFile,
+				description : self.intl.save_desc,
+				hidden : function(tag) {
+					return !tag.path;
+				},
 				onclick : function(v, tag) {
-					if (tag.path) {
+					try {
 						MapScript.saveJSON(tag.path, tag.data);
-						Common.toast(Intl.get("jsonEdit.saveSuccessfully"));
-					} else {
-						Common.toast(Intl.get("jsonEdit.firstSaveAs"));
+						Common.toast(self.intl.save_success);
+					} catch(e) {
+						Common.toast(self.intl.resolve("save_failed", e));
 					}
 					return true;
 				}
-			},{
+			}, {
 				text : self.intl.saveAs,
-				description : self.intl.saveAsToNewFile,
+				description : self.intl.saveAs_desc,
 				onclick : function(v, tag) {
 					Common.showFileDialog({
 						type : 1,
 						callback : function(f) {
 							try {
 								MapScript.saveJSON(tag.path = f.result.getAbsolutePath(), tag.data);
-								Common.toast(Intl.get("jsonEdit.saveAsSuccessfully"));
+								Common.toast(self.intl.saveAs_success);
 							} catch(e) {
-								Common.toast(Intl.resolve(Intl.get("jsonEdit.saveFailed"), e.toString()));
+								Common.toast(self.intl.resolve("save_failed", e));
 							}
 						}
 					});
 					return true;
 				}
-			},{
-				text : Intl.get("common.close"),
+			}, {
+				text : Common.intl.close,
 				onclick : function(v, tag) {}
 			}];
 			self.menu = [{
-				text : self.intl.createNew,
-				description : self.intl.createNewJSON,
+				text : self.intl.new,
+				description : self.intl.new_desc,
 				onclick : function() {
 					JSONEdit.create(function cb(o) {
 						Common.showOperateDialog(self.saveMenu, {
@@ -145,9 +151,9 @@ MapScript.loadModule("JSONEdit", {
 						});
 					});
 				}
-			},{
-				text : Intl.get("common.open"),
-				description : self.intl.openJSONFromFile,
+			}, {
+				text : self.intl.open,
+				description : self.intl.open_desc,
 				onclick : function() {
 					Common.showFileDialog({
 						type : 0,
@@ -166,13 +172,13 @@ MapScript.loadModule("JSONEdit", {
 									}
 								})) Common.showOperateDialog(self.saveMenu, o);
 							} catch(e) {
-								Common.toast(Intl.resolve(Intl.get("jsonEdit.JSONInvalid"), e.toString()));
+								Common.toast(JSONEdit.intl.resolve("invaildJSON", e));
 							}
 						}
 					});
 				}
-			},{
-				text : Intl.get("common.cancel"),
+			}, {
+				text : Common.intl.close,
 				onclick : function(v, tag) {}
 			}];
 		}
@@ -181,7 +187,6 @@ MapScript.loadModule("JSONEdit", {
 
 	showEdit : function self() {G.ui(function() {try {
 		if (!self.main) {
-			self.intl = Intl.getNamespace("jsonEdit.editMenu");
 			self.drawDivider = function(height) {
 				var width = Math.floor(height / 2);
 				var bmp = G.Bitmap.createBitmap(width, height, G.Bitmap.Config.ARGB_8888);
@@ -211,7 +216,7 @@ MapScript.loadModule("JSONEdit", {
 			Common.applyStyle(self.header, "bar_float");
 
 			self.back = new G.TextView(ctx);
-			self.back.setText(self.intl.back);
+			self.back.setText("< " + Common.intl.back);
 			self.back.setLayoutParams(new G.LinearLayout.LayoutParams(-2, -2));
 			self.back.setPadding(10 * G.dp, 10 * G.dp, 10 * G.dp, 10 * G.dp);
 			Common.applyStyle(self.back, "button_critical", 2);
@@ -236,7 +241,7 @@ MapScript.loadModule("JSONEdit", {
 			self.main.addView(self.header);
 
 			self.create = new G.TextView(ctx);
-			self.create.setText(self.intl.add);
+			self.create.setText(JSONEdit.intl.addItem);
 			self.create.setGravity(G.Gravity.CENTER);
 			self.create.setPadding(20 * G.dp, 20 * G.dp, 20 * G.dp, 20 * G.dp);
 			self.create.setLayoutParams(new G.AbsListView.LayoutParams(-1, -2));
@@ -255,12 +260,12 @@ MapScript.loadModule("JSONEdit", {
 							JSONEdit.refresh();
 						} else if (JSONEdit.isObject(data)) {
 							Common.showInputDialog({
-								title : Intl.get("jsonEdit.inputKeyName"),
+								title : JSONEdit.intl.inputKeyName,
 								callback : function(s) {
 									if (!s) {
-										Common.toast(Intl.get("jsonEdit.cannotEmpty"));
+										Common.toast(JSONEdit.intl.keyNameEmpty);
 									} else if (s in data) {
-										Common.toast(Intl.get("jsonEdit.keyNameExists"));
+										Common.toast(JSONEdit.intl.keyNameExists);
 									} else {
 										try {
 											data[s] = newItem;
@@ -272,7 +277,7 @@ MapScript.loadModule("JSONEdit", {
 								}
 							});
 						} else {
-							Common.toast(Intl.get("jsonEdit.unableToInsert"));
+							Common.toast(JSONEdit.intl.unableToInsert);
 						}
 					});
 					return true;
@@ -296,7 +301,7 @@ MapScript.loadModule("JSONEdit", {
 						self.hscr.fullScroll(G.View.FOCUS_RIGHT);
 					} catch(e) {erp(e)}});
 				} else if (data != null) {
-					JSONEdit.showData(Intl.resolve(Intl.get("jsonEdit.edit"), name), data, function(newValue) {
+					JSONEdit.showData(JSONEdit.intl.resolve("editData", name), data, function(newValue) {
 						JSONEdit.path[JSONEdit.path.length - 1].data[name] = newValue;
 						JSONEdit.refresh();
 					});
@@ -344,7 +349,6 @@ MapScript.loadModule("JSONEdit", {
 		JSONEdit.edit = null;
 	} catch(e) {erp(e)}})},
 	showData : function(msg, data, callback) {G.ui(function() {try {
-		if(msg instanceof Intl.Entry) msg = msg.toString();
 		var scr, layout, title, text, ret, exit, popup;
 		scr = new G.ScrollView(ctx);
 		Common.applyStyle(scr, "message_bg");
@@ -362,7 +366,7 @@ MapScript.loadModule("JSONEdit", {
 			ret.setLayoutParams(new G.LinearLayout.LayoutParams(-2, -2, 0));
 			ret.getLayoutParams().setMargins(10 * G.dp, 10 * G.dp, 10 * G.dp, 10 * G.dp)
 			ret.setChecked(data);
-			ret.setText("True / False");
+			ret.setText(JSONEdit.intl.booleanCheckbox);
 		} else {
 			ret = new G.EditText(ctx);
 			ret.setText(Common.toString(data));
@@ -378,7 +382,7 @@ MapScript.loadModule("JSONEdit", {
 		layout.addView(ret);
 		exit = new G.TextView(ctx);
 		exit.setLayoutParams(new G.LinearLayout.LayoutParams(-1, -2));
-		exit.setText(Intl.get("common.ok").toString());
+		exit.setText(Common.intl.ok);
 		exit.setGravity(G.Gravity.CENTER);
 		exit.setPadding(10 * G.dp, 20 * G.dp, 10 * G.dp, 20 * G.dp);
 		Common.applyStyle(exit, "button_critical", 3);
@@ -392,7 +396,7 @@ MapScript.loadModule("JSONEdit", {
 					if (isFinite(t)) {
 						callback(t);
 					} else {
-						Common.toast(Intl.get("jsonEdit.illegalDigitalFormat"));
+						Common.toast(JSONEdit.intl.irregularNumber);
 					}
 				} else {
 					callback(String(ret.getText()));
@@ -405,8 +409,17 @@ MapScript.loadModule("JSONEdit", {
 		scr.addView(layout);
 		popup = PopupPage.showDialog("jsonedit.DataEditor", scr, -2, -2);
 	} catch(e) {erp(e)}})},
-	showBatchEdit : function(data, callback) {G.ui(function() {try {
-		var frame, layout, title, text, ret, exit, popup;
+	showRawEdit : function(data, callback) {G.ui(function() {try {
+		var frame, layout, title, text, ret, exit, popup, datastr;
+		try {
+			datastr = JSONEdit.showAll ? MapScript.toSource(data) : JSON.stringify(data, null, 4);
+		} catch(e) {
+			Log.e(e);
+		}
+		if (!datastr) {
+			Common.toast(JSONEdit.intl.cannotStringify);
+			return;
+		}
 		layout = new G.LinearLayout(ctx);
 		layout.setLayoutParams(new G.FrameLayout.LayoutParams(-1, -1, G.Gravity.CENTER));
 		layout.setOrientation(G.LinearLayout.VERTICAL);
@@ -416,7 +429,7 @@ MapScript.loadModule("JSONEdit", {
 			return true;
 		}}));
 		ret = new G.EditText(ctx);
-		ret.setText(JSONEdit.showAll ? MapScript.toSource(data) : JSON.stringify(data, null, 4) || Intl.get("jsonEdit.illegalJSON"));
+		ret.setText(datastr);
 		ret.setSingleLine(false);
 		ret.setGravity(G.Gravity.LEFT | G.Gravity.TOP);
 		ret.setLayoutParams(new G.LinearLayout.LayoutParams(-1, 0, 1.0));
@@ -424,7 +437,7 @@ MapScript.loadModule("JSONEdit", {
 		layout.addView(ret);
 		exit = new G.TextView(ctx);
 		exit.setLayoutParams(new G.LinearLayout.LayoutParams(-1, -2));
-		exit.setText(Intl.get("jsonEdit.menu.save"));
+		exit.setText(Common.intl.ok);
 		exit.setGravity(G.Gravity.CENTER);
 		exit.setPadding(10 * G.dp, 20 * G.dp, 10 * G.dp, 20 * G.dp);
 		Common.applyStyle(exit, "button_critical", 3);
@@ -435,7 +448,7 @@ MapScript.loadModule("JSONEdit", {
 					callback(JSON.parse(ret.getText()));
 					popup.exit();
 				} catch(e) {
-					Common.toast(Intl.resolve(Intl.get("jsonEdit.parsingJSONError"), e.toString()));
+					Common.toast(JSONEdit.intl.resolve("cannotParse", e));
 				}
 			}
 		} catch(e) {erp(e)}}}));
@@ -449,61 +462,61 @@ MapScript.loadModule("JSONEdit", {
 			self.intl = Intl.getNamespace("jsonEdit.type");
 			self.menu = [{
 				text : self.intl.emptyObject,
-				description : self.intl.emptyObject_desc,
+				description : self.intl.object_desc,
 				onclick : function(v, tag) {
 					tag.callback({});
 				}
-			},{
+			}, {
 				text : self.intl.emptyArray,
-				description : self.intl.emptyArray_desc,
+				description : self.intl.array_desc,
 				onclick : function(v, tag) {
 					tag.callback([]);
 				}
-			},{
+			}, {
 				text : self.intl.string,
 				description : self.intl.string_desc,
 				onclick : function(v, tag) {
-					JSONEdit.showData(Intl.get("jsonEdit.newString"), "", function(newValue) {
+					JSONEdit.showData(JSONEdit.intl.resolve("newValue", self.intl.string), "", function(newValue) {
 						tag.callback(newValue);
 					});
 				}
-			},{
+			}, {
 				text : self.intl.number,
 				description : self.intl.number_desc,
 				onclick : function(v, tag) {
-					JSONEdit.showData(Intl.get("jsonEdit.newNumber"), 0, function(newValue) {
+					JSONEdit.showData(JSONEdit.intl.resolve("newValue", self.intl.number), 0, function(newValue) {
 						tag.callback(newValue);
 					});
 				}
-			},{
+			}, {
 				text : self.intl.boolean,
 				description : self.intl.boolean_desc,
 				onclick : function(v, tag) {
-					JSONEdit.showData(Intl.get("jsonEdit.newBoolean"), true, function(newValue) {
+					JSONEdit.showData(JSONEdit.intl.resolve("newValue", self.intl.boolean), true, function(newValue) {
 						tag.callback(newValue);
 					});
 				}
-			},{
+			}, {
 				text : self.intl.null,
 				description : self.intl.null_desc,
 				onclick : function(v, tag) {
 					tag.callback(null);
 				}
-			},{
+			}, {
 				gap : G.dp * 10
-			},{
-				text : self.intl.paste,
-				description : self.intl.paste_desc,
+			}, {
+				text : self.intl.clipboard,
+				description : self.intl.clipboard_desc,
 				onclick : function(v, tag) {
 					if (!JSONEdit.clipboard) {
-						Common.toast(Intl.get("jsonEdit.clipboardIsEmpty"));
+						Common.toast(JSONEdit.intl.emptyClipboard);
 						return true;
 					}
 					tag.callback(Object.copy(JSONEdit.clipboard.item));
 				}
-			},{
-				text : self.intl.manualInput,
-				description : self.intl.manualInput_desc,
+			}, {
+				text : self.intl.raw,
+				description : self.intl.raw_desc,
 				onclick : function(v, tag) {
 					Common.showInputDialog({
 						title : self.intl.manualInput_desc,
@@ -511,7 +524,7 @@ MapScript.loadModule("JSONEdit", {
 							try {
 								tag.callback(JSON.parse(s));
 							} catch(e) {
-								Common.toast(Intl.resolve(Intl.get("jsonEdit.parsingJSONError"), e.toString()));
+								Common.toast(JSONEdit.intl.resolve("cannotParse", e));
 							}
 						}
 					});
@@ -522,7 +535,7 @@ MapScript.loadModule("JSONEdit", {
 	},
 	showItemAction : function self(name) {
 		if (!self.menu) {
-			self.intl = Intl.getNamespace("jsonEdit.menu");
+			self.intl = Intl.getNamespace("jsonEdit.itemMenu");
 			self.menu = [{
 				text : self.intl.copy,
 				onclick : function(v, tag) {
@@ -532,8 +545,8 @@ MapScript.loadModule("JSONEdit", {
 					};
 					JSONEdit.refresh();
 				}
-			},{
-				text : self.intl.shear,
+			}, {
+				text : self.intl.cut,
 				onclick : function(v, tag) {
 					JSONEdit.clipboard = {
 						name : tag.name,
@@ -546,7 +559,7 @@ MapScript.loadModule("JSONEdit", {
 					}
 					JSONEdit.refresh();
 				}
-			},{
+			}, {
 				text : self.intl.replace,
 				onclick : function(v, tag) {
 					JSONEdit.showNewItem(function(newItem) {
@@ -558,8 +571,8 @@ MapScript.loadModule("JSONEdit", {
 						JSONEdit.refresh();
 					});
 				}
-			},{
-				text : self.intl.delete,
+			}, {
+				text : self.intl.remove,
 				onclick : function(v, tag) {
 					if (Array.isArray(tag.src)) {
 						tag.src.splice(parseInt(tag.name), 1);
@@ -568,10 +581,10 @@ MapScript.loadModule("JSONEdit", {
 					}
 					JSONEdit.refresh();
 				}
-			},{
-				text : self.intl.batch,
+			}, {
+				text : self.intl.rawEdit,
 				onclick : function(v, tag) {
-					JSONEdit.showBatchEdit(tag.data, function(v) {
+					JSONEdit.showRawEdit(tag.data, function(v) {
 						try {
 							tag.src[tag.name] = v;
 						} catch(e) {
@@ -600,7 +613,7 @@ MapScript.loadModule("JSONEdit", {
 				}
 			}].concat(self.menu);
 			self.arrMenu = [{
-				text : self.intl.insert,
+				text : self.intl.insertBefore,
 				onclick : function(v, tag) {
 					JSONEdit.showNewItem(function(newItem) {
 						tag.src.splice(parseInt(tag.name), 0, newItem);
@@ -670,11 +683,11 @@ MapScript.loadModule("JSONEdit", {
 		try {
 			e = obj[propertyName];
 			if (Array.isArray(e)) {
-				return e.length ? Intl.resolve(Intl.get("jsonEdit.objectDesc"), e[0], String(e.length)).toString() : Intl.get("jsonEdit.zeroProjects").toString();
+				return e.length ? JSONEdit.intl.resolve("arrayDesc", e[0], e.length) : JSONEdit.intl.emptyArrayDesc;
 			} else if (e instanceof Object && typeof e !== "function" && !(e instanceof java.lang.CharSequence)) {
-				return Intl.resolve(Intl.get("jsonEdit.keyvaluePair"), String(this.listItems(e).length)).toString();
+				return JSONEdit.intl.resolve("objectDesc", this.listItems(e).length);
 			} else if (e === null) {
-				return Intl.get("jsonEdit.null").toString();
+				return JSONEdit.intl.nullDesc;
 			} else return String(e);
 		} catch(er) {
 			Log.e(er);
@@ -704,7 +717,7 @@ MapScript.loadModule("JSONEdit", {
 	traceGlobal : function() {
 		this.show({
 			source : eval.call(null, "this"),
-			rootname : Intl.get("globalObject").toString(),
+			rootname : "Global object",
 			showAll : true
 		});
 	},
