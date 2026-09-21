@@ -1,0 +1,16 @@
+{
+  "name": "ca",
+  "version": "1.2.14",
+  "private": true,
+  "workspaces": [
+    "cabuildtools"
+  ],
+  "engines": {
+    "npm": ">=7.0.0"
+  },
+  "scripts": {
+    "build": "node ./cabuildtools/main.js buildRelease",
+    "buildSnapshot": "node ./cabuildtools/main.js buildSnapshot",
+    "postinstall": "node scripts/check-legacy.js"
+  }
+}

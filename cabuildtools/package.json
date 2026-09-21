@@ -19,7 +19,9 @@
     "url": "https://gitee.com/projectxero/cabuildtools/issues"
   },
   "homepage": "https://gitee.com/projectxero/cabuildtools",
-  "engines" : { "node" : ">=5.10.0" },
+  "engines": {
+    "node": ">=5.10.0"
+  },
   "dependencies": {
     "jsmin": "^1.0.1",
     "jszip": "^3.2.1",
