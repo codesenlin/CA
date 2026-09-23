@@ -548,7 +548,7 @@ MapScript.loadModule("ExternalStorage", {
 		if (!hint) hint = "*";
 		if (hint.indexOf("*") >= 0) {
 			for (let index = 1; index < 10000; index++) {
-				importFile = new java.io.File(this.ImportFilesRoot, hint.replace("*", index));
+				importFile = new java.io.File(this.ImportFilesRoot, hint.replace(/\*/g, index));
 				if (!importFile.exists()) break;
 			}
 		} else {
@@ -588,7 +588,7 @@ MapScript.loadModule("ExternalStorage", {
 		if (!hint) hint = "*";
 		if (hint.indexOf("*") >= 0) {
 			for (let index = 1; index < 10000; index++) {
-				tempFile = new java.io.File(this.TempFilesRoot, hint.replace("*", index));
+				tempFile = new java.io.File(this.TempFilesRoot, hint.replace(/\*/g, index));
 				if (!tempFile.exists()) break;
 			}
 		} else {
