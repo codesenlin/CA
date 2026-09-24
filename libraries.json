@@ -1,0 +1,14 @@
+{
+  "libraries": [
+    {
+      "uuid": "41e7d897-8f85-441a-8a81-89573cd6cfaf",
+      "name": "自定义ID表",
+      "url": "https://cdn.jsdelivr.net/gh/codesenlin/CA@dev/caclib/src/idmapeditor/main.js"
+    },
+    {
+      "uuid": "06b2fb31-668e-4693-92ad-c0ac8da3e7a9",
+      "name": "MC图标",
+      "url": "https://cdn.jsdelivr.net/gh/codesenlin/CA@dev/caclib/src/mcicon/main.js"
+    }
+  ]
+}

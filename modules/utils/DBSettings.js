@@ -380,8 +380,14 @@ MapScript.loadModule("DBSettings", {
 	},
 
 	getUndefinedInstance(cx, scope) {
-		return com.xero.ca.script.WrappedUndefined.get(cx, scope);
-	},
+    try {
+        var u = com.xero.ca.script.WrappedUndefined.get(cx, scope);
+        if (u) return u;
+    } catch(e) {
+        // 类不存在，用 Rhino 内置的兜底
+    }
+    return org.mozilla.javascript.Undefined.instance;
+},
 	createProxy(target, handler) {
 		const cx = org.mozilla.javascript.Context.getCurrentContext();
 		const topScope = eval.call(null, "this");

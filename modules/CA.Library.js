@@ -2,11 +2,13 @@
 	inner : {},
 	cache : {},
 	loadingStatus : null,
+	builtinLibs : "__BUILTIN_LIBS__",
 	currentLoadingLibrary : null,
 	initLibrary : function(callback) {
 		var info, flag = true, lib;
 		if (this.loadingStatus) return false;
 		this.loadingStatus = "core";
+		this.loadBuiltinLibraries();
 		CA.IntelliSense.library = lib = {
 			commands : {},
 			enums : {},
@@ -42,6 +44,27 @@
 		} catch(e) {erp(e)}});
 		return true;
 	},
+	loadBuiltinLibraries : function() {
+	var libs = this.builtinLibs;
+	if (!libs || !libs.length) return;
+	libs.forEach(function(lib) {
+		var uri = "builtin://" + lib.path;
+		if (CA.Library.inner[uri]) {
+			CA.Library.enableLibrary(uri);
+			return;
+		}
+		try {
+			var bytes = android.util.Base64.decode(lib.source, 2);
+			var code = new java.lang.String(bytes, "UTF-8");
+			var obj = eval("(" + code + ")");
+			if (!obj || typeof obj !== "object") throw "无效的拓展包对象";
+			CA.Library.inner[uri] = obj;
+			CA.Library.enableLibrary(uri);
+		} catch(e) {
+			erp(e);
+		}
+	});
+},
 	clearCache : function(uriStr) {
 		if (uriStr) {
 			delete this.cache[uriStr];

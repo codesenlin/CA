@@ -6,7 +6,7 @@ MapScript.loadModule("AndroidBridge", {
 	onCreate : function() {
 		G.ui(this.initIcon);
 		if (MapScript.host != "Android") return;
-		if (CA.RELEASE) gHandler.post(this.verifyApk);
+		// if (CA.RELEASE) gHandler.post(this.verifyApk);
 	},
 	initialize : function() {try {
 		if (MapScript.host != "Android") return;

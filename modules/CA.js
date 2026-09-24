@@ -141,8 +141,14 @@ MapScript.loadModule("CA", {
 			}
 
 			this.Library.initLibrary(function(flag) {
-				if (!flag) Common.toast("有至少1个拓展包无法加载，请在设置中查看详情");
-			});
+    if (!flag) Common.toast("有至少1个拓展包无法加载，请在设置中查看详情");
+    CA.RemoteLibrary.sync(function(changed) {
+        if (changed) {
+            CA.Library.initLibrary();
+            Common.toast("远程拓展包已加载");
+        }
+    });
+});
 			if (Date.parse(f.publishDate) < Date.parse(this.publishDate)) {
 				Updater.showNewVersionInfo(f.publishDate);
 			}
