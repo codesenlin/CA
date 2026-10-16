@@ -1,7 +1,12 @@
 const fs = require("fs");
 const readConfig = require("../readconfig");
+const localconfig = require("../localconfig");
 module.exports = function(context, args) {
-	var importConfig = readConfig(fs.readFileSync("./config/import.txt", "utf-8")), jarClasses = [];
+	var localPath = localconfig.pathOf("./config/import.txt");
+	var importConfig = readConfig(localconfig.load("./config/import.txt")), jarClasses = [];
+	if (!importConfig.androidJarPath || !fs.existsSync(importConfig.androidJarPath)) {
+		throw new Error("请先填写 " + localPath + " 里的 androidJarPath，当前值：" + importConfig.androidJarPath);
+	}
 	return context.execute("getBuildConfig", "inspect")
 		.then(context.task("readJarClasses", [jarClasses, {
 			path : importConfig.androidJarPath

@@ -18,3 +18,6 @@ Thumbs.db
 # 备份文件
 *.bak
 *.backup
+
+# 本机配置（由 config/*.txt 模板生成，各人填自己的路径）
+/config/*.local.txt

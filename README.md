@@ -37,12 +37,14 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 ### 准备工作
 
 1. 安装依赖：`npm install`
-2. 按需修改 `config/` 内的配置文件。这两份都是**模板**，填上自己机器上的路径即可；
-   本机路径不必提交，仓库里保持模板原样：
-   - `config/shell.txt` — cadroid 项目路径、Build Tools 目录、classes.dex 路径、签名文件与密钥路径
-     （每个键的说明见文件内注释；`javaHome` 只在命令行环境找不到 java 时才需要，
-     密钥轮换相关的 `lineagePath` / `lineageSigners` 默认留空 = 单密钥签名）
-   - `config/import.txt` — `android.jar` 路径，用于生成命令库的导入信息，越新的 SDK 越好
+2. 配置。仓库里跟踪的 `config/*.txt` 是**模板**（占位路径 + 注释，不要改动它），
+   各人自己的配置放在同目录的 `config/*.local.txt`：首次运行相关任务时会自动从模板
+   生成，按注释填上本机路径即可（`.local.txt` 已在 .gitignore 里，不入版本库，
+   `git status` 也不会被打扰）：
+   - `config/shell.local.txt` — `shellPath`（cadroid 项目路径）、`buildToolPath`（Build Tools 目录）、
+     `dexPath`、签名文件与密钥路径；`javaHome` 只在命令行环境找不到 java 时才需要，
+     密钥轮换的 `lineagePath` / `lineageSigners` 默认留空 = 单密钥签名
+   - `config/import.local.txt` — `androidJarPath`，生成命令库导入信息用，越新的 SDK 越好
 
 ### 生成正式版 JS
 
