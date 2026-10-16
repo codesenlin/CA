@@ -4,10 +4,25 @@
 	"author": "CA制作组",
 	"description": "该命令库是默认命令库的补充，包括了与核心玩法无关的命令。",
 	"uuid": "590cdcb5-3cdf-42fa-902c-b578779335ab",
-	"version": [1, 20, 20, 22],
-	"require": ["acf728c5-dd5d-4a38-b43d-7c4f18149fbd"],
-	"minSupportVer": "0.16.0",
-	"minCAVersion": "2023-07-23",
+	"version": [
+		1,
+		21,
+		0,
+		21
+	],
+	"require": [
+		{
+			"uuid": "acf728c5-dd5d-4a38-b43d-7c4f18149fbd",
+			"min": [
+				1,
+				21,
+				0,
+				21
+			]
+		}
+	],
+	"minSupportVer": "0.15.90.0",
+	"minCAVersion": "2023-11-15",
 	"commands": {},
 	"enums": {
 		"gametest_rotation": {
@@ -38,12 +53,12 @@
 							]
 						}
 					},
-					"help": "https://wiki.biligame.com/mc/%E5%91%BD%E4%BB%A4/deop"
+					"help": "https://zh.minecraft.wiki/w/%E5%91%BD%E4%BB%A4/deop"
 				},
 				"list": {
 					"description": "列出服务器上在线的玩家",
 					"noparams": {},
-					"help": "https://wiki.biligame.com/mc/%E5%91%BD%E4%BB%A4/list"
+					"help": "https://zh.minecraft.wiki/w/%E5%91%BD%E4%BB%A4/list"
 				},
 				"op": {
 					"description": "给予一位玩家管理员身份",
@@ -58,7 +73,7 @@
 							]
 						}
 					},
-					"help": "https://wiki.biligame.com/mc/%E5%91%BD%E4%BB%A4/op"
+					"help": "https://zh.minecraft.wiki/w/%E5%91%BD%E4%BB%A4/op"
 				},
 				"wsserver": {
 					"description": "尝试连接到指定的WebSocket服务器上",
@@ -72,7 +87,7 @@
 							]
 						}
 					},
-					"help": "https://wiki.biligame.com/mc/%E5%91%BD%E4%BB%A4/wsserver"
+					"help": "https://zh.minecraft.wiki/w/%E5%91%BD%E4%BB%A4/wsserver"
 				}
 			},
 			"minSupportVer": "0.15.90.0"
@@ -95,7 +110,7 @@
 							]
 						}
 					},
-					"help": "https://wiki.biligame.com/mc/%E5%91%BD%E4%BB%A4/transferserver"
+					"help": "https://zh.minecraft.wiki/w/%E5%91%BD%E4%BB%A4/transferserver"
 				}
 			},
 			"supportVer": [
@@ -119,7 +134,7 @@
 							]
 						}
 					},
-					"help": "https://wiki.biligame.com/mc/%E5%91%BD%E4%BB%A4/setmaxplayers"
+					"help": "https://zh.minecraft.wiki/w/%E5%91%BD%E4%BB%A4/setmaxplayers"
 				}
 			},
 			"minSupportVer": "1.1.0.55"
@@ -205,7 +220,7 @@
 							]
 						}
 					},
-					"help": "https://wiki.biligame.com/mc/%E5%91%BD%E4%BB%A4/videostream"
+					"help": "https://zh.minecraft.wiki/w/%E5%91%BD%E4%BB%A4/videostream"
 				},
 				"videostreamaction": {
 					"description": "执行一个视频流操作",
@@ -223,11 +238,15 @@
 							]
 						}
 					},
-					"help": "https://wiki.biligame.com/mc/%E5%91%BD%E4%BB%A4/videostreamaction"
+					"help": "https://zh.minecraft.wiki/w/%E5%91%BD%E4%BB%A4/videostreamaction"
 				}
 			},
-			"minSupportVer": "1.10.0.3",
-			"maxSupportVer": "1.16.0.55"
+			"supportVer": [
+				{
+					"min": "1.10.0.3",
+					"exclusiveMax": "1.16.0.57"
+				}
+			]
 		},
 		"1.12.0.2": {
 			"commands": {
@@ -256,8 +275,12 @@
 					}
 				}
 			},
-			"minSupportVer": "1.12.0.2",
-			"maxSupportVer": "1.16.0.55"
+			"supportVer": [
+				{
+					"min": "1.12.0.2",
+					"exclusiveMax": "1.16.0.57"
+				}
+			]
 		},
 		"1.19.40.22": {
 			"commands": {
@@ -404,8 +427,21 @@
 							]
 						}
 					},
-					"help": "https://wiki.biligame.com/mc/%E5%91%BD%E4%BB%A4/gametest"
+					"help": "https://zh.minecraft.wiki/w/%E5%91%BD%E4%BB%A4/gametest"
+				}
+			},
+			"supportVer": [
+				{
+					"min": "1.19.40.02",
+					"max": "1.19.40.02"
 				},
+				{
+					"min": "1.19.40.22"
+				}
+			]
+		},
+		"1.19.70.21": {
+			"commands": {
 				"script": {
 					"description": "管理GameTest脚本",
 					"patterns": {
@@ -484,16 +520,16 @@
 							]
 						}
 					},
-					"help": "https://wiki.biligame.com/mc/%E5%91%BD%E4%BB%A4/script"
+					"help": "https://zh.minecraft.wiki/w/%E5%91%BD%E4%BB%A4/script"
 				}
 			},
 			"supportVer": [
 				{
-					"min": "1.19.40.02",
-					"max": "1.19.40.02"
+					"min": "1.19.70.02",
+					"max": "1.19.70.02"
 				},
 				{
-					"min": "1.19.40.22"
+					"min": "1.19.70.21"
 				}
 			]
 		},

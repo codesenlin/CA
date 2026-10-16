@@ -4,8 +4,23 @@
 	"author": "CA制作组",
 	"description": "该命令库包含了需要打开教育版选项才能出现的命令。",
 	"uuid": "f9216c72-76a6-4963-b4c8-7959e5c7487a",
-	"version": [1, 20, 20, 22],
-	"require": ["acf728c5-dd5d-4a38-b43d-7c4f18149fbd"],
+	"version": [
+		1,
+		21,
+		0,
+		21
+	],
+	"require": [
+		{
+			"uuid": "acf728c5-dd5d-4a38-b43d-7c4f18149fbd",
+			"min": [
+				1,
+				21,
+				0,
+				21
+			]
+		}
+	],
 	"minSupportVer": "1.2.20.1",
 	"minCAVersion": "2023-07-23",
 	"commands": {},
@@ -133,7 +148,10 @@
 			"element_99": "锿"
 		},
 		"item": {
+			"balloon": "气球",
+			"bleach": "漂白剂",
 			"chemistry_table": "化合物创建器/材料分解器/元素构造器/实验台",
+			"compound": "化合物",
 			"element_0": "???",
 			"element_1": "氢",
 			"element_10": "氖",
@@ -252,7 +270,12 @@
 			"element_96": "锔",
 			"element_97": "锫",
 			"element_98": "锎",
-			"element_99": "锿"
+			"element_99": "锿",
+			"glow_stick": "荧光棒",
+			"ice_bomb": "冰弹",
+			"medicine": "药物",
+			"rapid_fertilizer": "超级肥料",
+			"sparkler": "烟花棒"
 		},
 		"entity": {
 			"balloon": "气球",
@@ -266,8 +289,16 @@
 			"lt.reaction.fire": "",
 			"sparkler.active": ""
 		},
+		"ability": {
+			"mayfly": "玩家可以飞行",
+			"mute": "玩家被禁言",
+			"worldbuilder": "玩家持有世界建造者权限"
+		},
 		"loot_tool": {
+			"minecraft:balloon": "气球",
+			"minecraft:bleach": "漂白剂",
 			"minecraft:chemistry_table": "化合物创建器/材料分解器/元素构造器/实验台",
+			"minecraft:compound": "化合物",
 			"minecraft:element_0": "???",
 			"minecraft:element_1": "氢",
 			"minecraft:element_10": "氖",
@@ -386,7 +417,12 @@
 			"minecraft:element_96": "锔",
 			"minecraft:element_97": "锫",
 			"minecraft:element_98": "锎",
-			"minecraft:element_99": "锿"
+			"minecraft:element_99": "锿",
+			"minecraft:glow_stick": "荧光棒",
+			"minecraft:ice_bomb": "冰弹",
+			"minecraft:medicine": "药物",
+			"minecraft:rapid_fertilizer": "超级肥料",
+			"minecraft:sparkler": "烟花棒"
 		}
 	},
 	"selectors": {},
@@ -434,7 +470,7 @@
 							]
 						}
 					},
-					"help": "https://wiki.biligame.com/mc/%E5%91%BD%E4%BB%A4/ability"
+					"help": "https://zh.minecraft.wiki/w/%E5%91%BD%E4%BB%A4/ability"
 				},
 				"immutableworld": {
 					"description": "设置世界是否可以变化",
@@ -450,7 +486,7 @@
 							]
 						}
 					},
-					"help": "https://wiki.biligame.com/mc/%E5%91%BD%E4%BB%A4/immutableworld"
+					"help": "https://zh.minecraft.wiki/w/%E5%91%BD%E4%BB%A4/immutableworld"
 				},
 				"wb": {
 					"alias": "worldbuilder"
@@ -458,7 +494,7 @@
 				"worldbuilder": {
 					"description": "切换世界建造者能力",
 					"noparams": {},
-					"help": "https://wiki.biligame.com/mc/%E5%91%BD%E4%BB%A4/worldbuilder"
+					"help": "https://zh.minecraft.wiki/w/%E5%91%BD%E4%BB%A4/worldbuilder"
 				}
 			},
 			"minSupportVer": "1.5.0.4"

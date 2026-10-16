@@ -2,17 +2,572 @@
 	"$schema": "https://ca.projectxero.top/clib/schema_v1.json",
 	"name": "实验性玩法命令库",
 	"author": "CA制作组",
-	"description": "该命令库包含了需要打开实验性玩法才能出现的命令，并且内置了1.20.20.22的实验性玩法专属ID表。",
+	"description": "该命令库包含了需要打开实验性玩法才能出现的命令，并且内置了实验性玩法专属ID表。",
 	"uuid": "9c190ced-8a85-4f65-a231-30d3349ab960",
-	"version": [1, 20, 20, 22],
+	"version": [
+		1,
+		21,
+		0,
+		21
+	],
 	"require": [
-		"acf728c5-dd5d-4a38-b43d-7c4f18149fbd",
-		"590cdcb5-3cdf-42fa-902c-b578779335ab"
+		{
+			"uuid": "acf728c5-dd5d-4a38-b43d-7c4f18149fbd",
+			"min": [
+				1,
+				21,
+				0,
+				21
+			]
+		},
+		{
+			"uuid": "590cdcb5-3cdf-42fa-902c-b578779335ab",
+			"min": [
+				1,
+				21,
+				0,
+				21
+			]
+		}
 	],
 	"minSupportVer": "1.2.13.8",
 	"minCAVersion": "2023-07-23",
 	"commands": {},
-	"enums": {},
+	"enums": {
+		"block": {
+			"chiseled_copper": "雕纹铜块",
+			"chiseled_tuff": "雕纹凝灰岩",
+			"chiseled_tuff_bricks": "雕纹凝灰岩砖",
+			"copper_bulb": "铜灯",
+			"copper_door": "铜门",
+			"copper_grate": "铜格栅",
+			"copper_trapdoor": "铜活板门",
+			"crafter": "合成器",
+			"exposed_chiseled_copper": "斑驳的雕纹铜块",
+			"exposed_copper_bulb": "斑驳的铜灯",
+			"exposed_copper_door": "斑驳的铜门",
+			"exposed_copper_grate": "斑驳的铜格栅",
+			"exposed_copper_trapdoor": "斑驳的铜活板门",
+			"heavy_core": "沉重核心",
+			"oxidized_chiseled_copper": "氧化的雕纹铜块",
+			"oxidized_copper_bulb": "氧化的铜灯",
+			"oxidized_copper_door": "氧化的铜门",
+			"oxidized_copper_grate": "氧化的铜格栅",
+			"oxidized_copper_trapdoor": "氧化的铜活板门",
+			"polished_tuff": "磨制凝灰岩",
+			"polished_tuff_double_slab": "双层磨制凝灰岩台阶",
+			"polished_tuff_slab": "磨制凝灰岩台阶",
+			"polished_tuff_stairs": "磨制凝灰岩楼梯",
+			"polished_tuff_wall": "磨制凝灰岩墙",
+			"trial_spawner": "试炼刷怪笼",
+			"tuff_brick_double_slab": "双层凝灰岩砖台阶",
+			"tuff_brick_slab": "凝灰岩砖台阶",
+			"tuff_brick_stairs": "凝灰岩砖楼梯",
+			"tuff_brick_wall": "凝灰岩砖墙",
+			"tuff_bricks": "凝灰岩砖",
+			"tuff_double_slab": "双层凝灰岩台阶",
+			"tuff_slab": "凝灰岩台阶",
+			"tuff_stairs": "凝灰岩楼梯",
+			"tuff_wall": "凝灰岩墙",
+			"vault": "宝库",
+			"waxed_chiseled_copper": "涂蜡的雕纹铜块",
+			"waxed_copper_bulb": "涂蜡的铜灯",
+			"waxed_copper_door": "涂蜡的铜门",
+			"waxed_copper_grate": "涂蜡的铜格栅",
+			"waxed_copper_trapdoor": "涂蜡的铜活板门",
+			"waxed_exposed_chiseled_copper": "涂蜡的斑驳雕纹铜块",
+			"waxed_exposed_copper_bulb": "涂蜡的斑驳铜灯",
+			"waxed_exposed_copper_door": "涂蜡的斑驳铜门",
+			"waxed_exposed_copper_grate": "涂蜡的斑驳铜格栅",
+			"waxed_exposed_copper_trapdoor": "涂蜡的斑驳铜活板门",
+			"waxed_oxidized_chiseled_copper": "涂蜡的氧化雕纹铜块",
+			"waxed_oxidized_copper_bulb": "涂蜡的氧化铜灯",
+			"waxed_oxidized_copper_door": "涂蜡的氧化铜门",
+			"waxed_oxidized_copper_grate": "涂蜡的氧化铜格栅",
+			"waxed_oxidized_copper_trapdoor": "涂蜡的氧化铜活板门",
+			"waxed_weathered_chiseled_copper": "涂蜡的锈蚀雕纹铜块",
+			"waxed_weathered_copper_bulb": "涂蜡的锈蚀铜灯",
+			"waxed_weathered_copper_door": "涂蜡的锈蚀铜门",
+			"waxed_weathered_copper_grate": "涂蜡的锈蚀铜格栅",
+			"waxed_weathered_copper_trapdoor": "涂蜡的锈蚀铜活板门",
+			"weathered_chiseled_copper": "锈蚀的雕纹铜块",
+			"weathered_copper_bulb": "锈蚀的铜灯",
+			"weathered_copper_door": "锈蚀的铜门",
+			"weathered_copper_grate": "锈蚀的铜格栅",
+			"weathered_copper_trapdoor": "锈蚀的铜活板门"
+		},
+		"item": {
+			"bogged_spawn_egg": "沼骸刷怪蛋",
+			"bolt_armor_trim_smithing_template": "镶铆盔甲纹饰锻造模板",
+			"breeze_rod": "旋风棒",
+			"breeze_spawn_egg": "旋风人刷怪蛋",
+			"chiseled_copper": "雕纹铜块",
+			"chiseled_tuff": "雕纹凝灰岩",
+			"chiseled_tuff_bricks": "雕纹凝灰岩砖",
+			"copper_bulb": "铜灯",
+			"copper_door": "铜门",
+			"copper_grate": "铜格栅",
+			"copper_trapdoor": "铜活板门",
+			"crafter": "合成器",
+			"exposed_chiseled_copper": "斑驳的雕纹铜块",
+			"exposed_copper_bulb": "斑驳的铜灯",
+			"exposed_copper_door": "斑驳的铜门",
+			"exposed_copper_grate": "斑驳的铜格栅",
+			"exposed_copper_trapdoor": "斑驳的铜活板门",
+			"flow_armor_trim_smithing_template": "涡流盔甲纹饰锻造模板",
+			"flow_banner_pattern": "涡流旗帜图案",
+			"flow_pottery_sherd": "涡流纹样陶片",
+			"guster_banner_pattern": "旋风旗帜图案",
+			"guster_pottery_sherd": "旋风纹样陶片",
+			"heavy_core": "沉重核心",
+			"mace": "重锤",
+			"ominous_bottle": "不祥之瓶",
+			"ominous_trial_key": "不祥试炼钥匙",
+			"oxidized_chiseled_copper": "氧化的雕纹铜块",
+			"oxidized_copper_bulb": "氧化的铜灯",
+			"oxidized_copper_door": "氧化的铜门",
+			"oxidized_copper_grate": "氧化的铜格栅",
+			"oxidized_copper_trapdoor": "氧化的铜活板门",
+			"polished_tuff": "磨制凝灰岩",
+			"polished_tuff_slab": "磨制凝灰岩台阶",
+			"polished_tuff_stairs": "磨制凝灰岩楼梯",
+			"polished_tuff_wall": "磨制凝灰岩墙",
+			"scrape_pottery_sherd": "刮削纹样陶片",
+			"trial_key": "试炼钥匙",
+			"trial_spawner": "试炼刷怪笼",
+			"tuff_brick_slab": "凝灰岩砖台阶",
+			"tuff_brick_stairs": "凝灰岩砖楼梯",
+			"tuff_brick_wall": "凝灰岩砖墙",
+			"tuff_bricks": "凝灰岩砖",
+			"tuff_slab": "凝灰岩台阶",
+			"tuff_stairs": "凝灰岩楼梯",
+			"tuff_wall": "凝灰岩墙",
+			"vault": "宝库",
+			"waxed_chiseled_copper": "涂蜡的雕纹铜块",
+			"waxed_copper_bulb": "涂蜡的铜灯",
+			"waxed_copper_door": "涂蜡的铜门",
+			"waxed_copper_grate": "涂蜡的铜格栅",
+			"waxed_copper_trapdoor": "涂蜡的铜活板门",
+			"waxed_exposed_chiseled_copper": "涂蜡的斑驳雕纹铜块",
+			"waxed_exposed_copper_bulb": "涂蜡的斑驳铜灯",
+			"waxed_exposed_copper_door": "涂蜡的斑驳铜门",
+			"waxed_exposed_copper_grate": "涂蜡的斑驳铜格栅",
+			"waxed_exposed_copper_trapdoor": "涂蜡的斑驳铜活板门",
+			"waxed_oxidized_chiseled_copper": "涂蜡的氧化雕纹铜块",
+			"waxed_oxidized_copper_bulb": "涂蜡的氧化铜灯",
+			"waxed_oxidized_copper_door": "涂蜡的氧化铜门",
+			"waxed_oxidized_copper_grate": "涂蜡的氧化铜格栅",
+			"waxed_oxidized_copper_trapdoor": "涂蜡的氧化铜活板门",
+			"waxed_weathered_chiseled_copper": "涂蜡的锈蚀雕纹铜块",
+			"waxed_weathered_copper_bulb": "涂蜡的锈蚀铜灯",
+			"waxed_weathered_copper_door": "涂蜡的锈蚀铜门",
+			"waxed_weathered_copper_grate": "涂蜡的锈蚀铜格栅",
+			"waxed_weathered_copper_trapdoor": "涂蜡的锈蚀铜活板门",
+			"weathered_chiseled_copper": "锈蚀的雕纹铜块",
+			"weathered_copper_bulb": "锈蚀的铜灯",
+			"weathered_copper_door": "锈蚀的铜门",
+			"weathered_copper_grate": "锈蚀的铜格栅",
+			"weathered_copper_trapdoor": "锈蚀的铜活板门",
+			"wind_charge": "风弹"
+		},
+		"entity": {
+			"bogged": "沼骸",
+			"breeze": "旋风人",
+			"breeze_wind_charge_projectile": "风弹",
+			"minecraft:bogged": "沼骸",
+			"minecraft:breeze": "旋风人",
+			"minecraft:breeze_wind_charge_projectile": "风弹",
+			"minecraft:ominous_item_spawner": "不祥之物生成器",
+			"minecraft:wind_charge_projectile": "风弹",
+			"ominous_item_spawner": "不祥之物生成器",
+			"wind_charge_projectile": "风弹"
+		},
+		"effect": {
+			"infested": "寄生",
+			"oozing": "渗浆",
+			"raid_omen": "袭击之兆",
+			"trial_omen": "试炼之兆",
+			"weaving": "盘丝",
+			"wind_charged": "蓄风"
+		},
+		"structure": {
+			"trial_chambers": "试炼密室"
+		},
+		"entity_event": {
+			"be_sheared": "",
+			"minecraft:clear_add_raid_omen": "",
+			"minecraft:gain_raid_omen": "",
+			"minecraft:start_playing_idle_ground_sound": "",
+			"minecraft:stop_playing_idle_ground_sound": ""
+		},
+		"entity_family": {
+			"bogged": "沼骸",
+			"breeze": "旋风人",
+			"wind_charge": "风弹",
+			"wind_charge_projectile": "风弹"
+		},
+		"animation": {
+			"animation.breeze.idle": "",
+			"animation.breeze.idle_ground_particles": "",
+			"animation.breeze.idle_ground_sound": "",
+			"animation.breeze.jump": "",
+			"animation.breeze.shoot": "",
+			"animation.breeze.slide": "",
+			"animation.breeze.slide_ground_particles": "",
+			"animation.breeze.whirl_sound": "",
+			"animation.wind_charge.rotate": ""
+		},
+		"animation_controller": {
+			"controller.animation.breeze.ground_particles": "",
+			"controller.animation.breeze.idle": "",
+			"controller.animation.breeze.idle_ground_sound": "",
+			"controller.animation.breeze.jump": "",
+			"controller.animation.breeze.look_at": "",
+			"controller.animation.breeze.move": "",
+			"controller.animation.breeze.shoot": ""
+		},
+		"particle_emitter": {
+			"minecraft:breeze_ground_particle": "",
+			"minecraft:breeze_wind_explosion_emitter": "",
+			"minecraft:ominous_spawning_particle": "",
+			"minecraft:small_flame_particle": "",
+			"minecraft:small_soul_fire_flame": "",
+			"minecraft:smash_ground_particle": "",
+			"minecraft:smash_ground_particle_center": "",
+			"minecraft:trial_spawner_detection": "",
+			"minecraft:trial_spawner_detection_ominous": "",
+			"minecraft:vault_connection_particle": "",
+			"minecraft:white_smoke_particle": "",
+			"minecraft:wind_explosion_emitter": ""
+		},
+		"sound": {
+			"apply_effect.bad_omen": "",
+			"apply_effect.raid_omen": "",
+			"apply_effect.trial_omen": "",
+			"block.copper_bulb.turn_off": "",
+			"block.copper_bulb.turn_on": "",
+			"break.copper_bulb": "",
+			"break.copper_grate": "",
+			"break.heavy_core": "",
+			"break.web": "",
+			"breeze_wind_charge.burst": "",
+			"close_door.copper": "",
+			"crafter.craft": "",
+			"crafter.disable_slot": "",
+			"crafter.fail": "",
+			"fall.copper_bulb": "",
+			"hit.copper_bulb": "",
+			"mace.heavy_smash_ground": "",
+			"mace.smash_air": "",
+			"mace.smash_ground": "",
+			"mob.bogged.ambient": "",
+			"mob.bogged.death": "",
+			"mob.bogged.hurt": "",
+			"mob.bogged.step": "",
+			"mob.breeze.charge": "",
+			"mob.breeze.death": "",
+			"mob.breeze.deflect": "",
+			"mob.breeze.hurt": "",
+			"mob.breeze.idle_air": "",
+			"mob.breeze.idle_ground": "",
+			"mob.breeze.inhale": "",
+			"mob.breeze.jump": "",
+			"mob.breeze.land": "",
+			"mob.breeze.shoot": "",
+			"mob.breeze.slide": "",
+			"mob.breeze.whirl": "",
+			"ominous_bottle.end_use": "",
+			"ominous_item_spawner.about_to_spawn_item": "",
+			"ominous_item_spawner.spawn_item": "",
+			"ominous_item_spawner.spawn_item_begin": "",
+			"open_door.copper": "",
+			"open_trapdoor.copper": "",
+			"place.copper_bulb": "",
+			"place.tuff_bricks": "",
+			"step.copper_bulb": "",
+			"step.copper_grate": "",
+			"step.heavy_core": "",
+			"step.tuff_bricks": "",
+			"step.web": "",
+			"trial_spawner.ambient": "",
+			"trial_spawner.ambient_ominous": "",
+			"trial_spawner.break": "",
+			"trial_spawner.charge_activate": "",
+			"trial_spawner.close_shutter": "",
+			"trial_spawner.detect_player": "",
+			"trial_spawner.eject_item": "",
+			"trial_spawner.hit": "",
+			"trial_spawner.open_shutter": "",
+			"trial_spawner.place": "",
+			"trial_spawner.spawn_mob": "",
+			"trial_spawner.step": "",
+			"vault.activate": "",
+			"vault.ambient": "",
+			"vault.break": "",
+			"vault.close_shutter": "",
+			"vault.deactivate": "",
+			"vault.eject_item": "",
+			"vault.hit": "",
+			"vault.insert_item": "",
+			"vault.insert_item_fail": "",
+			"vault.open_shutter": "",
+			"vault.place": "",
+			"vault.step": "",
+			"wind_charge.burst": ""
+		},
+		"loot_table": {
+			"chests/trial_chambers/corridor": "",
+			"chests/trial_chambers/entrance": "",
+			"chests/trial_chambers/intersection": "",
+			"chests/trial_chambers/intersection_barrel": "",
+			"chests/trial_chambers/reward": "",
+			"chests/trial_chambers/reward_common": "",
+			"chests/trial_chambers/reward_common_ominous": "",
+			"chests/trial_chambers/reward_ominous": "",
+			"chests/trial_chambers/reward_rare": "",
+			"chests/trial_chambers/reward_rare_ominous": "",
+			"chests/trial_chambers/reward_unique": "",
+			"chests/trial_chambers/reward_unique_ominous": "",
+			"chests/trial_chambers/supply": "",
+			"dispensers/trial_chambers/chamber": "",
+			"dispensers/trial_chambers/corridor": "",
+			"dispensers/trial_chambers/water": "",
+			"entities/bogged": "",
+			"entities/bogged_shear": "",
+			"entities/breeze": "",
+			"entities/pillager_captain": "",
+			"equipment/trial_chamber": "",
+			"equipment/trial_chamber_chainmail": "",
+			"equipment/trial_chamber_diamond": "",
+			"equipment/trial_chamber_iron": "",
+			"pots/trial_chambers/corridor": "",
+			"spawners/ominous/trial_chamber/consumables": "",
+			"spawners/ominous/trial_chamber/key": "",
+			"spawners/trial_chamber/consumables": "",
+			"spawners/trial_chamber/items_to_drop_when_ominous": "",
+			"spawners/trial_chamber/key": ""
+		},
+		"loot_table_wrapped": {
+			"\"chests/trial_chambers/corridor\"": "",
+			"\"chests/trial_chambers/entrance\"": "",
+			"\"chests/trial_chambers/intersection\"": "",
+			"\"chests/trial_chambers/intersection_barrel\"": "",
+			"\"chests/trial_chambers/reward\"": "",
+			"\"chests/trial_chambers/reward_common\"": "",
+			"\"chests/trial_chambers/reward_common_ominous\"": "",
+			"\"chests/trial_chambers/reward_ominous\"": "",
+			"\"chests/trial_chambers/reward_rare\"": "",
+			"\"chests/trial_chambers/reward_rare_ominous\"": "",
+			"\"chests/trial_chambers/reward_unique\"": "",
+			"\"chests/trial_chambers/reward_unique_ominous\"": "",
+			"\"chests/trial_chambers/supply\"": "",
+			"\"dispensers/trial_chambers/chamber\"": "",
+			"\"dispensers/trial_chambers/corridor\"": "",
+			"\"dispensers/trial_chambers/water\"": "",
+			"\"entities/bogged\"": "",
+			"\"entities/bogged_shear\"": "",
+			"\"entities/breeze\"": "",
+			"\"entities/pillager_captain\"": "",
+			"\"equipment/trial_chamber\"": "",
+			"\"equipment/trial_chamber_chainmail\"": "",
+			"\"equipment/trial_chamber_diamond\"": "",
+			"\"equipment/trial_chamber_iron\"": "",
+			"\"pots/trial_chambers/corridor\"": "",
+			"\"spawners/ominous/trial_chamber/consumables\"": "",
+			"\"spawners/ominous/trial_chamber/key\"": "",
+			"\"spawners/trial_chamber/consumables\"": "",
+			"\"spawners/trial_chamber/items_to_drop_when_ominous\"": "",
+			"\"spawners/trial_chamber/key\"": ""
+		},
+		"recipe": {
+			"minecraft:bolt_armor_trim_smithing_template_duplicate": "<工作台>镶铆盔甲纹饰锻造模板+钻石*7+铜块->镶铆盔甲纹饰锻造模板*2",
+			"minecraft:bolt_armor_trim_smithing_template_duplicate_waxed": "<工作台>镶铆盔甲纹饰锻造模板+钻石*7+涂蜡的铜块->镶铆盔甲纹饰锻造模板*2",
+			"minecraft:chiseled_tuff": "<工作台>凝灰岩台阶*2->雕纹凝灰岩",
+			"minecraft:chiseled_tuff_bricks": "<工作台>凝灰岩砖台阶*2->雕纹凝灰岩砖",
+			"minecraft:copper_bulb": "<工作台>红石粉+铜块*3+烈焰棒->铜灯*4",
+			"minecraft:copper_door": "<工作台>铜块*6->铜门*3",
+			"minecraft:copper_grate": "<工作台>铜块*4->铜格栅*4",
+			"minecraft:copper_trapdoor": "<工作台>铜块*6->铜活板门*2",
+			"minecraft:crafter": "<工作台>红石粉*2+铁锭*5+投掷器+工作台->合成器",
+			"minecraft:crafting_table_chiseled_copper": "<工作台>切制铜台阶*2->雕纹铜块",
+			"minecraft:crafting_table_waxed_chiseled_copper": "<工作台>雕纹铜块+蜜脾~>涂蜡的雕纹铜块",
+			"minecraft:crafting_table_waxed_copper_door": "<工作台>涂蜡的铜块*6->涂蜡的铜门*3",
+			"minecraft:crafting_table_waxed_copper_trapdoor": "<工作台>涂蜡的铜块*6->涂蜡的铜活板门*2",
+			"minecraft:crafting_table_waxed_exposed_copper_door": "<工作台>涂蜡的斑驳铜块*6->涂蜡的斑驳铜门*3",
+			"minecraft:crafting_table_waxed_exposed_copper_trapdoor": "<工作台>涂蜡的斑驳铜块*6->涂蜡的斑驳铜活板门*2",
+			"minecraft:crafting_table_waxed_oxidized_copper_door": "<工作台>涂蜡的氧化铜块*6->涂蜡的氧化铜门*3",
+			"minecraft:crafting_table_waxed_oxidized_copper_trapdoor": "<工作台>涂蜡的氧化铜块*6->涂蜡的氧化铜活板门*2",
+			"minecraft:crafting_table_waxed_weathered_copper_door": "<工作台>涂蜡的锈蚀铜块*6->涂蜡的锈蚀铜门*3",
+			"minecraft:crafting_table_waxed_weathered_copper_trapdoor": "<工作台>涂蜡的锈蚀铜块*6->涂蜡的锈蚀铜活板门*2",
+			"minecraft:exposed_copper_bulb": "<工作台>红石粉+斑驳的铜块*3+烈焰棒->斑驳的铜灯*4",
+			"minecraft:exposed_copper_door": "<工作台>斑驳的铜块*6->斑驳的铜门*3",
+			"minecraft:exposed_copper_grate": "<工作台>斑驳的铜块*4->斑驳的铜格栅*4",
+			"minecraft:exposed_copper_trapdoor": "<工作台>斑驳的铜块*6->斑驳的铜活板门*2",
+			"minecraft:flow_armor_trim_smithing_template_duplicate": "<工作台>涡流盔甲纹饰锻造模板+钻石*7+旋风棒->涡流盔甲纹饰锻造模板*2",
+			"minecraft:mace": "<工作台>旋风棒+沉重核心->重锤",
+			"minecraft:oxidized_copper_bulb": "<工作台>红石粉+氧化的铜块*3+烈焰棒->氧化的铜灯*4",
+			"minecraft:oxidized_copper_door": "<工作台>氧化的铜块*6->氧化的铜门*3",
+			"minecraft:oxidized_copper_grate": "<工作台>氧化的铜块*4->氧化的铜格栅*4",
+			"minecraft:oxidized_copper_trapdoor": "<工作台>氧化的铜块*6->氧化的铜活板门*2",
+			"minecraft:polished_tuff": "<工作台>凝灰岩*4->磨制凝灰岩*4",
+			"minecraft:polished_tuff_slab": "<工作台>磨制凝灰岩*3->磨制凝灰岩台阶*6",
+			"minecraft:polished_tuff_stairs": "<工作台>磨制凝灰岩*6->磨制凝灰岩楼梯*4",
+			"minecraft:polished_tuff_wall": "<工作台>磨制凝灰岩*6->磨制凝灰岩墙*6",
+			"minecraft:stonecutter_copper_block_to_chiseled_copper": "<切石机>铜块~>雕纹铜块*4",
+			"minecraft:stonecutter_copper_block_to_copper_grate": "<切石机>铜块~>铜格栅*4",
+			"minecraft:stonecutter_cut_copper_to_chiseled_copper": "<切石机>切制铜块~>雕纹铜块",
+			"minecraft:stonecutter_exposed_copper_to_exposed_chiseled_copper": "<切石机>斑驳的铜块~>斑驳的雕纹铜块*4",
+			"minecraft:stonecutter_exposed_copper_to_exposed_copper_grate": "<切石机>斑驳的铜块~>斑驳的铜格栅*4",
+			"minecraft:stonecutter_exposed_cut_copper_to_exposed_chiseled_copper": "<切石机>斑驳的切制铜块~>斑驳的雕纹铜块",
+			"minecraft:stonecutter_oxidized_copper_to_oxidized_chiseled_copper": "<切石机>氧化的铜块~>氧化的雕纹铜块*4",
+			"minecraft:stonecutter_oxidized_copper_to_oxidized_copper_grate": "<切石机>氧化的铜块~>氧化的铜格栅*4",
+			"minecraft:stonecutter_oxidized_cut_copper_to_oxidized_chiseled_copper": "<切石机>氧化的切制铜块~>氧化的雕纹铜块",
+			"minecraft:stonecutter_tuff_to_chiseled_tuff": "<切石机>凝灰岩~>雕纹凝灰岩",
+			"minecraft:stonecutter_tuff_to_chiseled_tuff_bricks": "<切石机>凝灰岩~>雕纹凝灰岩砖",
+			"minecraft:stonecutter_tuff_to_polished_tuff": "<切石机>凝灰岩~>磨制凝灰岩",
+			"minecraft:stonecutter_tuff_to_polished_tuff_slab": "<切石机>凝灰岩~>磨制凝灰岩台阶*2",
+			"minecraft:stonecutter_tuff_to_polished_tuff_stairs": "<切石机>凝灰岩~>磨制凝灰岩楼梯",
+			"minecraft:stonecutter_tuff_to_polished_tuff_wall": "<切石机>凝灰岩~>磨制凝灰岩墙",
+			"minecraft:stonecutter_tuff_to_tuff_brick_slab": "<切石机>凝灰岩~>凝灰岩砖台阶*2",
+			"minecraft:stonecutter_tuff_to_tuff_brick_stairs": "<切石机>凝灰岩~>凝灰岩砖楼梯",
+			"minecraft:stonecutter_tuff_to_tuff_brick_wall": "<切石机>凝灰岩~>凝灰岩砖墙",
+			"minecraft:stonecutter_tuff_to_tuff_bricks": "<切石机>凝灰岩~>凝灰岩砖",
+			"minecraft:stonecutter_tuff_to_tuff_slab": "<切石机>凝灰岩~>凝灰岩台阶*2",
+			"minecraft:stonecutter_tuff_to_tuff_stairs": "<切石机>凝灰岩~>凝灰岩楼梯",
+			"minecraft:stonecutter_tuff_to_tuff_wall": "<切石机>凝灰岩~>凝灰岩墙",
+			"minecraft:stonecutter_waxed_copper_to_waxed_chiseled_copper": "<切石机>涂蜡的铜块~>涂蜡的雕纹铜块*4",
+			"minecraft:stonecutter_waxed_copper_to_waxed_copper_grate": "<切石机>涂蜡的铜块~>涂蜡的铜格栅*4",
+			"minecraft:stonecutter_waxed_cut_copper_to_waxed_chiseled_copper": "<切石机>涂蜡的切制铜块~>涂蜡的雕纹铜块",
+			"minecraft:stonecutter_waxed_exposed_copper_to_waxed_exposed_chiseled_copper": "<切石机>涂蜡的斑驳铜块~>涂蜡的斑驳雕纹铜块*4",
+			"minecraft:stonecutter_waxed_exposed_copper_to_waxed_exposed_copper_grate": "<切石机>涂蜡的斑驳铜块~>涂蜡的斑驳铜格栅*4",
+			"minecraft:stonecutter_waxed_exposed_cut_copper_to_waxed_exposed_chiseled_copper": "<切石机>涂蜡的斑驳切制铜块~>涂蜡的斑驳雕纹铜块",
+			"minecraft:stonecutter_waxed_oxidized_copper_to_waxed_oxidized_chiseled_copper": "<切石机>涂蜡的氧化铜块~>涂蜡的氧化雕纹铜块*4",
+			"minecraft:stonecutter_waxed_oxidized_copper_to_waxed_oxidized_copper_grate": "<切石机>涂蜡的氧化铜块~>涂蜡的氧化铜格栅*4",
+			"minecraft:stonecutter_waxed_oxidized_cut_copper_to_waxed_oxidized_chiseled_copper": "<切石机>涂蜡的氧化切制铜块~>涂蜡的氧化雕纹铜块",
+			"minecraft:stonecutter_waxed_weathered_copper_to_waxed_weathered_chiseled_copper": "<切石机>涂蜡的锈蚀铜块~>涂蜡的锈蚀雕纹铜块*4",
+			"minecraft:stonecutter_waxed_weathered_copper_to_waxed_weathered_copper_grate": "<切石机>涂蜡的锈蚀铜块~>涂蜡的锈蚀铜格栅*4",
+			"minecraft:stonecutter_waxed_weathered_cut_copper_to_waxed_weathered_chiseled_copper": "<切石机>涂蜡的锈蚀切制铜块~>涂蜡的锈蚀雕纹铜块",
+			"minecraft:stonecutter_weathered_copper_to_weathered_chiseled_copper": "<切石机>锈蚀的铜块~>锈蚀的雕纹铜块*4",
+			"minecraft:stonecutter_weathered_copper_to_weathered_copper_grate": "<切石机>锈蚀的铜块~>锈蚀的铜格栅*4",
+			"minecraft:stonecutter_weathered_cut_copper_to_weathered_chiseled_copper": "<切石机>锈蚀的切制铜块~>锈蚀的雕纹铜块",
+			"minecraft:tuff_brick_slab": "<工作台>凝灰岩砖*3->凝灰岩砖台阶*6",
+			"minecraft:tuff_brick_stairs": "<工作台>凝灰岩砖*6->凝灰岩砖楼梯*4",
+			"minecraft:tuff_brick_wall": "<工作台>凝灰岩砖*6->凝灰岩砖墙*6",
+			"minecraft:tuff_bricks": "<工作台>磨制凝灰岩*4->凝灰岩砖*4",
+			"minecraft:tuff_slab": "<工作台>凝灰岩*3->凝灰岩台阶*6",
+			"minecraft:tuff_stairs": "<工作台>凝灰岩*6->凝灰岩楼梯*4",
+			"minecraft:tuff_wall": "<工作台>凝灰岩*6->凝灰岩墙*6",
+			"minecraft:waxed_copper_bulb": "<工作台>红石粉+涂蜡的铜块*3+烈焰棒->涂蜡的铜灯*4",
+			"minecraft:waxed_exposed_copper_bulb": "<工作台>红石粉+涂蜡的斑驳铜块*3+烈焰棒->涂蜡的斑驳铜灯*4",
+			"minecraft:waxed_oxidized_copper_bulb": "<工作台>红石粉+涂蜡的氧化铜块*3+烈焰棒->涂蜡的氧化铜灯*4",
+			"minecraft:waxed_weathered_copper_bulb": "<工作台>红石粉+涂蜡的锈蚀铜块*3+烈焰棒->涂蜡的锈蚀铜灯*4",
+			"minecraft:waxing_copper_bulb": "<工作台>铜灯+蜜脾~>涂蜡的铜灯",
+			"minecraft:waxing_copper_door": "<工作台>铜门+蜜脾~>涂蜡的铜门",
+			"minecraft:waxing_copper_grate": "<工作台>铜格栅+蜜脾~>涂蜡的铜格栅",
+			"minecraft:waxing_copper_trapdoor": "<工作台>铜活板门+蜜脾~>涂蜡的铜活板门",
+			"minecraft:waxing_exposed_copper_bulb": "<工作台>斑驳的铜灯+蜜脾~>涂蜡的斑驳铜灯",
+			"minecraft:waxing_exposed_copper_door": "<工作台>斑驳的铜门+蜜脾~>涂蜡的斑驳铜门",
+			"minecraft:waxing_exposed_copper_grate": "<工作台>斑驳的铜格栅+蜜脾~>涂蜡的斑驳铜格栅",
+			"minecraft:waxing_exposed_copper_trapdoor": "<工作台>斑驳的铜活板门+蜜脾~>涂蜡的斑驳铜活板门",
+			"minecraft:waxing_oxidized_copper_bulb": "<工作台>氧化的铜灯+蜜脾~>涂蜡的氧化铜灯",
+			"minecraft:waxing_oxidized_copper_door": "<工作台>氧化的铜门+蜜脾~>涂蜡的氧化铜门",
+			"minecraft:waxing_oxidized_copper_grate": "<工作台>氧化的铜格栅+蜜脾~>涂蜡的氧化铜格栅",
+			"minecraft:waxing_oxidized_copper_trapdoor": "<工作台>氧化的铜活板门+蜜脾~>涂蜡的氧化铜活板门",
+			"minecraft:waxing_weathered_copper_bulb": "<工作台>锈蚀的铜灯+蜜脾~>涂蜡的锈蚀铜灯",
+			"minecraft:waxing_weathered_copper_door": "<工作台>锈蚀的铜门+蜜脾~>涂蜡的锈蚀铜门",
+			"minecraft:waxing_weathered_copper_grate": "<工作台>锈蚀的铜格栅+蜜脾~>涂蜡的锈蚀铜格栅",
+			"minecraft:waxing_weathered_copper_trapdoor": "<工作台>锈蚀的铜活板门+蜜脾~>涂蜡的锈蚀铜活板门",
+			"minecraft:weathered_copper_bulb": "<工作台>红石粉+锈蚀的铜块*3+烈焰棒->锈蚀的铜灯*4",
+			"minecraft:weathered_copper_door": "<工作台>锈蚀的铜块*6->锈蚀的铜门*3",
+			"minecraft:weathered_copper_grate": "<工作台>锈蚀的铜块*4->锈蚀的铜格栅*4",
+			"minecraft:weathered_copper_trapdoor": "<工作台>锈蚀的铜块*6->锈蚀的铜活板门*2",
+			"minecraft:wind_charge": "<工作台>旋风棒~>风弹*4",
+			"weapon_arrow_recipe_43": "",
+			"weapon_arrow_recipe_44": "",
+			"weapon_arrow_recipe_45": "",
+			"weapon_arrow_recipe_46": ""
+		},
+		"summonable_entity": {
+			"bogged": "沼骸",
+			"breeze": "旋风人",
+			"minecraft:bogged": "沼骸",
+			"minecraft:breeze": "旋风人"
+		},
+		"loot_tool": {
+			"minecraft:bogged_spawn_egg": "沼骸刷怪蛋",
+			"minecraft:bolt_armor_trim_smithing_template": "镶铆盔甲纹饰锻造模板",
+			"minecraft:breeze_rod": "旋风棒",
+			"minecraft:breeze_spawn_egg": "旋风人刷怪蛋",
+			"minecraft:chiseled_copper": "雕纹铜块",
+			"minecraft:chiseled_tuff": "雕纹凝灰岩",
+			"minecraft:chiseled_tuff_bricks": "雕纹凝灰岩砖",
+			"minecraft:copper_bulb": "铜灯",
+			"minecraft:copper_door": "铜门",
+			"minecraft:copper_grate": "铜格栅",
+			"minecraft:copper_trapdoor": "铜活板门",
+			"minecraft:crafter": "合成器",
+			"minecraft:exposed_chiseled_copper": "斑驳的雕纹铜块",
+			"minecraft:exposed_copper_bulb": "斑驳的铜灯",
+			"minecraft:exposed_copper_door": "斑驳的铜门",
+			"minecraft:exposed_copper_grate": "斑驳的铜格栅",
+			"minecraft:exposed_copper_trapdoor": "斑驳的铜活板门",
+			"minecraft:flow_armor_trim_smithing_template": "涡流盔甲纹饰锻造模板",
+			"minecraft:flow_banner_pattern": "涡流旗帜图案",
+			"minecraft:flow_pottery_sherd": "涡流纹样陶片",
+			"minecraft:guster_banner_pattern": "旋风旗帜图案",
+			"minecraft:guster_pottery_sherd": "旋风纹样陶片",
+			"minecraft:heavy_core": "沉重核心",
+			"minecraft:mace": "重锤",
+			"minecraft:ominous_bottle": "不祥之瓶",
+			"minecraft:ominous_trial_key": "不祥试炼钥匙",
+			"minecraft:oxidized_chiseled_copper": "氧化的雕纹铜块",
+			"minecraft:oxidized_copper_bulb": "氧化的铜灯",
+			"minecraft:oxidized_copper_door": "氧化的铜门",
+			"minecraft:oxidized_copper_grate": "氧化的铜格栅",
+			"minecraft:oxidized_copper_trapdoor": "氧化的铜活板门",
+			"minecraft:polished_tuff": "磨制凝灰岩",
+			"minecraft:polished_tuff_slab": "磨制凝灰岩台阶",
+			"minecraft:polished_tuff_stairs": "磨制凝灰岩楼梯",
+			"minecraft:polished_tuff_wall": "磨制凝灰岩墙",
+			"minecraft:scrape_pottery_sherd": "刮削纹样陶片",
+			"minecraft:trial_key": "试炼钥匙",
+			"minecraft:trial_spawner": "试炼刷怪笼",
+			"minecraft:tuff_brick_slab": "凝灰岩砖台阶",
+			"minecraft:tuff_brick_stairs": "凝灰岩砖楼梯",
+			"minecraft:tuff_brick_wall": "凝灰岩砖墙",
+			"minecraft:tuff_bricks": "凝灰岩砖",
+			"minecraft:tuff_slab": "凝灰岩台阶",
+			"minecraft:tuff_stairs": "凝灰岩楼梯",
+			"minecraft:tuff_wall": "凝灰岩墙",
+			"minecraft:vault": "宝库",
+			"minecraft:waxed_chiseled_copper": "涂蜡的雕纹铜块",
+			"minecraft:waxed_copper_bulb": "涂蜡的铜灯",
+			"minecraft:waxed_copper_door": "涂蜡的铜门",
+			"minecraft:waxed_copper_grate": "涂蜡的铜格栅",
+			"minecraft:waxed_copper_trapdoor": "涂蜡的铜活板门",
+			"minecraft:waxed_exposed_chiseled_copper": "涂蜡的斑驳雕纹铜块",
+			"minecraft:waxed_exposed_copper_bulb": "涂蜡的斑驳铜灯",
+			"minecraft:waxed_exposed_copper_door": "涂蜡的斑驳铜门",
+			"minecraft:waxed_exposed_copper_grate": "涂蜡的斑驳铜格栅",
+			"minecraft:waxed_exposed_copper_trapdoor": "涂蜡的斑驳铜活板门",
+			"minecraft:waxed_oxidized_chiseled_copper": "涂蜡的氧化雕纹铜块",
+			"minecraft:waxed_oxidized_copper_bulb": "涂蜡的氧化铜灯",
+			"minecraft:waxed_oxidized_copper_door": "涂蜡的氧化铜门",
+			"minecraft:waxed_oxidized_copper_grate": "涂蜡的氧化铜格栅",
+			"minecraft:waxed_oxidized_copper_trapdoor": "涂蜡的氧化铜活板门",
+			"minecraft:waxed_weathered_chiseled_copper": "涂蜡的锈蚀雕纹铜块",
+			"minecraft:waxed_weathered_copper_bulb": "涂蜡的锈蚀铜灯",
+			"minecraft:waxed_weathered_copper_door": "涂蜡的锈蚀铜门",
+			"minecraft:waxed_weathered_copper_grate": "涂蜡的锈蚀铜格栅",
+			"minecraft:waxed_weathered_copper_trapdoor": "涂蜡的锈蚀铜活板门",
+			"minecraft:weathered_chiseled_copper": "锈蚀的雕纹铜块",
+			"minecraft:weathered_copper_bulb": "锈蚀的铜灯",
+			"minecraft:weathered_copper_door": "锈蚀的铜门",
+			"minecraft:weathered_copper_grate": "锈蚀的铜格栅",
+			"minecraft:weathered_copper_trapdoor": "锈蚀的铜活板门",
+			"minecraft:wind_charge": "风弹"
+		}
+	},
 	"selectors": {},
 	"help": {},
 	"versionPack": {
@@ -137,7 +692,7 @@
 							]
 						}
 					},
-					"help": "https://wiki.biligame.com/mc/%E5%91%BD%E4%BB%A4/gametest"
+					"help": "https://zh.minecraft.wiki/w/%E5%91%BD%E4%BB%A4/gametest"
 				}
 			},
 			"supportVer": [
@@ -147,11 +702,11 @@
 				},
 				{
 					"min": "1.16.210.60",
-					"max": "1.19.40.01.*"
+					"exclusiveMax": "1.19.40.02"
 				},
 				{
-					"min": "1.19.40.02.0",
-					"max": "1.19.40.21.*"
+					"min": "1.19.40.21",
+					"max": "1.19.40.21"
 				}
 			]
 		},
@@ -198,11 +753,11 @@
 				},
 				{
 					"min": "1.16.220.50",
-					"max": "1.19.40.01.*"
+					"exclusiveMax": "1.19.40.02"
 				},
 				{
-					"min": "1.19.40.02.0",
-					"max": "1.19.40.21.*"
+					"min": "1.19.40.21",
+					"max": "1.19.40.21"
 				}
 			]
 		},
@@ -237,11 +792,11 @@
 			"supportVer": [
 				{
 					"min": "1.16.230.50",
-					"max": "1.19.40.01.*"
+					"exclusiveMax": "1.19.40.02"
 				},
 				{
-					"min": "1.19.40.02.0",
-					"max": "1.19.40.21.*"
+					"min": "1.19.40.21",
+					"max": "1.19.40.21"
 				}
 			]
 		},
@@ -293,7 +848,7 @@
 							]
 						}
 					},
-					"help": "https://wiki.biligame.com/mc/%E5%91%BD%E4%BB%A4/script"
+					"help": "https://zh.minecraft.wiki/w/%E5%91%BD%E4%BB%A4/script"
 				}
 			},
 			"supportVer": [
@@ -303,11 +858,11 @@
 				},
 				{
 					"min": "1.17.30.23",
-					"max": "1.19.40.01.*"
+					"exclusiveMax": "1.19.40.02"
 				},
 				{
-					"min": "1.19.40.02.0",
-					"max": "1.19.40.21.*"
+					"min": "1.19.40.21",
+					"max": "1.19.40.21"
 				}
 			]
 		},
@@ -398,7 +953,7 @@
 							]
 						}
 					},
-					"help": "https://wiki.biligame.com/mc/%E5%91%BD%E4%BB%A4/volumearea"
+					"help": "https://zh.minecraft.wiki/w/%E5%91%BD%E4%BB%A4/volumearea"
 				}
 			},
 			"supportVer": [
@@ -427,11 +982,11 @@
 			"supportVer": [
 				{
 					"min": "1.18.20.27",
-					"max": "1.19.40.01.*"
+					"exclusiveMax": "1.19.40.02"
 				},
 				{
-					"min": "1.19.40.02.0",
-					"max": "1.19.40.21.*"
+					"min": "1.19.40.21",
+					"max": "1.19.40.21"
 				}
 			]
 		},
@@ -448,7 +1003,7 @@
 				},
 				{
 					"min": "1.18.30.20",
-					"max": "1.19.22.01" // TODO: Use exclusiveMax
+					"exclusiveMax": "1.19.30.04"
 				}
 			]
 		},
@@ -458,8 +1013,16 @@
 					"spectator": "旁观模式"
 				}
 			},
-			"minSupportVer": "1.18.31.04",
-			"maxSupportVer": "1.19.41.*"
+			"supportVer": [
+				{
+					"min": "1.18.30.04",
+					"max": "1.18.30.04"
+				},
+				{
+					"min": "1.18.30.20",
+					"exclusiveMax": "1.19.50.02"
+				}
+			]
 		},
 		"1.19.0.20_script": {
 			"commands": {
@@ -495,7 +1058,11 @@
 				},
 				{
 					"min": "1.19.0.20",
-					"max": "1.19.40.21.*"
+					"exclusiveMax": "1.19.70.02"
+				},
+				{
+					"min": "1.19.70.20",
+					"max": "1.19.70.20"
 				}
 			]
 		},
@@ -533,7 +1100,11 @@
 				},
 				{
 					"min": "1.19.0.30",
-					"max": "1.19.40.21.*"
+					"exclusiveMax": "1.19.70.02"
+				},
+				{
+					"min": "1.19.70.20",
+					"max": "1.19.70.20"
 				}
 			]
 		},
@@ -553,11 +1124,11 @@
 				},
 				{
 					"min": "1.19.10.20",
-					"max": "1.19.41"
+					"exclusiveMax": "1.19.50.02"
 				},
 				{
 					"min": "1.19.50.20",
-					"max": "1.19.50.22.*"
+					"exclusiveMax": "1.19.50.23"
 				}
 			],
 			"mode": "remove"
@@ -750,7 +1321,7 @@
 									"suggestion": "block"
 								},
 								{
-									"type": "string", // blockStates
+									"type": "string",
 									"name": "方块状态"
 								},
 								{
@@ -913,11 +1484,11 @@
 				},
 				{
 					"min": "1.19.10.20",
-					"max": "1.19.41"
+					"exclusiveMax": "1.19.50.02"
 				},
 				{
 					"min": "1.19.50.20",
-					"max": "1.19.50.22.*"
+					"exclusiveMax": "1.19.50.23"
 				}
 			]
 		},
@@ -945,7 +1516,11 @@
 				},
 				{
 					"min": "1.19.30.22",
-					"max": "1.19.40.21.*"
+					"exclusiveMax": "1.19.70.02"
+				},
+				{
+					"min": "1.19.70.20",
+					"max": "1.19.70.20"
 				}
 			]
 		},
@@ -1011,11 +1586,11 @@
 				},
 				{
 					"min": "1.19.40.20",
-					"max": "1.19.41"
+					"exclusiveMax": "1.19.50.02"
 				},
 				{
 					"min": "1.19.50.20",
-					"max": "1.19.50.22.*"
+					"exclusiveMax": "1.19.50.23"
 				}
 			]
 		},
@@ -1104,11 +1679,11 @@
 				},
 				{
 					"min": "1.19.40.21",
-					"max": "1.19.41"
+					"exclusiveMax": "1.19.50.02"
 				},
 				{
 					"min": "1.19.50.20",
-					"max": "1.19.50.22.*"
+					"exclusiveMax": "1.19.50.23"
 				}
 			]
 		},
@@ -1166,11 +1741,11 @@
 				},
 				{
 					"min": "1.19.40.23",
-					"max": "1.19.41"
+					"exclusiveMax": "1.19.50.02"
 				},
 				{
 					"min": "1.19.50.20",
-					"max": "1.19.50.22.*"
+					"exclusiveMax": "1.19.50.23"
 				}
 			]
 		},
@@ -1192,7 +1767,7 @@
 							]
 						}
 					},
-					"help": "https://wiki.biligame.com/mc/%E5%91%BD%E4%BB%A4/scriptevent"
+					"help": "https://zh.minecraft.wiki/w/%E5%91%BD%E4%BB%A4/scriptevent"
 				}
 			},
 			"supportVer": [
@@ -1202,7 +1777,7 @@
 				},
 				{
 					"min": "1.19.60.22",
-					"max": "1.20.10.*"
+					"exclusiveMax": "1.20.20.20"
 				}
 			]
 		},
@@ -1671,7 +2246,7 @@
 							]
 						}
 					},
-					"help": "https://wiki.biligame.com/mc/%E5%91%BD%E4%BB%A4/camera"
+					"help": "https://zh.minecraft.wiki/w/%E5%91%BD%E4%BB%A4/camera"
 				}
 			},
 			"supportVer": [
@@ -1775,7 +2350,11 @@
 			},
 			"supportVer": [
 				{
-					"min": "1.20.10.20", // TODO: 1.20.10 Release
+					"min": "1.20.10.01",
+					"max": "1.20.10.01"
+				},
+				{
+					"min": "1.20.10.20",
 					"exclusiveMax": "1.20.20.22"
 				}
 			]
@@ -1826,12 +2405,17 @@
 							]
 						}
 					},
-					"help": "https://wiki.biligame.com/mc/%E5%91%BD%E4%BB%A4/recipe"
+					"help": "https://zh.minecraft.wiki/w/%E5%91%BD%E4%BB%A4/recipe"
 				}
 			},
 			"supportVer": [
 				{
-					"min": "1.20.10.21" // TODO: 1.20.10 Release
+					"min": "1.20.10.01",
+					"max": "1.20.10.01"
+				},
+				{
+					"min": "1.20.10.21",
+					"exclusiveMax": "1.20.20.20"
 				}
 			]
 		},
@@ -2172,7 +2756,11 @@
 			},
 			"supportVer": [
 				{
-					"min": "1.20.10.23", // TODO: 1.20.10 Release
+					"min": "1.20.10.01",
+					"max": "1.20.10.01"
+				},
+				{
+					"min": "1.20.10.23",
 					"exclusiveMax": "1.20.20.22"
 				}
 			]
@@ -2226,7 +2814,47 @@
 			},
 			"supportVer": [
 				{
-					"min": "1.20.20.20" // TODO: 1.20.20 Release
+					"min": "1.20.20.20",
+					"exclusiveMin": "1.20.20.21"
+				}
+			]
+		},
+		"1.20.60.04_hud": {
+			"commands": {
+				"hud": {
+					"description": "配置选中玩家的HUD界面元素的可见性",
+					"patterns": {
+						"default": {
+							"params": [
+								{
+									"type": "selector",
+									"name": "玩家",
+									"target": "player"
+								},
+								{
+									"type": "enum",
+									"name": "可见性",
+									"list": "hud_visibility"
+								},
+								{
+									"type": "enum",
+									"name": "界面元素",
+									"list": "hud_element"
+								}
+							]
+						}
+					},
+					"help": "https://zh.minecraft.wiki/w/%E5%91%BD%E4%BB%A4/hud"
+				}
+			},
+			"supportVer": [
+				{
+					"min": "1.20.60.04",
+					"max": "1.20.60.04"
+				},
+				{
+					"min": "1.20.60.23",
+					"exclusiveMax": "1.20.80.23"
 				}
 			]
 		}
