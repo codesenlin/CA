@@ -1,5 +1,5 @@
 ({
-    sourceUrl: "https://cdn.jsdelivr.net/gh/codesenlin/CA@main/libraries.json",
+    sourceUrl: "https://cdn.jsdelivr.net/gh/codesenlin/CA@dev/libraries.json",
 
     sync: function(callback) {
         var self = this;
