@@ -247,10 +247,29 @@
 		this.checkLibrary(l);
 		if (CA.Library.findByUUID(l.uuid)) throw "已存在相同的拓展包";
 		if (l.require.some(function(e1) {
+			var requuid, vertester;
+			if (typeof e1 == "string") {
+				requuid = e1;
+			} else {
+				//扩展写法：{ uuid : "...", min : [...], max : [...] }，可限定前提包的版本区间
+				requuid = e1.uuid;
+				vertester = function(ver) {
+					if (e1.min && NeteaseAdapter.compareVersion(e1.min, ver) > 0) {
+						return false;
+					}
+					if (e1.max && NeteaseAdapter.compareVersion(e1.max, ver) < 0) {
+						return false;
+					}
+					return true;
+				}
+			}
 			return !libinfo.some(function(e2) {
-				return e1 == e2.uuid;
+				if (vertester) {
+					return requuid == e2.uuid && vertester(e2.version);
+				}
+				return requuid == e2.uuid;
 			});
-		}, this)) throw "前提包并未全部加载，请检查加载顺序及拓展包列表";
+		}, this)) throw "前提包并未全部加载或不满足版本条件，请检查加载顺序及拓展包列表";
 		this.joinPack(cur, Object.copy(l)); //创建副本
 		if (!l.versionPack) return;
 		c = l.versionPack;
@@ -402,11 +421,8 @@
 			stack[1] = "版本(version)";
 			iterateArray(a.version, checkUnsignedInt);
 			stack[1] = "前提包(require)";
-			try {
-				iterateArray(a.require, checkNotEmptyString);
-			} catch(err) {
-				iterateObject(a.require, checkNotEmptyString, checkObject);
-			}
+			//require 是数组，元素可以是 UUID 字符串，也可以是带版本区间的对象
+			checkArray(a.require);
 		}
 	})(),
 	checkPackVer : (function() {
@@ -428,9 +444,10 @@
 			}
 			return 0;
 		}
-		var inRange = function(min, max, exclusiveMax) {
+		var inRange = function(min, max, exclusiveMin, exclusiveMax) {
 			if (min && compare(min) < 0) return -1;
 			if (max && compare(max) > 0) return 1;
+			if (exclusiveMin && compare(exclusiveMin) <= 0) return -1; //开区间：最小版本不包含
 			if (exclusiveMax && compare(exclusiveMax) >= 0) return 1;
 			return 0;
 		}
@@ -439,7 +456,7 @@
 			if (this.ignoreVersion) return 0;
 			a = getMinecraftVersion().split(".");
 			if (o.minSupportVer || o.maxSupportVer) {
-				r = inRange(o.minSupportVer, o.maxSupportVer, null);
+				r = inRange(o.minSupportVer, o.maxSupportVer, null, null);
 				if (r != 0) return r; //这两个参数是总范围
 			}
 			if (Array.isArray(o.supportVer)) {
@@ -447,7 +464,7 @@
 				r = 1;
 				for (i = 0; i < n; i++) {
 					e = o.supportVer[i];
-					r = Math.min(r, inRange(e.min, e.max, e.exclusiveMax)); //趋向返回游戏版本过低
+					r = Math.min(r, inRange(e.min, e.max, e.exclusiveMin, e.exclusiveMax)); //趋向返回游戏版本过低
 					if (r == 0) return 0; //这段只要存在一个范围符合条件就返回0
 				}
 			}

@@ -580,6 +580,7 @@ MapScript.loadModule("ExternalStorage", {
 		const output = new java.io.FileOutputStream(importFile);
 		this.pipe(input, output);
 		input.close();
+		output.close();
 		return importFile;
 	},
 	createTempFile(hint) {

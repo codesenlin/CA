@@ -6,6 +6,10 @@ MapScript.loadModule("AndroidBridge", {
 	onCreate : function() {
 		G.ui(this.initIcon);
 		if (MapScript.host != "Android") return;
+		//作者原版是常开的（if(true)…）。这里保持「仅正式版校验」：
+		//verifySign 的证书哈希已换成我们自己的，verifyDex 的 $dexCrc$ 由 shellWriteScript
+		//按正式包 classes.dex 的 CRC32 注入，所以发布流程产出的包能直接通过；
+		//要打开就取消下面这行的注释。注意：调试包用的是调试构建的 dex，CRC 对不上。
 		// if (CA.RELEASE) gHandler.post(this.verifyApk);
 	},
 	initialize : function() {try {
@@ -213,7 +217,9 @@ MapScript.loadModule("AndroidBridge", {
 				md.update(sn[i].toByteArray());
 				vc.push(android.util.Base64.encodeToString(md.digest(), android.util.Base64.NO_WRAP));
 			}
-			if (vc.join("") != "HmzSXz/O6M/qIPo8mvhmFuXusTaKk3caC/vjP+ymxzw=") throw 102;
+			//这份哈希必须等于 app/signatures/{release,debug}.signature 那张证书的
+			//SHA-256（Base64）。换签名密钥时同步更新，否则 verifyApk 会抛 SecurityException(102)。
+			if (vc.join("") != "pA2oClnRcMqpUM8VwYxFTUejmyaYnYtkDs10W6cb9dw=") throw 102;
 		} catch(e) {
 			throw new java.lang.SecurityException(String(e));
 		}
