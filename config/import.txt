@@ -1,2 +1,4 @@
-@androidJarPath C:\Users\Administrator\AppData\Local\Android\Sdk\platforms\android-29\android.jar
+@androidJarPath /path/to/Android/Sdk/platforms/android-34/android.jar
 android.jar的路径，越新的sdk版本越好
+例：Windows C:\Users\你\AppData\Local\Android\Sdk\platforms\android-34\android.jar
+    Linux   /home/你/Android/Sdk/platforms/android-34/android.jar
