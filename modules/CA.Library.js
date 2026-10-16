@@ -46,7 +46,9 @@
 	},
 	loadBuiltinLibraries : function() {
 	var libs = this.builtinLibs;
-	if (!libs || !libs.length) return;
+	// 若构建时没有注入内置命令库（例如旧脚本），这里仍是占位符字符串，
+	// 字符串没有 forEach，必须直接跳过，否则初始化命令库时会抛 TypeError
+	if (!libs || !libs.length || typeof libs.forEach !== "function") return;
 	libs.forEach(function(lib) {
 		var uri = "builtin://" + lib.path;
 		if (CA.Library.inner[uri]) {
