@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const child_process = require("child_process");
+const javaenv = require("../javaenv");
 module.exports = function(context, args) {
 	var jarsignerPath = path.resolve(context.shellConfig.shellPath, context.shellConfig.buildToolPath, "apksigner");
 	var keystonePath = path.resolve(context.shellConfig.shellPath, context.shellConfig.keystorePath);
@@ -14,6 +15,7 @@ module.exports = function(context, args) {
 			unsignedPath
 		],
 		cwd : context.shellConfig.shellPath,
+		env : javaenv(context.shellConfig),
 		stdio : ["pipe", "inherit", "inherit"],
 		input : fs.readFileSync(keyPassPath),
 		shell : true

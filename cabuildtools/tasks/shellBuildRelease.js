@@ -14,7 +14,9 @@ module.exports = function(context, args) {
 			}
 		}))
 		.then(context.task("shellUpdateGradle"))
-		.then(context.task("shellGradle", ":app:buildRelease"))
+		// 先构建一次 release 以拿到 classes.dex（CRC 要写进脚本）。
+		// 注意：AGP 8 没有 :app:buildRelease 这个任务，只有 assembleRelease。
+		.then(context.task("shellGradle", ":app:assembleRelease"))
 		.then(context.task("assembleSourceRelease"))
 		.then(function self(script) {
 			return context.execute("shellAddDexVerify", [script])

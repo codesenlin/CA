@@ -21,7 +21,7 @@ module.exports = function(context, args) {
 				'return void(o.description+="您正在使用本尝鲜版或更高版本\\n\\n"+ds);',
 			'}',
 			'if(MapScript.host!="Android")return void(o.description+="本安装器仅在App版上可用");',
-			'if(shell!=ScriptActivity.getShellVersion())return void(o.description+="本安装器不适用于您的版本");',
+			'if(shell!=ScriptInterface.getShellVersion())return void(o.description+="本安装器不适用于您的版本");',
 			'u(MapScript.baseDir+"core.js",' + JSON.stringify(args[0].toString("base64")) + ');',
 			'u(MapScript.baseDir+"core.sign",' + JSON.stringify(fs.readFileSync("./build/outputs/hotfix/release.sign").toString("base64")) + ');',
 			'Common.showTextDialog(o.description+="重新启动命令助手后即可使用");',
