@@ -1,6 +1,6 @@
-@version 1.2.13
-@versionCode [1, 2, 13]
-@date 2020-01-24
+@version 1.2.14
+@versionCode [1, 2, 14]
+@date 2026-10-15
 @licenceUpdate 2019/9/21
 @description
 [重要通知]
