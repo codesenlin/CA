@@ -25,7 +25,8 @@
             if (changed) CA.Library.orderLibraries();
             if (callback) callback(changed);
         } catch(e) {
-            erp(e);
+            // 网络不通（jsDelivr 被 reset 之类）属于常见情况，静默记日志即可，别弹上报框
+            erp(e, true);
             if (callback) callback(false);
         }});
     }

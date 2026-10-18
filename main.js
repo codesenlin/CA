@@ -603,6 +603,11 @@ if (variables.buildConfig.variants == "release") {
 	postprocessor = function(src) {
 		return src.replace(/\{DATE\}/g, "S" + variables.buildConfig.date);
 	};
+} else if (variables.buildConfig.variants == "debug") {
+	// 调试包也要替换 {DATE}，否则 erp 的错误报告里显示的就是字面量 "{DATE}"
+	postprocessor = function(src) {
+		return src.replace(/\{DATE\}/g, variables.buildConfig.date);
+	};
 }
 */
 
