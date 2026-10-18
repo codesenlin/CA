@@ -1,9 +1,17 @@
-@version 1.2.14
-@versionCode [1, 2, 14]
-@date 2026-10-15
-@licenceUpdate 2019/9/21
-@description
-[重要通知]
+/**
+ * 版本与更新说明。
+ *
+ * 这些值会被写进核心脚本的 BuildConfig（version / versionCode / date / description），
+ * 也会用于 update.json 和安装包文件名；shellUpdateGradle 会用 date 算出
+ * cadroid 的 versionCode 并写回它的 app/build.gradle。
+ */
+module.exports = {
+	version : "1.2.14",
+	versionCode : [1, 2, 14],
+	date : "2026-10-15",
+	licenceUpdate : "2019/9/21",
+
+	description : `[重要通知]
 您可能需要手动授予命令助手“后台弹出界面”权限，否则系统会拦截或阻止命令助手打开外部App的操作。
 
 新增：
@@ -26,5 +34,5 @@
 - 拓展包出错时错误信息不能正常显示
 - 重命名收藏夹时提示名称已占用
 
-欢迎加入命令助手交流群303697689
-@end description
+欢迎加入命令助手交流群303697689`
+};

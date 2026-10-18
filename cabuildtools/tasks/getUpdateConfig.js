@@ -1,6 +1,5 @@
-const fs = require("fs");
-const readConfig = require("../readconfig");
+const path = require("path");
 
 module.exports = function(context, args) {
-	context.updateConfig = readConfig(fs.readFileSync("./config/update.txt", "utf-8"));
+	context.updateConfig = require(path.resolve("./config/update.js"));
 }

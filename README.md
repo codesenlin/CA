@@ -37,14 +37,37 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 ### 准备工作
 
 1. 安装依赖：`npm install`
-2. 配置。仓库里跟踪的 `config/*.txt` 是**模板**（占位路径 + 注释，不要改动它），
-   各人自己的配置放在同目录的 `config/*.local.txt`：首次运行相关任务时会自动从模板
-   生成，按注释填上本机路径即可（`.local.txt` 已在 .gitignore 里，不入版本库，
-   `git status` 也不会被打扰）：
-   - `config/shell.local.txt` — `shellPath`（cadroid 项目路径）、`buildToolPath`（Build Tools 目录）、
-     `dexPath`、签名文件与密钥路径；`javaHome` 只在命令行环境找不到 java 时才需要，
-     密钥轮换的 `lineagePath` / `lineageSigners` 默认留空 = 单密钥签名
-   - `config/import.local.txt` — `androidJarPath`，生成命令库导入信息用，越新的 SDK 越好
+2. 配置（一般不用改）。`config/shell.js` 与 `config/import.js` 里只写和机器无关的默认值，
+   构建时会自动探测本机路径：
+
+   | 要找到的东西 | 探测顺序 |
+   | --- | --- |
+   | cadroid 项目 | 环境变量 `CA_CADROID` → CA 旁边的 `cadroid/` 或 `ca/` |
+   | Android SDK | `ANDROID_HOME` / `ANDROID_SDK_ROOT` → cadroid 的 `local.properties`（`sdk.dir`）→ 常见安装位置 |
+   | Build Tools | 优先 `config/shell.js` 的 `buildToolVersion`（默认 34.0.0），否则取已安装的最高版本 |
+   | JDK | `JAVA_HOME` → `~/.jdks`（优先 17）→ Android Studio 自带的 JBR → `/usr/lib/jvm` |
+   | android.jar | SDK 里最新的 platform |
+
+   解析结果会写到 `build/generated/shellConfig.json`（`generateImport` 则写 `importConfig.json`），
+   排查问题时直接看这份就知道用了哪个 SDK / JDK / cadroid。要固定某个路径，改
+   `config/shell.js` 里对应字段即可（填了就不再探测）。
+
+   配置一览（都在 `config/` 下，全部是 JS，按注释改即可）：
+
+   | 文件 | 内容 |
+   | --- | --- |
+   | `build.js` | 版本号、versionCode、日期、许可更新日期、更新说明（会写进核心的 BuildConfig 与 update.json） |
+   | `update.js` | 下载地址表、更新站点根目录 |
+   | `publish.js` | 发布方式（`local` 复制到目录 / `sftp` 上传）、目标路径与 SSH 参数 |
+   | `shell.js` | 壳子打包相关路径（一般不用改，自动探测） |
+   | `import.js` | `generateImport` 用的 android.jar（自动探测） |
+
+   `caclib/` 里还有 clib 自己的元数据：`config.js`（发布源设置）、`config/publish.js`
+   （发布方式）、`src/*/library.js`（每个命令库的 id/名称/版本/entry）。这些原来也是
+   `@key value` 的 txt，现在统一成 JS 模块（可写注释；`preparePublish` 也兼容 `.js` / `.json` / `.txt`）。
+
+   > 注意：`caclib/signature/`（clib 签名私钥）和 `caclib/outputs/` 不入库，所以 `clibspawn`
+   > 在全新检出的仓库里跑不起来，需要自己准备私钥后才会生成产物。
 
 ### 生成正式版 JS
 

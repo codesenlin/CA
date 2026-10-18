@@ -1,12 +1,9 @@
-const fs = require("fs");
-const readConfig = require("../readconfig");
-const localconfig = require("../localconfig");
+const path = require("path");
+const shellconfig = require("../shellconfig");
 module.exports = function(context, args) {
-	var localPath = localconfig.pathOf("./config/import.txt");
-	var importConfig = readConfig(localconfig.load("./config/import.txt")), jarClasses = [];
-	if (!importConfig.androidJarPath || !fs.existsSync(importConfig.androidJarPath)) {
-		throw new Error("请先填写 " + localPath + " 里的 androidJarPath，当前值：" + importConfig.androidJarPath);
-	}
+	// 解析 config/import.js（androidJarPath 留空时自动找 SDK 里最新的 platform）
+	var importConfig = shellconfig.importConfig(path.resolve(".")), jarClasses = [];
+	shellconfig.writeGenerated("./build/generated/importConfig.json", importConfig);
 	return context.execute("getBuildConfig", "inspect")
 		.then(context.task("readJarClasses", [jarClasses, {
 			path : importConfig.androidJarPath

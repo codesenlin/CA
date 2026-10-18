@@ -1,6 +1,18 @@
 const fs = require("fs");
 const path = require("path");
 const readConfig = require("../readconfig");
+
+/**
+ * 读发布配置：优先 .js（require 一个对象），其次 .json，最后兼容老的 .txt（readConfig 解析）。
+ * 这样 CA 根目录用 config/publish.js，caclib 子树里那份 config/publish.json 也还能用。
+ */
+function loadPublishConfig(base) {
+	var stem = base.replace(/\.(js|json|txt)$/, "");
+	if (fs.existsSync(stem + ".js")) return require(path.resolve(stem + ".js"));
+	if (fs.existsSync(stem + ".json")) return JSON.parse(fs.readFileSync(stem + ".json", "utf-8"));
+	if (fs.existsSync(stem + ".txt")) return readConfig(fs.readFileSync(stem + ".txt", "utf-8"));
+	throw new Error("找不到发布配置：" + base + "（.js / .json / .txt 均可）");
+}
 var localInterface = {
 	enableAsyncUpload : true,
 	upload : function(context, args) {
@@ -28,9 +40,11 @@ var sftpInterface = {
 }
 module.exports = function(context, args) {
 	var publishCfg;
-	context.publishConfig = readConfig(fs.readFileSync("./config/publish.txt", "utf-8"));
+	context.publishConfig = loadPublishConfig("./config/publish");
 	if (args) {
-		publishCfg = readConfig(fs.readFileSync(path.resolve("./config", context.publishConfig[args]), "utf-8"));
+		var name = context.publishConfig[args];
+		if (!name) throw new Error("发布配置里没有名为 " + args + " 的目标（检查 config/publish.js）");
+		publishCfg = loadPublishConfig(path.resolve("./config", name));
 	} else {
 		publishCfg = context.publishConfig;
 	}

@@ -1,9 +1,0 @@
-@downloadSource
-{
-	"官方网站（最推荐）": "https://projectxero.top/ca/release.apk"
-}
-@end downloadSource
-可用的下载地址
-
-@remoteRoot https://ca.projectxero.top/
-更新源站点目录，以/结尾
