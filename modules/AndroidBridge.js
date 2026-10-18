@@ -151,9 +151,9 @@ MapScript.loadModule("AndroidBridge", {
 					if (id != 0) return onReturn();
 					const importFile = ExternalStorage.importFile(t, "caclib/*/**");
 					try {
-						CA.Library.enableLibrary(String(ExternalStorage.toUri(importFile)));
+						const status = CA.Library.addLibrary(String(ExternalStorage.toUri(importFile)));
 						CA.Library.initLibrary(function() {
-							Common.toast("导入成功！");
+							Common.toast(status == "ignored" ? "已存在版本更高或相同的拓展包，本次导入已忽略" : "导入成功！");
 							CA.showLibraryMan(onReturn);
 						});
 					} catch(e) {

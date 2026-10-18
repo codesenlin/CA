@@ -14,7 +14,8 @@
                     var obj = eval("(" + code + ")");
                     if (!obj || typeof obj !== "object") throw "无效：" + item.name;
                     CA.Library.inner[uri] = obj;
-                    CA.Library.enableLibrary(uri);
+                    // 走版本判断：本地已有更高版本时保留本地的
+                    CA.Library.addLibrary(uri);
                     changed = true;
                 } catch(e) {
                     Log.e(e);

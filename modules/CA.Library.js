@@ -20,6 +20,11 @@
 			info : info = []
 		};
 		this.processDeprecated();
+		// 同一 uuid 只保留最高版本；低版本移除（内置的改为禁用）
+		var removed = this.dedupeLibraries();
+		if (removed > 0) {
+			Common.toast("有更高版本的拓展包，已自动移除 " + removed + " 个低版本拓展包");
+		}
 		CA.settings.coreLibrarys.forEach(function(e, i, a) {
 			CA.Library.currentLoadingLibrary = e;
 			var data = CA.Library.loadLibrary(String(e), null);
@@ -108,6 +113,116 @@
 		Common.removeSet(CA.settings.disabledLibrarys, uriStr);
 		return Common.addSet(CA.settings.coreLibrarys, uriStr);
 	},
+	/** 版本归一化成数组（compareVersion 依赖数组下标） */
+	toVersionArray : function(v) {
+		return Array.isArray(v) ? v : [v];
+	},
+	/** 比较两个拓展包版本（数组或字符串都行）：a > b 返回 1，相等 0，a < b 返回 -1 */
+	compareLibraryVersion : function(a, b) {
+		return NeteaseAdapter.compareVersion(this.toVersionArray(a), this.toVersionArray(b));
+	},
+	/**
+	 * 同一 uuid 只保留最高版本：低版本从列表里移除（内置包删不掉文件，改为禁用）。
+	 * 在 initLibrary 里、真正加载之前调用；返回被移除的个数。
+	 */
+	dedupeLibraries : function() {
+		var self = this, best = {}, dropped = [], lists, i;
+		lists = [CA.settings.coreLibrarys, CA.settings.enabledLibrarys];
+		lists.forEach(function(list) {
+			list.slice().forEach(function(uriStr) {
+				var rd, info, t;
+				try {
+					rd = self.readLibrary(String(uriStr));
+				} catch(e) {
+					return; // 读不出来的交给正常加载流程去报错
+				}
+				if (!rd || rd.error || !rd.data || !rd.data.uuid) return;
+				info = {
+					uri : String(uriStr),
+					uuid : rd.data.uuid,
+					version : self.toVersionArray(rd.data.version),
+					name : rd.data.name
+				};
+				t = best[info.uuid];
+				if (!t) {
+					best[info.uuid] = info;
+					return;
+				}
+				if (self.compareLibraryVersion(info.version, t.version) > 0) {
+					dropped.push(t);
+					best[info.uuid] = info;
+				} else {
+					dropped.push(info);
+				}
+			});
+		});
+		dropped.forEach(function(info) {
+			// 内置拓展包（inner 里的 / builtin:// 形式的）没法从仓库删掉，放进禁用列表
+			if (info.uri.indexOf("builtin://") == 0 || CA.Library.inner[info.uri]) {
+				CA.Library.disableLibrary(info.uri);
+			} else {
+				CA.Library.removeLibrary(info.uri);
+			}
+		});
+		return dropped.length;
+	},
+	/**
+	 * 导入/加载一个外置拓展包（替代直接 enableLibrary），返回状态字符串：
+	 *   "added"   新增并启用
+	 *   "updated" 版本更高：移除低版本（内置的改为禁用）后启用
+	 *   "ignored" 已有版本更高或相同：忽略本次导入，并删掉导入进来的文件
+	 *   "enabled" 读不出元数据时按原行为启用（后续加载会报具体错误）
+	 * 这里不弹提示：批量导入时由调用方汇总数量，只提示包的数量。
+	 */
+	addLibrary : function(uriStr) {
+		var uri = String(uriStr), rd, data, existing, cmp;
+		try {
+			rd = this.readLibrary(uri);
+		} catch(e) {
+			rd = null;
+		}
+		if (!rd || rd.error || !rd.data) {
+			this.enableLibrary(uriStr);
+			return "enabled";
+		}
+		data = rd.data;
+		existing = this.findByUUID(data.uuid);
+		if (!existing) {
+			this.enableLibrary(uriStr);
+			return "added";
+		}
+		cmp = this.compareLibraryVersion(data.version, existing.version);
+		if (cmp <= 0) {
+			if (uri != String(existing.src) && !CA.Library.inner[uri]) this.removeLibrary(uri);
+			return "ignored";
+		}
+		if (existing.src && (String(existing.src).indexOf("builtin://") == 0 || CA.Library.inner[String(existing.src)])) {
+			this.disableLibrary(String(existing.src)); // 内置包不能删，保持禁用
+		} else if (existing.src) {
+			this.removeLibrary(String(existing.src)); // 低版本直接移除
+		}
+		this.enableLibrary(uriStr);
+		return "updated";
+	},
+	/** 把一批 addLibrary 的返回值汇总成一句提示（只报数量） */
+	summarizeAddResults : function(results) {
+		var added = 0, updated = 0, ignored = 0;
+		results.forEach(function(r) {
+			if (r == "updated") {
+				updated++;
+			} else if (r == "ignored") {
+				ignored++;
+			} else {
+				added++;
+			}
+		});
+		var parts = [];
+		if (updated) parts.push("更新 " + updated + " 个");
+		if (added) parts.push("新增 " + added + " 个");
+		if (ignored) parts.push("忽略 " + ignored + " 个");
+		return parts.length ? "拓展包：" + parts.join("，") : "没有可导入的拓展包";
+	},
+
 	loadLibrary : function(uriStr, targetLib) {
 		var m, cur, resolved;
 		try {

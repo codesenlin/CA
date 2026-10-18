@@ -3933,13 +3933,15 @@ MapScript.loadModule("CA", {
 						allowMultiple: true,
 						file(files) {
 							self.postTask((cb) => {
-								files.forEach((f) => {
-									const uriStr = String(ExternalStorage.toUri(f));
-									CA.Library.enableLibrary(uriStr);
-								});
-								cb(true, function() {
-									Common.toast("导入成功！");
-								});
+								const results = files.map((f) => CA.Library.addLibrary(String(ExternalStorage.toUri(f))));
+								const message = CA.Library.summarizeAddResults(results);
+								// 立即生效：重新加载全部拓展包（加载中则退回原行为，下次启动生效）
+								const done = function() {
+									cb(true, function() {
+										Common.toast(message);
+									});
+								};
+								if (!CA.Library.initLibrary(done)) done();
 							});
 						}
 					});
@@ -3957,13 +3959,14 @@ MapScript.loadModule("CA", {
 						callback(uriList) {
 							uriList.forEach((uri) => ExternalStorage.tryTakeUriPermission(uri));
 							self.postTask((cb) => {
-								uriList.forEach((uri) => {
-									const uriStr = String(uri);
-									CA.Library.enableLibrary(uriStr);
-								});
-								cb(true, function() {
-									Common.toast("加载成功！");
-								});
+								const results = uriList.map((uri) => CA.Library.addLibrary(String(uri)));
+								const message = CA.Library.summarizeAddResults(results);
+								const done = function() {
+									cb(true, function() {
+										Common.toast(message);
+									});
+								};
+								if (!CA.Library.initLibrary(done)) done();
 							});
 						}
 					});
@@ -4808,7 +4811,11 @@ MapScript.loadModule("CA", {
 					try {
 						uriStr = String(CA.Library.downloadLib(data, self.libsrc));
 						CA.Library.clearCache(uriStr);
-						CA.Library.enableLibrary(uriStr);
+						// 走版本判断：已装的版本更高就忽略这次下载
+						if (CA.Library.addLibrary(uriStr) == "ignored") {
+							Common.toast("已安装更高版本的拓展包，忽略本次下载");
+							return;
+						}
 					} catch(e) {
 						Common.toast("下载拓展包“" + data.name + "”失败\n" + e);
 						return;
