@@ -21,6 +21,8 @@
                     Log.e(e);
                 }
             });
+            // 新加入的远程库也要排在它的前提包之后
+            if (changed) CA.Library.orderLibraries();
             if (callback) callback(changed);
         } catch(e) {
             erp(e);

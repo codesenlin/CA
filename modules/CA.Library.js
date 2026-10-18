@@ -25,6 +25,8 @@
 		if (removed > 0) {
 			Common.toast("有更高版本的拓展包，已自动移除 " + removed + " 个低版本拓展包");
 		}
+		// 前提包排在依赖它的拓展包前面，避免顺序导致「前提包并未全部加载」的报错
+		this.orderLibraries();
 		CA.settings.coreLibrarys.forEach(function(e, i, a) {
 			CA.Library.currentLoadingLibrary = e;
 			var data = CA.Library.loadLibrary(String(e), null);
@@ -221,6 +223,59 @@
 		if (added) parts.push("新增 " + added + " 个");
 		if (ignored) parts.push("忽略 " + ignored + " 个");
 		return parts.length ? "拓展包：" + parts.join("，") : "没有可导入的拓展包";
+	},
+	/**
+	 * 按前提包（require）给「已启用」列表排序：前提包排在依赖它的拓展包前面。
+	 * 读取走 loadLibrary 的缓存，不会重复 eval；循环依赖时也能正常结束（保持可加载的相对顺序）。
+	 * 返回是否调整过顺序。
+	 */
+	orderLibraries : function() {
+		var self = this, list = CA.settings.enabledLibrarys, meta = {}, byUuid = {}, order = [], visiting = {}, changed;
+		list.slice().forEach(function(uri) {
+			var rd, key = String(uri);
+			try {
+				rd = self.readLibrary(key);
+			} catch(e) {
+				return;
+			}
+			if (!rd || rd.error || !rd.data) return;
+			meta[key] = {
+				uuid : rd.data.uuid,
+				require : Array.isArray(rd.data.require) ? rd.data.require : []
+			};
+			if (rd.data.uuid) byUuid[rd.data.uuid] = key;
+		});
+		var visit = function(uri) {
+			var m, req, j, ruuid, ruri;
+			if (order.indexOf(uri) >= 0) return;
+			if (visiting[uri]) return; // 循环依赖：不重复进栈
+			visiting[uri] = true;
+			m = meta[uri];
+			req = m ? m.require : [];
+			for (j = 0; j < req.length; j++) {
+				ruuid = typeof req[j] === "string" ? req[j] : (req[j] && req[j].uuid);
+				ruri = ruuid && byUuid[ruuid];
+				// 前提包也在启用列表里：先放它
+				if (ruri && ruri != uri) visit(ruri);
+			}
+			visiting[uri] = false;
+			if (order.indexOf(uri) < 0) order.push(uri);
+		};
+		list.slice().forEach(visit);
+		// 读不出元数据的库照样保留（放最后，交给加载流程报错）
+		list.slice().forEach(function(uri) {
+			if (order.indexOf(uri) < 0) order.push(uri);
+		});
+		changed = order.some(function(uri, i) {
+			return uri != list[i];
+		});
+		if (changed) {
+			list.splice(0, list.length);
+			order.forEach(function(uri) {
+				list.push(uri);
+			});
+		}
+		return changed;
 	},
 
 	loadLibrary : function(uriStr, targetLib) {
