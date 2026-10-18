@@ -1,0 +1,18 @@
+/**
+ * 命令库元数据（clibspawn 读取）：
+ * id / name / author / source（入口文件）/ uuid / version / versionCode / description
+ */
+module.exports = {
+	"id": "idmapeditor",
+	"name": "自定义ID表",
+	"author": "ProjectXero",
+	"source": "main.js",
+	"uuid": "41e7d897-8f85-441a-8a81-89573cd6cfaf",
+	"version": "0.0.8",
+	"versionCode": [
+		0,
+		0,
+		8
+	],
+	"description": "[开发者专用]使用本拓展包，您可以自定义ID的翻译，增删ID。目前支持方块、物品、声音和粒子的ID。"
+};

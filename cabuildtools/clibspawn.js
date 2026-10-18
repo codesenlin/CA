@@ -2,14 +2,13 @@ const fs = require("fs");
 const path = require("path");
 const process = require("process");
 const crypto = require("crypto");
-const readConfig = require("./readconfig");
 const loader = require("./loader");
 const js2lib = require("./js2lib");
 const js2signlib = require("./js2signlib");
 
 function main() {
 	var indexFile = JSON.parse(fs.readFileSync("./index.json", "utf-8"));
-	var config = readConfig(fs.readFileSync("./config.txt", "utf-8"));
+	var config = require(path.resolve("./config.js"));
 	var lockFile;
 	try {
 		lockFile = JSON.parse(fs.readFileSync("./index.lock.json", "utf-8"));
@@ -53,7 +52,7 @@ function digestSHA1(data) {
 function resolveLib(info, config) {
 	var lib;
 	if (info.path) {
-		lib = readConfig(fs.readFileSync(path.resolve(info.path, "library.txt"), "utf-8"));
+		lib = require(path.resolve(info.path, "library.js"));
 	} else {
 		throw new Error("not supported");
 	}

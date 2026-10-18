@@ -1,0 +1,18 @@
+/**
+ * 命令库元数据（clibspawn 读取）：
+ * id / name / author / source（入口文件）/ uuid / version / versionCode / description
+ */
+module.exports = {
+	"id": "educommands",
+	"name": "教育版模式命令库",
+	"author": "ProjectXero",
+	"source": "main.json",
+	"uuid": "f9216c72-76a6-4963-b4c8-7959e5c7487a",
+	"version": "1.0.0",
+	"versionCode": [
+		1,
+		0,
+		0
+	],
+	"description": "本命令库包括了在启用教育版模式后可使用的命令"
+};

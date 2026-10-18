@@ -1,3 +1,0 @@
-@method local
-
-参见https://gitee.com/projectxero/ca/blob/master/config/publish.txt
