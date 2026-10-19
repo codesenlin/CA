@@ -57,7 +57,7 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
    | 文件 | 内容 |
    | --- | --- |
    | `build.js` | 版本号、versionCode、日期、许可更新日期、更新说明（会写进核心的 BuildConfig 与 update.json） |
-   | `update.js` | 下载地址表、更新站点根目录 |
+   | `update-sources.js` | 客户端检查更新用的源地址（可按渠道配置、可清空关闭），以及发布端的下载地址表、更新站点根目录 |
    | `publish.js` | 发布方式（`local` 复制到目录 / `sftp` 上传）、目标路径与 SSH 参数 |
    | `shell.js` | 壳子打包相关路径（一般不用改，自动探测） |
    | `import.js` | `generateImport` 用的 android.jar（自动探测） |
