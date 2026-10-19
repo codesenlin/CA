@@ -22,6 +22,8 @@ MapScript.loadModule("CA", {
 	version : BuildConfig.versionCode,
 	versionName : BuildConfig.version,
 	publishDate : BuildConfig.date,
+	// 供拓展包/插件读取当前渠道（BuildConfig 是模块内的局部变量，eval 出来的作用域看不到）
+	variants : BuildConfig.variants,
 	tips : [],
 
 	initialize : function() {try {
