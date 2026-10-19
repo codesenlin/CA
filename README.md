@@ -116,3 +116,24 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 ## 远程命令库
 
 `libraries.json` 定义了一组远程命令库，包含 uuid、名称与下载地址。CA 启动时通过 `CA.RemoteLibrary.sync()` 拉取清单并下载未加载的库，注册到 `CA.Library.inner`。
+
+## 命令库的签名格式
+
+命令库有三种容器，`01` 是格式版本号：
+
+| 魔数 | 生成工具 | 用途 |
+| --- | --- | --- |
+| `LIBRARY` | `js2lib.js` | 本地/安装器库（安装器 lib 用这个） |
+| `SIGNLIB01` | `js2signlib.js` | 分发（源站/商店下载），9 字节魔数 + 256 字节 RSA 签名 + 8 字节时间戳 + gzip 载荷 |
+| `LIBSIGN01` | App 下载时 / `js2localib.js` | 本地已验签库，9 字节魔数 + int32 sourceId 长度 + sourceId + SIGNLIB01 的 [9..] |
+
+    # 分发格式
+    node ./cabuildtools/js2signlib.js <源码.js> <私钥.pem> <输出.lib>
+
+    # 本地格式（源站 uuid + App 公钥，公钥在 cadroid 的 Secret.HOTFIX_PUBLIC_KEY）
+    node ./cabuildtools/js2localib.js <输入.lib> <源站uuid> <输出.lib> [app公钥]
+
+签名私钥必须是 **RSA 2048 位**（App 里验签段长度写死 256 字节）。`LIBSIGN01` 旁边的 `.hash`
+是 `SHA1(appVerifyKey || SHA1(payload))`，用 App 内置的公钥算——所以只有 App（或掌握其公钥的
+本地流程）能产出合法 `.hash`。`SIGNLIB01` 只在下载路径里验签；直接拷贝进手机的 `SIGNLIB01`
+会被当成未知格式，需要先转成 `LIBSIGN01`。
