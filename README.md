@@ -81,6 +81,21 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 
 产物导出至 `build/outputs/snapshot/main.js`。
 
+### 生成渠道版 JS（Beta / Dev / Canary）
+
+构建命令可以附加渠道参数，产物名会带上渠道名，一眼能看出是什么构建物：
+
+    node ./cabuildtools/main.js buildRelease -beta      # build/dist/命令助手(2026-10-15) beta.js
+    node ./cabuildtools/main.js buildSnapshot -dev      # build/outputs/snapshot/dev.js + dev.lib
+    node ./cabuildtools/main.js buildSnapshot -canary   # build/outputs/snapshot/canary.js + canary.lib
+
+不带参数就是默认渠道（`buildRelease` -> release，`buildSnapshot` -> snapshot）。渠道包不写
+`update.json`，避免覆盖正式更新通道。
+
+`.lib` 是「安装器」：装进 App 后把该渠道的脚本设为调试源并建快捷方式。**同版本号下渠道优先级为
+`canary > dev > beta > release`**（snapshot 视为 dev 一档），低优先级不会覆盖高优先级；版本更新的
+仍然可以装。
+
 ### 生成正式版 APP
 
     npm run shellBuildRelease

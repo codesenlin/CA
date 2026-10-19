@@ -1,28 +1,57 @@
 const fs = require("fs");
 const asLibrary = require("../js2lib");
+
+/**
+ * 生成「安装器」库（.lib）：把当前构建的脚本装进 App 并设置为调试源。
+ *
+ * 渠道由 variants 决定：release / beta / dev / canary（以及作者原有的 snapshot）。
+ * 同版本号下渠道优先级为 canary > dev > beta > release，低优先级不会覆盖高优先级。
+ */
 module.exports = function(context, args) {
-	fs.writeFileSync("./build/outputs/snapshotLib/snapshot.lib", asLibrary(Buffer.from([
+	var variants = context.buildConfig.variants,
+		// snapshot 沿用作者原来的命名，其余渠道用渠道名
+		isSnapshot = variants == "snapshot",
+		channel = isSnapshot ? "snapshot" : variants,
+		libName = isSnapshot ? "快照" : channel,
+		fileName = channel + ".lib",
+		scriptName = channel + ".js",
+		uuid = {
+			snapshot : "f6cf1729-3861-481b-a9ac-e3f48cbc4a94",
+			beta : "3c1f0b52-8f4d-4a86-9f4e-6b2d7c9a1e05",
+			dev : "8e4a2d61-5b7c-4f39-9a1d-2c6e7f8b0a43",
+			canary : "b7d1c394-2e6a-4c58-8f07-9d3b1e5a6c27"
+		}[channel] || "f6cf1729-3861-481b-a9ac-e3f48cbc4a94";
+
+	fs.writeFileSync("./build/outputs/snapshotLib/" + fileName, asLibrary(Buffer.from([
 		'Plugins.inject(function(o){',
 			'const id=' + JSON.stringify(context.buildConfig.date) + ';',
+			// 渠道优先级：canary > dev > beta > release（snapshot 视为 dev 一档）
+			'const rank=function(v){',
+				'return v=="canary"?3:(v=="dev"||v=="snapshot")?2:v=="beta"?1:0',
+			'};',
 			'function u(p,b){',
 				'var o=new java.io.FileOutputStream(p);',
 				'o.write(android.util.Base64.decode(b,2));',
 				'o.close();',
 			'}',
-			'o.name="命令助手快照包 - "+id;',
-			'o.description="命令助手快照安装器\\n";',
-			'o.uuid="f6cf1729-3861-481b-a9ac-e3f48cbc4a94";',
+			'o.name=' + JSON.stringify("命令助手" + libName + "包 - ") + '+id;',
+			'o.description=' + JSON.stringify("命令助手" + libName + "安装器\n") + ';',
+			'o.uuid=' + JSON.stringify(uuid) + ';',
 			'o.author="命令助手制作组";',
 			'o.version=[1,0];',
-			'if (CA.publishDate==id){return void(o.description+="您正在使用本快照或更高版本\\n\\n"+ds)}',
-			'if(MapScript.host!="Android")return void(o.description+="本快照仅适用于App版");',
-			'u(MapScript.baseDir+"snapshot.js",' + JSON.stringify(Buffer.from(args[0]).toString("base64")) + ');',
-			'ctx.getSharedPreferences("user_settings",ctx.MODE_PRIVATE).edit().putString("debugSource",MapScript.baseDir+"snapshot.js").apply()',
-			'AndroidBridge.createShortcut(new android.content.Intent("com.xero.ca.DEBUG_EXEC").setComponent(new android.content.ComponentName("com.xero.ca","com.xero.ca.MainActivity")).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),"快照命令助手",com.xero.ca.R.mipmap.icon_small);',
-			'Common.showTextDialog(o.description+="快照已安装完毕，您可以在桌面找到快照版的快捷方式");',
+			// 版本号相同的话，只有渠道优先级更高时才允许覆盖
+			'if(id<CA.publishDate){return void(o.description+="您正在使用本' + libName + '或更高版本\\n\\n"+ds)}',
+			'if(id==CA.publishDate&&rank(' + JSON.stringify(channel) + ')<=rank(BuildConfig.variants)){',
+				'return void(o.description+="当前已装同版本的' + (isSnapshot ? "更快照" : "更高渠道") + '构建（"+BuildConfig.variants+"），无需安装本' + libName + '\\n\\n"+ds)',
+			'}',
+			'if(MapScript.host!="Android")return void(o.description+="本' + libName + '仅适用于App版");',
+			'u(MapScript.baseDir+' + JSON.stringify(scriptName) + ',' + JSON.stringify(Buffer.from(args[0]).toString("base64")) + ');',
+			'ctx.getSharedPreferences("user_settings",ctx.MODE_PRIVATE).edit().putString("debugSource",MapScript.baseDir+' + JSON.stringify(scriptName) + ').apply()',
+			'AndroidBridge.createShortcut(new android.content.Intent("com.xero.ca.DEBUG_EXEC").setComponent(new android.content.ComponentName("com.xero.ca","com.xero.ca.MainActivity")).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),"' + libName + '命令助手",com.xero.ca.R.mipmap.icon_small);',
+			'Common.showTextDialog(o.description+="' + libName + '已安装完毕，您可以在桌面找到' + libName + '版的快捷方式");',
 			'CA.Library.removeLibrary(path);',
 		'})'
 	].join("\n"))));
-	fs.copyFileSync("./build/outputs/snapshotLib/snapshot.lib", "./build/dist/命令助手快照" + context.buildConfig.date + ".lib");
+	fs.copyFileSync("./build/outputs/snapshotLib/" + fileName, "./build/dist/命令助手" + (isSnapshot ? "快照" : channel) + context.buildConfig.date + ".lib");
 	return args[0];
 }
