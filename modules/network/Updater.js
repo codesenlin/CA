@@ -47,6 +47,12 @@ MapScript.loadModule("Updater", {
 		}
 	},
 	checkUpdate : function(statusListener, silently) {
+		// 未配置更新源（config/update-sources.js 里 content 为空）就什么都不做
+		if (!this.sources || !this.sources.content || !this.sources.content.length) {
+			if (statusListener) statusListener("completed", 0);
+			if (!silently) Common.toast("未配置更新源");
+			return false;
+		}
 		if (this.checking) {
 			Common.toast("正在检查更新中，请稍候");
 			return false;
@@ -233,6 +239,11 @@ MapScript.loadModule("Updater", {
 		return this.snapshotVer;
 	},
 	checkUpdateBeta : function(statusListener, silently) {
+		if (!this.betaSources || !this.betaSources.content || !this.betaSources.content.length) {
+			if (statusListener) statusListener("completed", 0);
+			if (!silently) Common.toast("未配置更新源");
+			return false;
+		}
 		if (this.checkingBeta) {
 			Common.toast("正在检查更新中，请稍候");
 			return false;
@@ -451,22 +462,7 @@ MapScript.loadModule("Updater", {
 		
 	},
 	cacheUpdateData : {},
-	sources : {
-		id : "9f15605c-b7fa-49c7-8ee8-55b525570d96",
-		content : [
-			"https://ca.projectxero.top/hotfix.json",
-			"https://projectxero.top/ca/hotfix.json",
-			"http://47.102.100.56/ca/hotfix.json",
-			"https://projectxero.gitee.io/ca/hotfix.json",
-			"https://xeroalpha.github.io/CA/pages/hotfix.json"
-		]
-	},
-	betaSources : {
-		id : "7a0df683-bae8-477d-9d84-b2a0c72eadcc",
-		content : [
-			"https://ca.projectxero.top/snapshot.json",
-			"https://projectxero.top/ca/snapshot.json",
-			"http://47.102.100.56/ca/snapshot.json"
-		]
-	}
+	// 更新源见 config/update-sources.js（构建时注入 UpdateSources），按顺序 fallback
+	sources : UpdateSources.release,
+	betaSources : UpdateSources.beta
 });

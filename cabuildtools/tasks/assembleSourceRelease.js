@@ -6,6 +6,8 @@ module.exports = function(context, args) {
 	var libs = builtinlibs.collect();
 	var result = loader.load("./main.js", {
 		buildConfig : context.buildConfig,
+		// 更新源配置（config/update-sources.js），注入成核心里的 UpdateSources
+		updateSources : require("../../config/update-sources.js"),
 		builtinLibs : libs
 	});
 	result = builtinlibs.inject(result, libs);

@@ -674,6 +674,8 @@ Loader.fromFile("modules/listAdapter/MoreListAdapter.js")
 
 Loader.fromFile("modules/network/NetworkUtils.js")
 
+Loader.fromFile("modules/UpdateSources.js")
+
 Loader.fromFile("modules/network/Updater.js")
 
 Loader.fromFile("modules/sense/ISegment.js")
