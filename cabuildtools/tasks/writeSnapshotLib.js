@@ -63,7 +63,7 @@ module.exports = function(context, args) {
 				'}catch(e2){Log.w(e2)}',
 			'}',
 			'Common.showTextDialog(o.description+="' + libName + '已安装完毕，您可以在桌面找到' + libName + '版的快捷方式");',
-			'CA.Library.removeLibrary(path);',
+			'CA.Library.removeLibrary(String(LibInfo&&LibInfo.uri||path));',
 		'})'
 	].join("\n"))));
 	fs.copyFileSync("./build/outputs/snapshotLib/" + fileName, "./build/dist/命令助手" + channel + context.buildConfig.date + ".lib");
