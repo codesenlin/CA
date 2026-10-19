@@ -73,6 +73,13 @@
 			erp(e);
 		}
 	});
+		// 清理已经不存在的内置库（比如从构建里移除的），否则每次启动都会报无法加载
+		[CA.settings.enabledLibrarys, CA.settings.coreLibrarys].forEach(function(list) {
+			var k;
+			for (k = list.length - 1; k >= 0; k--) {
+				if (String(list[k]).indexOf("builtin://") == 0 && !CA.Library.inner[list[k]]) list.splice(k, 1);
+			}
+		});
 },
 	clearCache : function(uriStr) {
 		if (uriStr) {
