@@ -28,7 +28,6 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 - `modules/` — CA 的核心 JS 模块
 - `cabuildtools/` — 构建工具（git subtree）
 - `caclib/` — 内置命令库源码（git subtree）
-- `libraries.json` — 远程命令库清单
 - `config/` — 构建配置
 - `build/` — 构建产物（不入版本库）
 
@@ -113,10 +112,6 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 
 `caclib/index.json` 列出的命令库会在构建时被嵌入到最终 JS 中，运行时通过 `CA.Library.builtinLibs` 注册到 `CA.Library.inner`，用户无需手动导入。
 
-## 远程命令库
-
-`libraries.json` 定义了一组远程命令库，包含 uuid、名称与下载地址。CA 启动时通过 `CA.RemoteLibrary.sync()` 拉取清单并下载未加载的库，注册到 `CA.Library.inner`。
-
 ## 命令库的签名格式
 
 命令库有三种容器，`01` 是格式版本号：
@@ -140,14 +135,20 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 
 ## 拓展包源
 
-拓展包的「检测更新」支持同时配置多个源。入口在「拓展包管理」菜单里的「**拓展包源**」：
+拓展包的「检测更新」和「在线拓展包」都支持多个源。入口：「拓展包管理」菜单 →「**拓展包源**」。
 
-- **添加源**：填写源站根目录（或它的 `info.json` 地址），会先请求 `info.json` 校验，
-  成功才保存；显示名优先取 `maintainer` / `details`
-- **点按某个源**：启用 / 禁用；「删除：xxx」移除（需二次确认）
-- **内置官方源**不能禁用或删除；配置存在 `CA.settings.librarySources`
+- **内置官方源**默认存在，列表里带 `[官方]` 前缀，不能禁用或删除
+- **添加源**：填源站根目录（或它的 `info.json` 地址），先请求 `info.json` 校验，成功才保存
+- **点按源**：启用 / 禁用（禁用后不参与更新检查和在线列表）
+- **备注**：每个源可以写一行备注，显示在源列表和在线列表的「来源」后面
+- **删除**：非官方源可删除（二次确认）
+- 配置存在 `CA.settings.librarySources`，源对象为 `{url, name, enabled, note, builtin}`
 
-检查更新时（`requestUpdateUrlFromDefSrc`）会按源的顺序遍历所有**启用中的源**，第一个能给出
-该 uuid 更新地址的源胜出。源内部仍然校验 `sourceId` 一致性、`.lib` 的 SHA-1 与 RSA 签名。
+检查更新时（`requestUpdateUrlFromDefSrc`）按顺序遍历启用中的源，第一个给出该 uuid 更新地址的源
+胜出；源内部仍然校验 `sourceId`、SHA-1 与 RSA 签名。
 
-> 商店的「浏览源站」界面目前仍只读内置官方源（`requestDefaultSourceInfo`），多源浏览还没做。
+「在线拓展包」会汇总**所有启用中的源**，同一个 uuid 只显示版本最高的那个，每项名称下面显示
+`来源 : <源名称>（备注）`，下载时用该条目所属的源验签。
+
+> 已移除原先"从 GitHub 自动下载远程拓展包"的机制（`modules/RemoteLibrary.js` 与
+> `libraries.json`）。

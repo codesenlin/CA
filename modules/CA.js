@@ -141,14 +141,8 @@ MapScript.loadModule("CA", {
 			}
 
 			this.Library.initLibrary(function(flag) {
-    if (!flag) Common.toast("有至少1个拓展包无法加载，请在设置中查看详情");
-    CA.RemoteLibrary.sync(function(changed) {
-        if (changed) {
-            CA.Library.initLibrary();
-            Common.toast("远程拓展包已加载");
-        }
-    });
-});
+				if (!flag) Common.toast("有至少1个拓展包无法加载，请在设置中查看详情");
+			});
 			if (Date.parse(f.publishDate) < Date.parse(this.publishDate)) {
 				Updater.showNewVersionInfo(f.publishDate);
 			}
@@ -3954,9 +3948,12 @@ MapScript.loadModule("CA", {
 			}
 		});
 		CA.Library.getSources().forEach(function(src) {
+			var desc = src.url;
+			if (src.note) desc += "\n备注：" + src.note;
+			desc += src.builtin ? "\n内置源，不能禁用或删除" : "\n点按" + (src.enabled ? "禁用" : "启用");
 			list.push({
-				text : (src.enabled ? "" : "（已禁用）") + (src.name || src.url),
-				description : src.url + (src.builtin ? "\n内置源，不能禁用或删除" : "\n点按" + (src.enabled ? "禁用" : "启用")),
+				text : (src.enabled ? "" : "（已禁用）") + (src.builtin ? "[官方] " : "") + (src.name || src.url),
+				description : desc,
 				onclick : function(e, tag) {
 					try {
 						CA.Library.setSourceEnabled(src.url, !src.enabled);
@@ -3965,6 +3962,22 @@ MapScript.loadModule("CA", {
 						return false;
 					}
 					changed = true;
+					return false;
+				}
+			});
+			list.push({
+				text : "　备注：" + (src.builtin ? "[官方] " : "") + (src.name || src.url),
+				description : src.note ? src.note : "（未设置，点按编辑）",
+				onclick : function(e, tag) {
+					Common.showInputDialog({
+						title : "编辑源备注",
+						description : src.url,
+						defaultValue : src.note || "",
+						callback : function(text) {
+							src.note = String(text || "").trim();
+							CA.showSourceMan();
+						}
+					});
 					return false;
 				}
 			});
@@ -4636,6 +4649,7 @@ MapScript.loadModule("CA", {
 					}
 					if (detail.length) detail.push("");
 					detail.push("版本 : " + e.version.join("."), "作者 : " + e.author);
+				if (e.sourceName) detail.push("来源 : " + e.sourceName + (e.sourceNote ? "（" + e.sourceNote + "）" : ""));
 					if (e.description && e.description.length) {
 						detail.push("\n" + e.description);
 					}
@@ -4782,15 +4796,22 @@ MapScript.loadModule("CA", {
 			}, {
 				text : "查看源信息",
 				hidden : function() {
-					return !self.libsrc;
+					return !(self.libs && self.libs.length);
 				},
 				onclick : function(v, tag) {
-					var s = [];
-					s.push("地址 : " + self.libsrc.url);
-					s.push("上次更新时间 : " + Updater.toChineseDate(self.libsrc.lastUpdate));
-					s.push("库大小 : " + self.libsrc.libCount);
-					s.push("由 " + self.libsrc.maintainer + " 维护");
-					if (self.libsrc.details) s.push(self.libsrc.details);
+					var s = [], seen = {};
+					CA.Library.enabledSources().forEach(function(src) {
+						var info = CA.Library.requestSourceInfoCached(src.url);
+						if (!info || seen[src.url]) return;
+						seen[src.url] = true;
+						s.push((src.builtin ? "[官方] " : "") + (src.name || src.url));
+						if (src.note) s.push("  备注 : " + src.note);
+						s.push("  地址 : " + src.url);
+						s.push("  库大小 : " + info.libCount + "，由 " + (info.maintainer || "未知") + " 维护");
+						if (info.lastUpdate) s.push("  上次更新 : " + Updater.toChineseDate(info.lastUpdate));
+						if (info.details) s.push("  " + info.details);
+						s.push("");
+					});
 					Common.showTextDialog(s.join("\n"));
 				}
 			}];
@@ -4842,57 +4863,58 @@ MapScript.loadModule("CA", {
 				if (MapScript.host != "Android") return Common.toast("您目前的版本不允许访问在线命令库，请使用命令助手App版");
 				self.loading = true;
 				self.libs.length = 0;
-				self.pages = 0;
 				self.adpt.notifyChange();
 				var progress = Common.showProgressDialog();
 				progress.setText("正在加载……");
 				progress.async(function() {
-					var src = CA.Library.requestDefaultSourceInfo();
+					// 汇总所有启用中的源；同一 uuid 只保留版本最高的
+					var srcs = CA.Library.enabledSources(), best = {}, order = [], err = null;
+					try {
+						srcs.forEach(function(src) {
+							var info = CA.Library.requestSourceInfoCached(src.url), pageNo = 0, page;
+							if (!info) return;
+							while ((page = CA.Library.requestSourceIndex(info, pageNo))) {
+								pageNo++;
+								page.forEach(function(e) {
+									var key = e.uuid, old;
+									e.sourceName = src.name || src.url;
+									e.sourceInfo = info;
+									e.sourceNote = src.note;
+									if (!best[key]) {
+										best[key] = e;
+										order.push(key);
+										return;
+									}
+									old = best[key];
+									if (CA.Library.compareLibraryVersion(e.version, old.version) > 0) best[key] = e;
+								});
+							}
+						});
+					} catch(e) {
+						err = e;
+					}
 					self.loading = false;
-					if (!src) return Common.toast("拓展包源加载失败");
-					self.libsrc = src;
-					self.appendPage(true);
-				});
-			}
-			self.appendPage = function(sync) {
-				if (!sync) {
-					var progress = Common.showProgressDialog();
-					progress.setText("正在加载……");
-					progress.async(function() {
-						self.appendPage(true);
-					});
-				} else {
-					if (self.loading) return Common.toast("正在加载中……");
-					var i, off = self.libs.length, page = CA.Library.requestSourceIndex(self.libsrc, self.pages);
-					if (!page) return Common.toast("拓展包列表加载失败");
-					self.pages++;
+					if (err) erp(err);
+					if (!order.length) return Common.toast("拓展包源加载失败");
 					G.ui(function() {try {
-						self.libs.length += page.length;
-						for (i = 0; i < page.length; i++) {
-							page[i].disabled = page[i].desperated ||
-								(page[i].minSupport && Date.parse(page[i].minSupport) > Date.parse(CA.publishDate)) ||
-								(page[i].maxSupport && Date.parse(page[i].maxSupport) < Date.parse(CA.publishDate));
-							page[i].installed = CA.Library.findByUUID(page[i].uuid);
-							self.libs[i + off] = page[i];
-						}
+						order.forEach(function(key) {
+							var e = best[key];
+							e.disabled = e.desperated ||
+								(e.minSupport && Date.parse(e.minSupport) > Date.parse(CA.publishDate)) ||
+								(e.maxSupport && Date.parse(e.maxSupport) < Date.parse(CA.publishDate));
+							e.installed = CA.Library.findByUUID(e.uuid);
+							self.libs.push(e);
+						});
 						self.adpt.notifyChange();
-						if (self.libsrc.nextPage) self.more.setText("查看剩余" + (self.libsrc.libCount - self.libs.length) + "个拓展包……");
-						if (self.libsrc.nextPage && !self.moreVisible) {
-							self.moreVisible = true;
-							self.list.addFooterView(self.more);
-						} else if (!self.libsrc.nextPage && self.moreVisible) {
-							self.moreVisible = false;
-							self.list.removeFooterView(self.more);
-						}
 					} catch(e) {erp(e)}});
-				}
+				});
 			}
 			self.downloadLib = function(data) {
 				Common.showProgressDialog(function(dia) {
 					var uriStr;
 					dia.setText("正在下载拓展包: " + data.name);
 					try {
-						uriStr = String(CA.Library.downloadLib(data, self.libsrc));
+						uriStr = String(CA.Library.downloadLib(data, data.sourceInfo));
 						CA.Library.clearCache(uriStr);
 						// 走版本判断：已装的版本更高就忽略这次下载
 						if (CA.Library.addLibrary(uriStr) == "ignored") {
@@ -4945,19 +4967,9 @@ MapScript.loadModule("CA", {
 			self.header.addView(self.menu, new G.LinearLayout.LayoutParams(-2, -1));
 			self.linear.addView(self.header, new G.LinearLayout.LayoutParams(-1, -2));
 			
-			self.more = new G.TextView(ctx);
-			self.more.setGravity(G.Gravity.CENTER);
-			self.more.setPadding(15 * G.dp, 15 * G.dp, 15 * G.dp, 15 * G.dp);
-			self.more.setLayoutParams(new G.AbsListView.LayoutParams(-1, -2));
-			Common.applyStyle(self.more, "textview_prompt", 2);
-
 			self.list = new G.ListView(ctx);
 			self.list.setAdapter(self.adpt.self);
 			self.list.setOnItemClickListener(new G.AdapterView.OnItemClickListener({onItemClick : function(parent, view, pos, id) {try {
-				if (view == self.more) {
-					self.appendPage();
-					return;
-				}
 				var data = parent.getAdapter().getItem(pos);
 				if (!data.installed) {
 					Common.showOperateDialog(self.itemMenu, {
@@ -7368,6 +7380,5 @@ MapScript.loadModule("CA", {
 	
 	Library : Loader.fromFile("CA.Library.js"),
 	IntelliSense : Loader.fromFile("CA.IntelliSense.js"),
-	Assist : Loader.fromFile("CA.Assist.js"),
-	RemoteLibrary : Loader.fromFile("RemoteLibrary.js")
+	Assist : Loader.fromFile("CA.Assist.js")
 });
