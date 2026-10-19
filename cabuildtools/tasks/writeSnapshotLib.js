@@ -47,7 +47,21 @@ module.exports = function(context, args) {
 			'if(MapScript.host!="Android")return void(o.description+="本' + libName + '仅适用于App版");',
 			'u(MapScript.baseDir+' + JSON.stringify(scriptName) + ',' + JSON.stringify(Buffer.from(args[0]).toString("base64")) + ');',
 			'ctx.getSharedPreferences("user_settings",ctx.MODE_PRIVATE).edit().putString("debugSource",MapScript.baseDir+' + JSON.stringify(scriptName) + ').apply()',
-			'AndroidBridge.createShortcut(new android.content.Intent("com.xero.ca.DEBUG_EXEC").setComponent(new android.content.ComponentName("com.xero.ca","com.xero.ca.MainActivity")).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),"' + libName + '命令助手",com.xero.ca.R.mipmap.icon_small);',
+			// 快捷方式：组件名用当前包名（改包版也能用）。部分壳子的 AndroidBridge.createShortcut
+			// 自身有 bug（setIcon 传了 object），失败时退回标准 API 自己建一个。
+			'var scIntent=new android.content.Intent("com.xero.ca.DEBUG_EXEC")' +
+				'.setComponent(new android.content.ComponentName(ctx.getPackageName(),"com.xero.ca.MainActivity"))' +
+				'.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),scName=' + JSON.stringify(libName + "命令助手") + ',scIcon=com.xero.ca.R.mipmap.icon_small;',
+			'try{',
+				'AndroidBridge.createShortcut(scIntent,scName,scIcon);',
+			'}catch(e){',
+				'try{',
+					'var mgr=ctx.getSystemService(ctx.SHORTCUT_SERVICE),si=new android.content.pm.ShortcutInfo.Builder(ctx,scName)' +
+						'.setShortLabel(scName).setLongLabel(scName).setIntent(scIntent)' +
+						'.setIcon(android.graphics.drawable.Icon.createWithResource(ctx,scIcon)).build();',
+					'mgr.requestPinShortcut(si,null);',
+				'}catch(e2){Log.w(e2)}',
+			'}',
 			'Common.showTextDialog(o.description+="' + libName + '已安装完毕，您可以在桌面找到' + libName + '版的快捷方式");',
 			'CA.Library.removeLibrary(path);',
 		'})'
