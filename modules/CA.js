@@ -3131,6 +3131,17 @@ MapScript.loadModule("CA", {
 					});
 				}
 			}, {
+				name : "拓展包源",
+				type : "custom",
+				get : function() {
+					var srcs = CA.Library.enabledSources();
+					return srcs.length + "个已启用";
+				},
+				onclick : function(fset) {
+					CA.showSourceMan();
+					if (fset) fset();
+				}
+			}, {
 				name : "在线拓展包",
 				type : "custom",
 				onclick : function(fset) {
