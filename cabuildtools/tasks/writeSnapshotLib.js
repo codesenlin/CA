@@ -41,7 +41,7 @@ module.exports = function(context, args) {
 			'o.version=' + JSON.stringify(context.buildConfig.date.split(/[-/]/).map(function(v) { return parseInt(v, 10) || 0; })) + ';',
 			// 版本号相同的话，只有渠道优先级更高时才允许覆盖
 			'if(id<CA.publishDate){return void(o.description+="您正在使用本' + libName + '或更高版本\\n\\n"+ds)}',
-			'if(id==CA.publishDate&&rank(' + JSON.stringify(channel) + ')<=rank(BuildConfig.variants)){',
+			'if(id==CA.publishDate&&rank(' + JSON.stringify(channel) + ')<rank(BuildConfig.variants)){',
 				'return void(o.description+="当前已装同版本的' + "更高渠道" + '构建（"+BuildConfig.variants+"），无需安装本' + libName + '\\n\\n"+ds)',
 			'}',
 			'if(MapScript.host!="Android")return void(o.description+="本' + libName + '仅适用于App版");',

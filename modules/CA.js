@@ -4886,7 +4886,7 @@ MapScript.loadModule("CA", {
 										return;
 									}
 									old = best[key];
-									if (CA.Library.compareLibraryVersion(e.version, old.version) > 0) best[key] = e;
+									if (CA.Library.compareLibraryVersion(e.version, old.version) >= 0) best[key] = e;
 								});
 							}
 						});

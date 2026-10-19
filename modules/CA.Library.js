@@ -150,7 +150,8 @@
 					best[info.uuid] = info;
 					return;
 				}
-				if (self.compareLibraryVersion(info.version, t.version) > 0) {
+				// 同版本时保留后面加载的那份（"加载最后的相同版本"）
+				if (self.compareLibraryVersion(info.version, t.version) >= 0) {
 					dropped.push(t);
 					best[info.uuid] = info;
 				} else {
@@ -193,11 +194,12 @@
 			this.enableLibrary(uriStr);
 			return "added";
 		}
-		cmp = this.compareLibraryVersion(data.version, existing.version);
-		if (cmp <= 0) {
-			if (uri != String(existing.src) && !CA.Library.inner[uri]) this.removeLibrary(uri);
+		if (uri == String(existing.src)) {
+			// 同一个文件，不用处理
 			return "ignored";
 		}
+		cmp = this.compareLibraryVersion(data.version, existing.version);
+		// cmp > 0：升级；== 0：同版本重装；< 0：降级。都允许覆盖安装
 		if (existing.src && (String(existing.src).indexOf("builtin://") == 0 || CA.Library.inner[String(existing.src)])) {
 			this.disableLibrary(String(existing.src)); // 内置包不能删，保持禁用
 		} else if (existing.src) {
