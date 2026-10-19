@@ -8,7 +8,7 @@
 module.exports = {
 	version : "1.2.14",
 	versionCode : [1, 2, 14],
-	date : "2026-10-20",
+	date : "2026-10-21",
 	licenceUpdate : "2019/9/21",
 
 	description : `[重要通知]
