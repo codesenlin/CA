@@ -137,3 +137,17 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 是 `SHA1(appVerifyKey || SHA1(payload))`，用 App 内置的公钥算——所以只有 App（或掌握其公钥的
 本地流程）能产出合法 `.hash`。`SIGNLIB01` 只在下载路径里验签；直接拷贝进手机的 `SIGNLIB01`
 会被当成未知格式，需要先转成 `LIBSIGN01`。
+
+## 拓展包源
+
+拓展包的「检测更新」支持同时配置多个源。入口在「拓展包管理」菜单里的「**拓展包源**」：
+
+- **添加源**：填写源站根目录（或它的 `info.json` 地址），会先请求 `info.json` 校验，
+  成功才保存；显示名优先取 `maintainer` / `details`
+- **点按某个源**：启用 / 禁用；「删除：xxx」移除（需二次确认）
+- **内置官方源**不能禁用或删除；配置存在 `CA.settings.librarySources`
+
+检查更新时（`requestUpdateUrlFromDefSrc`）会按源的顺序遍历所有**启用中的源**，第一个能给出
+该 uuid 更新地址的源胜出。源内部仍然校验 `sourceId` 一致性、`.lib` 的 SHA-1 与 RSA 签名。
+
+> 商店的「浏览源站」界面目前仍只读内置官方源（`requestDefaultSourceInfo`），多源浏览还没做。

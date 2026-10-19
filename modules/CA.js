@@ -188,6 +188,8 @@ MapScript.loadModule("CA", {
 				tipsRead : 0,
 				iiMode : -1,
 				libraryAutoUpdate : 1,
+				// 拓展包源（{url, name, enabled, builtin}），至少含内置官方源
+				librarySources : [],
 				securityLevel : 1,
 				enabledLibrarys : this.Library.recommended,
 				coreLibrarys : [],
@@ -3921,6 +3923,78 @@ MapScript.loadModule("CA", {
 		});
 	},
 
+	/** 拓展包源管理：添加 / 启用禁用 / 删除 */
+	showSourceMan : function self() {G.ui(function() {try {
+		var list = [], changed = false;
+		var reopen = function() {
+			if (!changed) return;
+			changed = false;
+			CA.showSourceMan();
+		};
+		list.push({
+			text : "添加源…",
+			description : "填写源站根目录或 info.json 的地址",
+			onclick : function(e, tag) {
+				Common.showInputDialog({
+					title : "添加拓展包源",
+					description : "例如 https://ca.projectxero.top/clib/",
+					callback : function(text) {
+						var src;
+						try {
+							src = CA.Library.addSource(text);
+						} catch(err) {
+							Common.toast("添加失败：" + err);
+							return true; // 留在输入框里方便修改
+						}
+						Common.toast("已添加源：" + src.name);
+						CA.showSourceMan();
+					}
+				});
+				return false;
+			}
+		});
+		CA.Library.getSources().forEach(function(src) {
+			list.push({
+				text : (src.enabled ? "" : "（已禁用）") + (src.name || src.url),
+				description : src.url + (src.builtin ? "\n内置源，不能禁用或删除" : "\n点按" + (src.enabled ? "禁用" : "启用")),
+				onclick : function(e, tag) {
+					try {
+						CA.Library.setSourceEnabled(src.url, !src.enabled);
+					} catch(err) {
+						Common.toast(String(err));
+						return false;
+					}
+					changed = true;
+					return false;
+				}
+			});
+			if (!src.builtin) {
+				list.push({
+					text : "删除：" + (src.name || src.url),
+					description : "移除后不再从这个源检查更新",
+					onclick : function(e, tag) {
+						Common.showConfirmDialog({
+							title : "删除拓展包源？",
+							description : src.url,
+							callback : function(id) {
+								if (id != 0) return;
+								try {
+									CA.Library.removeSource(src.url);
+									Common.toast("已删除");
+								} catch(err) {
+									Common.toast(String(err));
+								}
+								CA.showSourceMan();
+							}
+						});
+						return false;
+					}
+				});
+			}
+		});
+		Common.showOperateDialog(list, null, reopen);
+	} catch(e) {erp(e)}}); },
+
 	showLibraryMan : function self(callback) {G.ui(function() {try {
 		if (!self.linear) {
 			self.contextMenu = [{
@@ -4121,6 +4195,15 @@ MapScript.loadModule("CA", {
 					var d = this.secLevelDetails[CA.settings.securityLevel];
 					this.description = "当前安全级别为 " + (d ? d.text : "未知");
 					return false;
+				}
+			},{
+				text : "拓展包源",
+				description : "管理从哪些源检查拓展包更新",
+				hidden : function() {
+					return CA.settings.securityLevel < 0;
+				},
+				onclick : function(v, tag) {
+					CA.showSourceMan();
 				}
 			},{
 				text : "切换版本",

@@ -947,6 +947,84 @@
 	getOriginSourceUrl : function() {
 		return "https://ca.projectxero.top/clib/";
 	},
+
+	// ───────────── 拓展包源管理 ─────────────
+	// 源对象：{ url, name, enabled, builtin }，存在 CA.settings.librarySources 里
+
+	/** 取源列表；第一次使用时补上内置官方源 */
+	getSources : function() {
+		var list = CA.settings.librarySources;
+		if (!Array.isArray(list)) list = CA.settings.librarySources = [];
+		if (!list.some(function(s) { return s && s.builtin; })) {
+			list.unshift({
+				url : this.getOriginSourceUrl(),
+				name : "官方源",
+				enabled : true,
+				builtin : true
+			});
+		}
+		return list;
+	},
+	/** 规范化源的 URL：补 http(s)://、去掉多余的空白、保证以 / 结尾 */
+	normalizeSourceUrl : function(url) {
+		url = String(url || "").trim();
+		if (!url) return "";
+		if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+		return url.replace(/\/+$/, "") + "/";
+	},
+	findSource : function(url) {
+		var list = this.getSources(), i;
+		for (i = 0; i < list.length; i++) {
+			if (list[i] && this.normalizeSourceUrl(list[i].url) == this.normalizeSourceUrl(url)) return list[i];
+		}
+		return null;
+	},
+	/** 启用中的源 */
+	enabledSources : function() {
+		return this.getSources().filter(function(s) {
+			return s && s.enabled;
+		});
+	},
+	/**
+	 * 校验并添加一个源。url 可以是源站根目录，也可以是 info.json 的地址。
+	 * 成功返回源对象；失败抛错（供界面显示）。
+	 */
+	addSource : function(url) {
+		var info, src;
+		url = this.normalizeSourceUrl(url);
+		if (!url) throw "请输入源的地址";
+		if (url.slice(-10) == "info.json/") url = url.slice(0, -10);
+		if (this.findSource(url)) throw "该源已经存在";
+		info = this.requestSourceInfo(url);
+		if (!info) throw "无法访问该源（读取 info.json 失败）\n" + url;
+		if (!info.sourceId) throw "不是有效的拓展包源（缺少 sourceId）";
+		src = {
+			url : url,
+			name : info.maintainer && info.maintainer != url ? String(info.maintainer) : (info.details ? String(info.details) : url),
+			enabled : true,
+			builtin : false
+		};
+		this.getSources().push(src);
+		return src;
+	},
+	removeSource : function(url) {
+		var list = this.getSources(), i;
+		for (i = 0; i < list.length; i++) {
+			if (list[i] && this.normalizeSourceUrl(list[i].url) == this.normalizeSourceUrl(url)) {
+				if (list[i].builtin) throw "内置源不能删除";
+				list.splice(i, 1);
+				return true;
+			}
+		}
+		return false;
+	},
+	setSourceEnabled : function(url, enabled) {
+		var src = this.findSource(url);
+		if (!src) return false;
+		if (!enabled && src.builtin) throw "内置源不能禁用";
+		src.enabled = !!enabled;
+		return true;
+	},
 	getVerify : function(source) {
 		return source.verifyObject ? source.verifyObject : (source.verifyObject = this.downloadAsArray(source.pubkey));
 	},
@@ -1112,12 +1190,14 @@
 		}
 	},
 	requestUpdateUrlFromDefSrc : function(uuid) {
-		var source, map;
-		source = this.requestDefaultSourceInfo();
-		if (!source) return;
-		map = this.requestSourceMap(source);
-		if (!map) return;
-		return map[uuid];
+		var self = this, srcs = this.enabledSources(), i, source, map;
+		// 按源的顺序找，第一个能给出更新地址的源胜出
+		for (i = 0; i < srcs.length; i++) {
+			source = this.requestSourceInfoCached(srcs[i].url);
+			if (!source) continue;
+			map = this.requestSourceMap(source);
+			if (map && map[uuid]) return map[uuid];
+		}
 	},
 	requestUpdateInfo : function(libinfo, callback) {
 		var r, u = libinfo.update, t;
