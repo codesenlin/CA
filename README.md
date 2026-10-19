@@ -81,20 +81,24 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 
 产物导出至 `build/outputs/snapshot/main.js`。
 
-### 生成渠道版 JS（Beta / Dev / Canary）
+### 生成渠道版 JS（standard / beta / dev / canary）
 
 构建命令可以附加渠道参数，产物名会带上渠道名，一眼能看出是什么构建物：
 
-    node ./cabuildtools/main.js buildRelease -beta      # build/dist/命令助手(2026-10-15) beta.js
-    node ./cabuildtools/main.js buildSnapshot -dev      # build/outputs/snapshot/dev.js + dev.lib
-    node ./cabuildtools/main.js buildSnapshot -canary   # build/outputs/snapshot/canary.js + canary.lib
+    node ./cabuildtools/main.js buildRelease            # 命令助手(2026-10-15) standard.js + standard.lib
+    node ./cabuildtools/main.js buildRelease -beta      # 命令助手(2026-10-15) beta.js + beta.lib
+    node ./cabuildtools/main.js buildSnapshot           # build/outputs/snapshot/snapshot.js + snapshot.lib
+    node ./cabuildtools/main.js buildSnapshot -dev      # dev.js + dev.lib
+    node ./cabuildtools/main.js buildSnapshot -canary   # canary.js + canary.lib
 
-不带参数就是默认渠道（`buildRelease` -> release，`buildSnapshot` -> snapshot）。渠道包不写
-`update.json`，避免覆盖正式更新通道。
+不加参数就是默认渠道：`buildRelease` -> **standard**（正式版），`buildSnapshot` -> snapshot。
+注意 `standard` 只是对外的渠道名，核心代码里它仍然是 `release`（`BuildConfig.variants` 不变），
+所以所有 `variants == "release"` 的判断照常生效。渠道包不写 `update.json`，不会覆盖正式更新通道。
 
-`.lib` 是「安装器」：装进 App 后把该渠道的脚本设为调试源并建快捷方式。**同版本号下渠道优先级为
-`canary > dev > beta > release`**（snapshot 视为 dev 一档），低优先级不会覆盖高优先级；版本更新的
-仍然可以装。
+`.lib` 是安装器：装进 App 后把该渠道的脚本设为调试源并建快捷方式。每个渠道一个固定 uuid
+（快照沿用作者原来的 `f6cf1729-...`，是唯一的历史特例），版本号取构建日期 `[年, 月, 日]`，
+所以重新构建的包会被识别为更新；**同版本号下渠道优先级 `canary > dev > beta > standard`**
+（snapshot 视为 dev 一档），低优先级不会覆盖高优先级。
 
 ### 生成正式版 APP
 

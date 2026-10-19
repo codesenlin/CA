@@ -17,12 +17,15 @@ module.exports = function(context, args) {
 			"./build/": {
 				"outputs/": [
 					"releaseSource",
-					"release"
+					"release",
+					"snapshotLib"
 				],
 				"dist": ""
 			}
 		}))
 		.then(context.task("assembleSourceRelease"))
+		// 安装器 lib 用未压缩的源码（和快照包的机制一致）
+		.then(context.pipe("writeSnapshotLib"))
 		.then(context.pipe("compressSource"))
 		.then(context.pipe("writeRelease"))
 		.then(function(r) {

@@ -9,14 +9,15 @@ const asLibrary = require("../js2lib");
  */
 module.exports = function(context, args) {
 	var variants = context.buildConfig.variants,
-		// snapshot 沿用作者原来的命名，其余渠道用渠道名
+		// release 对外的渠道名是 standard（核心代码里仍然叫 release，保持兼容）
 		isSnapshot = variants == "snapshot",
-		channel = isSnapshot ? "snapshot" : variants,
+		channel = isSnapshot ? "snapshot" : variants == "release" ? "standard" : variants,
 		libName = isSnapshot ? "快照" : channel,
 		fileName = channel + ".lib",
 		scriptName = channel + ".js",
 		uuid = {
 			snapshot : "f6cf1729-3861-481b-a9ac-e3f48cbc4a94",
+			standard : "1d6b8f24-3a9c-4e57-b0d8-7f2c5a4e9b61",
 			beta : "3c1f0b52-8f4d-4a86-9f4e-6b2d7c9a1e05",
 			dev : "8e4a2d61-5b7c-4f39-9a1d-2c6e7f8b0a43",
 			canary : "b7d1c394-2e6a-4c58-8f07-9d3b1e5a6c27"
@@ -38,7 +39,7 @@ module.exports = function(context, args) {
 			'o.description=' + JSON.stringify("命令助手" + libName + "安装器\n") + ';',
 			'o.uuid=' + JSON.stringify(uuid) + ';',
 			'o.author="命令助手制作组";',
-			'o.version=[1,0];',
+			'o.version=' + JSON.stringify(context.buildConfig.date.split(/[-/]/).map(function(v) { return parseInt(v, 10) || 0; })) + ';',
 			// 版本号相同的话，只有渠道优先级更高时才允许覆盖
 			'if(id<CA.publishDate){return void(o.description+="您正在使用本' + libName + '或更高版本\\n\\n"+ds)}',
 			'if(id==CA.publishDate&&rank(' + JSON.stringify(channel) + ')<=rank(BuildConfig.variants)){',
