@@ -9,19 +9,18 @@ const asLibrary = require("../js2lib");
  */
 module.exports = function(context, args) {
 	var variants = context.buildConfig.variants,
-		// release 对外的渠道名是 standard（核心代码里仍然叫 release，保持兼容）
-		isSnapshot = variants == "snapshot",
-		channel = isSnapshot ? "snapshot" : variants == "release" ? "standard" : variants,
-		libName = isSnapshot ? "快照" : channel,
-		fileName = channel + ".lib",
-		scriptName = channel + ".js",
-		uuid = {
-			snapshot : "f6cf1729-3861-481b-a9ac-e3f48cbc4a94",
+		channel = context.buildConfig.channel,
+		// 快照形态（作者原有的 snapshot 构建）沿用历史 uuid，是唯一特例；
+		// 其余渠道各用固定 uuid，保证同渠道的新构建能被识别为更新
+		uuid = variants == "snapshot" ? "f6cf1729-3861-481b-a9ac-e3f48cbc4a94" : ({
 			standard : "1d6b8f24-3a9c-4e57-b0d8-7f2c5a4e9b61",
 			beta : "3c1f0b52-8f4d-4a86-9f4e-6b2d7c9a1e05",
 			dev : "8e4a2d61-5b7c-4f39-9a1d-2c6e7f8b0a43",
 			canary : "b7d1c394-2e6a-4c58-8f07-9d3b1e5a6c27"
-		}[channel] || "f6cf1729-3861-481b-a9ac-e3f48cbc4a94";
+		}[channel] || "1d6b8f24-3a9c-4e57-b0d8-7f2c5a4e9b61"),
+		libName = channel,
+		fileName = variants + ".lib",
+		scriptName = variants + ".js";
 
 	fs.writeFileSync("./build/outputs/snapshotLib/" + fileName, asLibrary(Buffer.from([
 		'Plugins.inject(function(o){',
@@ -43,7 +42,7 @@ module.exports = function(context, args) {
 			// 版本号相同的话，只有渠道优先级更高时才允许覆盖
 			'if(id<CA.publishDate){return void(o.description+="您正在使用本' + libName + '或更高版本\\n\\n"+ds)}',
 			'if(id==CA.publishDate&&rank(' + JSON.stringify(channel) + ')<=rank(BuildConfig.variants)){',
-				'return void(o.description+="当前已装同版本的' + (isSnapshot ? "更快照" : "更高渠道") + '构建（"+BuildConfig.variants+"），无需安装本' + libName + '\\n\\n"+ds)',
+				'return void(o.description+="当前已装同版本的' + "更高渠道" + '构建（"+BuildConfig.variants+"），无需安装本' + libName + '\\n\\n"+ds)',
 			'}',
 			'if(MapScript.host!="Android")return void(o.description+="本' + libName + '仅适用于App版");',
 			'u(MapScript.baseDir+' + JSON.stringify(scriptName) + ',' + JSON.stringify(Buffer.from(args[0]).toString("base64")) + ');',
@@ -53,6 +52,6 @@ module.exports = function(context, args) {
 			'CA.Library.removeLibrary(path);',
 		'})'
 	].join("\n"))));
-	fs.copyFileSync("./build/outputs/snapshotLib/" + fileName, "./build/dist/命令助手" + (isSnapshot ? "快照" : channel) + context.buildConfig.date + ".lib");
+	fs.copyFileSync("./build/outputs/snapshotLib/" + fileName, "./build/dist/命令助手" + channel + context.buildConfig.date + ".lib");
 	return args[0];
 }

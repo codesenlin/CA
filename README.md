@@ -85,20 +85,25 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 
 构建命令可以附加渠道参数，产物名会带上渠道名，一眼能看出是什么构建物：
 
-    node ./cabuildtools/main.js buildRelease            # 命令助手(2026-10-15) standard.js + standard.lib
-    node ./cabuildtools/main.js buildRelease -beta      # 命令助手(2026-10-15) beta.js + beta.lib
-    node ./cabuildtools/main.js buildSnapshot           # build/outputs/snapshot/snapshot.js + snapshot.lib
-    node ./cabuildtools/main.js buildSnapshot -dev      # dev.js + dev.lib
-    node ./cabuildtools/main.js buildSnapshot -canary   # canary.js + canary.lib
+    node ./cabuildtools/main.js buildRelease            # 命令助手(2026-10-15) standard.js + 命令助手standard<日期>.lib
+    node ./cabuildtools/main.js buildRelease -beta      # 命令助手(2026-10-15) beta.js + 命令助手beta<日期>.lib
+    node ./cabuildtools/main.js buildSnapshot           # build/outputs/snapshot/snapshot.js + 命令助手standard<日期>.lib
+    node ./cabuildtools/main.js buildSnapshot -dev      # dev.js + 命令助手dev<日期>.lib
+    node ./cabuildtools/main.js buildSnapshot -canary   # canary.js + 命令助手canary<日期>.lib
 
-不加参数就是默认渠道：`buildRelease` -> **standard**（正式版），`buildSnapshot` -> snapshot。
-注意 `standard` 只是对外的渠道名，核心代码里它仍然是 `release`（`BuildConfig.variants` 不变），
-所以所有 `variants == "release"` 的判断照常生效。渠道包不写 `update.json`，不会覆盖正式更新通道。
+渠道名和构建形态是分开的两个概念：
 
-`.lib` 是安装器：装进 App 后把该渠道的脚本设为调试源并建快捷方式。每个渠道一个固定 uuid
-（快照沿用作者原来的 `f6cf1729-...`，是唯一的历史特例），版本号取构建日期 `[年, 月, 日]`，
-所以重新构建的包会被识别为更新；**同版本号下渠道优先级 `canary > dev > beta > standard`**
-（snapshot 视为 dev 一档），低优先级不会覆盖高优先级。
+- **形态**（`BuildConfig.variants`）决定核心行为：`buildRelease` -> `release`，`buildSnapshot` -> `snapshot`
+  （快照形态：不写 `update.json`，核心按非正式版处理）
+- **渠道**（产物名 + `.lib` 的 uuid）默认都是 **standard**，加 `-beta` / `-dev` / `-canary` 才换成对应渠道
+
+`standard` 只是对外的名字，内部仍然是 `release`/`snapshot`，所以核心代码里 `variants == "release"`
+这类判断不受影响。
+
+`.lib` 是安装器：装进 App 后把该渠道的脚本设为调试源并建快捷方式。每个渠道固定一个 uuid，
+版本号取构建日期 `[年, 月, 日]`，重新构建的包会被识别为更新。**快照形态沿用作者原来的
+`f6cf1729-...` uuid**（唯一特例，保证老的快照包还能被覆盖更新）；**同版本号下渠道优先级
+`canary > dev > beta > standard`**，低优先级不会覆盖高优先级。
 
 ### 生成正式版 APP
 

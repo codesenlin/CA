@@ -11,7 +11,9 @@ function channelOf(args) {
 
 module.exports = function(context, args) {
 	// 带 -beta 时 variants = "beta"：产物叫 beta.js / beta.lib，lib 的 uuid 与名字也不同
-	return context.execute("getBuildConfig", channelOf(args) || "snapshot")
+	var channel = channelOf(args);
+	// 不带渠道参数就是 standard（正式版）；带参数时渠道名同时作为 variants
+	return context.execute("getBuildConfig", [channel || "snapshot", channel || "standard"])
 		.then(context.task("getUpdateConfig"))
 		.then(context.task("initDirectory", {
 			"./build/": {
