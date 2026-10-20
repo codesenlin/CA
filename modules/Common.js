@@ -1,9 +1,6 @@
 MapScript.loadModule("Common", {
-	themelist : {
-		"light" : {
-			"name" : Intl.get("common.theme.default")
-		}
-	},
+	// 真正的主题数据在 data/theme.json，这里只留占位，由 builtinData.js 加载后覆盖
+	themelist : {},
 	theme : null,
 	
 	onCreate : function() {
