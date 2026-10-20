@@ -55,9 +55,12 @@ CA/
 │  │  ├─ addition.json
 │  │  └─ ...
 │  ├─ theme.json                ← 从 builtinData.js 的 Common.themelist 提取
-│  └─ notes/                    ← 与 json 一一对应的注释文件
-│     ├─ idlibs.default.js      ← 说明 default.json 每个字段什么意思
-│     └─ theme.js
+│  └─ notes/                    ← 与 json 一一对应的注释文件（目录结构镜像）
+│     ├─ idlibs/
+│     │  ├─ default.js          ← 说明 default.json 每个字段什么意思
+│     │  └─ ...
+│     ├─ theme.js
+│     └─ ...
 ├─ caaccel/                     ← 新增：Java 加速库源码
 │  ├─ build.gradle              ← 独立模块，产出 caaccel.jar
 │  └─ src/main/java/top/projectxero/ca/accel/
@@ -88,7 +91,8 @@ CA/
  */
 ```
 
-约定：**每个 JSON 在 `data/notes/` 下有同名 `.js` 说明文件**，内容只有注释。
+约定：**`data/notes/` 的目录结构镜像 `data/`，每个 JSON 对应一个同名 `.js`**，内容只有注释。
+例如 `data/idlibs/default.json` ↔ `data/notes/idlibs/default.js`。
 
 ## 四、加速库的调用约定
 
