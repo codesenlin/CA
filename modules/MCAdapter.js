@@ -235,18 +235,10 @@ MapScript.loadModule("MCAdapter", {
 				i.addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION | android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION | android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
 				if (!SettingsCompat.startSafely(i)) return Common.toast("导入适配器失败");
 			} else if (!isNaN(ver)) {
-				var fs = [
-					"main.js",
-					"mod.info",
-					"launcher.js",
-					"build.config",
-					"mod_icon.png"
-				], i;
+				// 旧版 InnerCore 不支持 .icmod，需要把包里的 ICAdpt/ 手工铺到 mods 目录。
+				// 包里本来就是这几个文件，直接从 InnerCore.icmod 解压，不再单独维护一份副本。
 				try {
-					new java.io.File("/sdcard/games/com.mojang/mods/ICAdpt").mkdirs();
-					for (i in fs) {
-						this.unpackAssets("adapter/ICAdpt/" + fs[i], "/sdcard/games/com.mojang/mods/ICAdpt/" + fs[i]);
-					}
+					this.unpackIcmod("adapter/InnerCore.icmod", "/sdcard/games/com.mojang/mods");
 				} catch(e) {
 					Log.e(e);
 					return Common.toast("释放适配器失败\n" + e);
@@ -265,6 +257,29 @@ MapScript.loadModule("MCAdapter", {
 			self.adapters[id].callback.call(self);
 		});
 		Common.toast("请选择系统适用的适配器");
+	},
+	/**
+	 * 把 assets 里的 .icmod（本质是 zip）解压到目标目录，保留包内的相对路径。
+	 * 用于旧版 InnerCore 手工铺 mod 的场景。
+	 */
+	unpackIcmod : function(fn, destDir) {
+		var zis = new java.util.zip.ZipInputStream(ctx.getAssets().open(fn));
+		var ze, buf, os, hr, name;
+		try {
+			while ((ze = zis.getNextEntry()) != null) {
+				name = String(ze.getName());
+				if (ze.isDirectory()) continue;
+				var dest = new java.io.File(destDir, name);
+				dest.getParentFile().mkdirs();
+				os = new java.io.FileOutputStream(dest);
+				buf = java.lang.reflect.Array.newInstance(java.lang.Byte.TYPE, 8192);
+				while ((hr = zis.read(buf)) > 0) os.write(buf, 0, hr);
+				os.close();
+				zis.closeEntry();
+			}
+		} finally {
+			zis.close();
+		}
 	},
 	unpackAssets : function(fn, path) {
 		const BUFFER_SIZE = 8192;
