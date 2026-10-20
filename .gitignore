@@ -20,3 +20,4 @@ Thumbs.db
 *.backup
 
 examples/clib-update/CA_Reforged/
+caaccel/build/
