@@ -821,6 +821,7 @@
 		return t;
 	},
 	matchString : function(ps, a, r) {
+		if (Accel.available()) return Accel.matchString(ps, a, r);
 		var t, t2, t3;
 		if (!(r instanceof Object)) r = {};
 		if (!Array.isArray(r.input)) r.input = [];

@@ -1,5 +1,11 @@
 package top.projectxero.ca.accel;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * 加速库入口。
  *
@@ -16,6 +22,61 @@ public final class Accel {
     /** 供 JS 探测版本，回退实现与加速实现共用同一套约定 */
     public static String version() {
         return "1.0.0";
+    }
+
+/**
+     * 补全的字符串匹配。对应 JS: CA.IntelliSense.matchString。
+     *
+     * 输入的 a 支持两种形态：
+     *   - List&lt;String&gt;：候选值列表
+     *   - Map&lt;String,String&gt;：候选值 → 描述
+     * 返回匹配到的新增条目，由 JS 侧合并进 r.input / r.output，
+     * 这样调用方拿到的 r 与纯 JS 实现完全一致。
+     *
+     * 相比 JS 版的收益：JS 版用 indexOf 去重是 O(n²)，这里用 LinkedHashSet 是 O(n)。
+     */
+    public static Result matchString(String ps, Object a) {
+        Result r = new Result();
+        String p = ps == null ? "" : ps;
+        if (a instanceof Map) {
+            List<String> withDesc = new ArrayList<String>();
+            List<String> plain = new ArrayList<String>();
+            for (Object o : ((Map<?, ?>) a).entrySet()) {
+                Map.Entry<?, ?> e = (Map.Entry<?, ?>) o;
+                String key = String.valueOf(e.getKey());
+                String val = e.getValue() == null ? "" : String.valueOf(e.getValue());
+                if (key.indexOf(p) < 0 && val.indexOf(p) < 0) continue;
+                if (val.length() > 0) {
+                    String display = key + " - " + val;
+                    r.outputs.put(display, key);
+                    withDesc.add(display);
+                } else {
+                    r.outputs.put(key, key);
+                    plain.add(key);
+                }
+            }
+            Collections.sort(withDesc);
+            Collections.sort(plain);
+            r.inputs.addAll(withDesc);
+            r.inputs.addAll(plain);
+        } else if (a instanceof Iterable) {
+            List<String> hits = new ArrayList<String>();
+            for (Object o : (Iterable<?>) a) {
+                String e = String.valueOf(o);
+                if (e.indexOf(p) < 0) continue;
+                r.outputs.put(e, e);
+                hits.add(e);
+            }
+            Collections.sort(hits);
+            r.inputs.addAll(hits);
+        }
+        return r;
+    }
+
+    /** matchString 的结果：新增的候选与新增的显示映射 */
+    public static final class Result {
+        public final List<String> inputs = new ArrayList<String>();
+        public final Map<String, String> outputs = new LinkedHashMap<String, String>();
     }
 
     /**

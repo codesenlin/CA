@@ -641,6 +641,7 @@ Loader.fromFile("modules/uiCore/PopupPage.js")
 Loader.fromFile("modules/core/MemSaver.js")
 
 Loader.fromFile("modules/Intl.js")
+Loader.fromFile("modules/Accel.js")
 
 Loader.fromFile("modules/CA.js")
 
