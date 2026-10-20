@@ -21,3 +21,4 @@ Thumbs.db
 
 examples/clib-update/CA_Reforged/
 caaccel/build/
+caaccel/test/rhino-*.jar
