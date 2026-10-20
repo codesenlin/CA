@@ -7,11 +7,11 @@ if (variables.buildConfig.variants == "release") {
 }
 */
 CA.Library.recommended = ["default", "addition", "basicedu"];
-CA.Library.inner["default"] = Loader.fromFile("builtinLibrarys/default.json");
-CA.Library.inner["addition"] = Loader.fromFile("builtinLibrarys/addition.json");
-CA.Library.inner["education"] = Loader.fromFile("builtinLibrarys/education.json");
-CA.Library.inner["experiment"] = Loader.fromFile("builtinLibrarys/experiment.json");
-CA.Library.inner["basicedu"] = Loader.fromFile("builtinLibrarys/basicedu.json");
+CA.Library.inner["default"] = Loader.fromFile("../data/idlibs/default.json");
+CA.Library.inner["addition"] = Loader.fromFile("../data/idlibs/addition.json");
+CA.Library.inner["education"] = Loader.fromFile("../data/idlibs/education.json");
+CA.Library.inner["experiment"] = Loader.fromFile("../data/idlibs/experiment.json");
+CA.Library.inner["basicedu"] = Loader.fromFile("../data/idlibs/basicedu.json");
 CA.Library.defaultDisabled = Object.keys(CA.Library.inner).filter(function(e) { 
 	return CA.Library.recommended.indexOf(e) < 0;
 });
