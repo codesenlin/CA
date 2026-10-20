@@ -116,16 +116,64 @@ var Accel = (function() {
 - **没 jar**（比如纯 JS 环境、或构建时没放 jar）：走等价 JS 实现，行为一致
 - **产物不受影响**：`script.js` 的对外行为不变
 
-## 五、分阶段
+## 五、分阶段（已完成）
 
-| 阶段 | 内容 | 风险 |
+| 阶段 | 内容 | 状态 |
 |---|---|---|
-| P0 | 盘点 + 方案（本文） | 无 |
-| P1 | 数据搬家：`builtinLibrarys` → `data/idlibs`，改 `builtinData.js` 路径，跑构建对比产物 | 低 |
-| P2 | 提取 JS 内嵌数据：主题、版本映射表等 → `data/*.json` | 中（要确认没有代码依赖对象身份） |
-| P3 | 注释文件：`data/notes/*.js`，与 JSON 一一对应 | 低 |
-| P4 | 加速库骨架：`caaccel` 模块 + 空实现 + JS 侧 `Accel` 封装 | 低 |
-| P5 | 第一个加速点：`CA.IntelliSense` 的匹配函数 | 中 |
-| P6 | 更多加速点 + 产物一致性验证 | 中 |
+| P0 | 盘点 + 方案 | ✅ |
+| P1 | 数据搬家：`builtinLibrarys` → `data/idlibs`（7 个 JSON，760 KB） | ✅ `c044e41` |
+| P2 | 提取内嵌数据：tips / theme / packnames / keepermenu | ✅ `e896f76` `ee09fd8` `4852061` |
+| P3 | 注释文件：11 份 notes（7 个 idlibs + 4 个数据） | ✅ `34eaace` |
+| P4 | `caaccel` Java 模块 + `.jar` + 单测 | ✅ `53e13b4` |
+| P5 | 第一个加速点 `matchString` + 接进 APK | ✅ `823722b` `f7f9c62` |
+| 基准 | Rhino vs Java 对比（实测 23x） | ✅ `8db652f` |
 
-**每一阶段结束都要跑 `buildRelease`，对比产物的行为**（至少保证能构建、脚本能加载）。
+### P5 的效果
+
+`module/CA.IntelliSense.js` 的 `matchString` 是补全里唯一"元素数量随数据规模增长"的
+O(n²) 去重（遍历整个候选表，3000 个 ID 级别）。搬到 Java 后：
+
+```
+数组输入  JS(Rhino) 6323.72 ms   Java 275.73 ms   加速 22.9x
+对象输入  JS(Rhino) 11999.54 ms  Java 456.40 ms   加速 26.3x
+```
+
+其余几处 `indexOf` 去重（`CA.IntelliSense:178/736`、`builtinData:16`、`CA.js:97`）
+数组长度都是个位数，O(n²) 在这里等于 O(1)，**不值得搬**。
+
+## 六、以后怎么继续
+
+### 加一个加速点
+
+1. `caaccel/src/top/projectxero/ca/accel/Accel.java` 加 static 方法（保持无状态）
+2. `caaccel/test/` 加用例，跑 `./caaccel/test.sh`
+3. `modules/Accel.js` 里加 JS 等价实现 + 分发分支
+4. 调用方加 `if (Accel.available()) return Accel.xxx(...)`
+5. **`cadroid/app/proguard-rules.pro` 确认有 keep 规则**（见下）
+6. 跑 `node cabuildtools/main.js buildRelease` 验证产物
+
+### 必须注意：R8 会裁掉加速库
+
+`Accel` 只被核心脚本通过 Rhino 反射调用（`Packages.top.projectxero.ca.accel.Accel`），
+Java 侧没有任何静态引用。release 构建时 R8 会把它整个裁掉——**必须**在
+`cadroid/app/proguard-rules.pro` 里保留：
+
+```
+-keep class top.projectxero.ca.accel.** { *; }
+```
+
+第一次接入时漏了这条，构建成功但 dex 里查不到类，到真机才炸。
+
+### 接入 Android（已完成的步骤，留档）
+
+1. `CA/caaccel/build.sh` 产出 `caaccel.jar`
+2. 复制到 `cadroid/app/libs/`
+3. `cadroid/app/build.gradle`：`implementation files('libs/caaccel.jar')`
+4. proguard keep 规则
+
+### 判断"值不值得搬"的三个问题
+
+1. **是算法问题还是解释器问题？** `matchString` 的 23x 主要来自 O(n²)→O(n)，
+   解释器开销是次要的。纯算法问题在 JS 里改也一样有效。
+2. **输入规模会随数据增长吗？** 个位数的数组不值得搬，跨 JNI 的开销会吃掉收益。
+3. **真机上哪一步最慢？** 目前只能靠静态分析猜，缺真机 profiling 数据。
