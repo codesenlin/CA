@@ -1039,10 +1039,7 @@ MapScript.loadModule("AndroidBridge", {
 		if (!CA.settings.notificationActions) CA.settings.notificationActions = Object.copy(this.defaultKeeperMenu);
 		return CA.settings.notificationActions;
 	},
-	defaultKeeperMenu : [
-		{ action : "ca.switchIconVisibility" },
-		{ action : "ca.exit" }
-	],
+	defaultKeeperMenu : Loader.fromFile("../data/keepermenu.json").default,
 	Tiles : {
 		"null" : {
 			name : "无",
