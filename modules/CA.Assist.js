@@ -330,8 +330,10 @@
 			listener.onTextChanged = function(s) {
 				var s = String(s);
 				if (s) {
+					// 过滤在 Java 里一次算完，JS 侧只剩取下标；没有 jar 时走等价 JS 实现
+					var keep = Accel.filter(Object.keys(suggestion), s);
 					adpt.setFilter(function(e, i) {
-						return e.indexOf(s) >= 0;
+						return keep[i];
 					});
 				} else {
 					adpt.clearFilter();

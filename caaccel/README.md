@@ -1,39 +1,73 @@
 # caaccel —— 命令助手高性能加速库
 
-纯 Java 实现的计算密集逻辑，供核心脚本（Rhino）通过 `Packages.top.projectxero.ca.accel.Accel`
-调用；也可以在普通 JVM 上单测。
+**可选加速层。** JS 侧每个调用点都有等价的纯 JS 实现，jar 在不在、方法有没有，
+功能都一模一样，只是慢一点。
 
 ## 设计约束
 
-1. **零依赖**：不依赖 Android、不依赖 Rhino，只有 JDK
-2. **无状态**：所有方法 static，不持有上下文，Rhino 直接当 Callable 调
-3. **必须有等价回退**：每个方法在 JS 侧都有一份实现，jar 不存在时自动走 JS
+1. 纯 Java，不依赖 Android、不依赖 Rhino —— 可以单独在 JVM 上跑单测
+2. 所有方法都是 static、无状态，Rhino 直接 Callable 调用
+3. **每个方法在 `modules/Accel.js` 里都有一份语义等价的 JS 实现**
+
+## 契约：谁负责什么
+
+```
+modules/CA.Assist.js       业务逻辑：决定"要过滤"
+        │  Accel.filter(list, s)
+        ▼
+modules/Accel.js           决策层：jar 在不在？方法有没有？
+        │                  有 → 调 Java；没有 → 跑自己的 JS 实现
+        ▼
+caaccel/Accel.java         加速层：可选。下载代码的人想快就在这里实现
+```
+
+**想让某个操作变快**：在 `Accel.java` 里实现对应方法，重新 `./build.sh`，把 jar 放进
+`cadroid/app/libs/`。
+**不想管**：什么都不做。`Accel.js` 会走纯 JS 实现，功能完全一样。
+
+## 接口清单
+
+| 方法 | 签名 | 语义 | JS 回退 | 被谁调用 |
+|---|---|---|---|---|
+| `version` | `String version()` | 加速库版本号 | 返回 `"js"` | 仅调试 |
+| `matchString` | `Result matchString(String ps, Object a)` | 补全的字符串匹配：`a` 是 `List` 或 `Map`，返回新增的 `inputs` 与 `outputs` | `jsMatchString` | `CA.IntelliSense.js:824` |
+| `filter` | `boolean[] filter(String[] arr, String s)` | 保留 `arr` 中含 `s` 的元素，返回下标掩码 | `Accel.js` 内的循环 | `CA.Assist.js:334` |
+| `parseColor` | `int parseColor(String)` | `#RRGGBB` → ARGB int | 未接调用点 | — |
+| `compareVersion` | `int compareVersion(String, String)` | 版本号比较 | 未接调用点 | — |
+
+后两个是备用的，目前 JS 没调用。要接就按同一套路：`Accel.js` 加包装 + JS 回退。
 
 ## 构建
 
-```bash
-./build.sh      # 产出 build/caaccel.jar
-./test.sh       # 构建 + 跑单测
+```sh
+./build.sh     # 产出 build/caaccel.jar
+./test.sh      # 单测
+./bench.sh     # 与 Rhino 的对比基准（需要 rhino-runtime jar）
 ```
 
-要求 JDK 8+（`JAVA_HOME` 有效时自动用它，否则用 PATH 里的 `javac`/`jar`）。
+`build.sh` 需要 javac/jar：优先用 `$JAVA_HOME/bin`，没有就用 PATH 里的。
 
-## 当前提供的能力
+## 接入 Android（可选）
 
-| 方法 | 说明 | JS 回退 |
-|---|---|---|
-| `version()` | 库版本，供 JS 探测 | 常量字符串 |
-| `parseColor(hex)` | `#RRGGBB` → ARGB int | `Common.argbInt` 系列 |
-| `compareVersion(a, b)` | 点分版本号比较 | `NeteaseAdapter` 里的版本判断 |
+1. `./build.sh` 产出 `caaccel.jar`
+2. 复制到 `cadroid/app/libs/`
+3. `app/build.gradle` 里已有：
+   ```gradle
+   if (caaccelAvailable) { implementation files('libs/caaccel.jar') }
+   ```
+4. `app/proguard-rules.pro` 里已有：
+   ```proguard
+   -keep class top.projectxero.ca.accel.** { *; }
+   ```
+   **这条必须有**：Accel 只被脚本通过 Rhino 反射调用，Java 侧没有静态引用，
+   R8 会把它整个裁掉。
 
-## 接入 Android
-
-把 `caaccel.jar` 放进 `cadroid/app/libs/`，Gradle 侧 `implementation files('libs/caaccel.jar')`。
-Rhino 里通过 `Packages.top.projectxero.ca.accel.Accel.xxx()` 直接调。
+不做 1-3 也能编译运行，只是没有加速。
 
 ## 新增加速点
 
-1. 在 `src/top/projectxero/ca/accel/` 加方法（保持 static、无状态）
-2. 在 `test/AccelTest.java` 加用例
-3. 在 JS 侧写等价实现，放进 `modules/Accel.js` 的回退分支
-4. 跑 `./test.sh` + `node cabuildtools/main.js buildRelease` 双重验证
+1. `Accel.java` 加 static 方法（无状态）
+2. `caaccel/test/` 加用例，跑 `./test.sh`
+3. `modules/Accel.js` 加同名包装 + **JS 等价实现**（关键：没人实现 Java 时靠它）
+4. 业务代码直接 `Accel.xxx(...)`，不需要判断 jar 在不在
+5. `app/proguard-rules.pro` 的 keep 规则已覆盖整个包，不用改

@@ -74,6 +74,18 @@ MapScript.loadModule("Accel", (function() {
 			}
 			return r;
 		},
+		/**
+		 * 批量过滤：返回与 arr 等长的下标掩码，true 表示保留。
+		 * 对应 setFilter(function(e, i){ return e.indexOf(s) >= 0; })
+		 */
+		filter : function(arr, s) {
+			var keep = [], i, p = String(s);
+			if (impl != null) {
+				try { return impl.filter(arr, p); } catch (e) { /* jar 太旧没有 filter，走下面的回退 */ }
+			}
+			for (i = 0; i < arr.length; i++) keep.push(arr[i] != null && arr[i].indexOf(p) >= 0);
+			return keep;
+		},
 		// 供单测/调试：强制走 JS 实现
 		_matchStringJS : jsMatchString
 	};

@@ -73,6 +73,24 @@ public final class Accel {
         return r;
     }
 
+/**
+     * 批量过滤：保留 arr 中包含 s 的元素，返回下标掩码。
+     *
+     * 对应 JS 侧的 setFilter(function(e, i) { return e.indexOf(s) >= 0; })：
+     * 语义完全一样，但字符串查找在 Java 里一次做完，JS 侧只剩 keep[i] 取下标，
+     * 避免每个元素都从 Java 回调进 Rhino 做一次 String.indexOf。
+     */
+    public static boolean[] filter(String[] arr, String s) {
+        boolean[] keep = new boolean[arr == null ? 0 : arr.length];
+        if (arr == null) return keep;
+        String p = s == null ? "" : s;
+        for (int i = 0; i < arr.length; i++) {
+            String e = arr[i];
+            keep[i] = e != null && e.contains(p);
+        }
+        return keep;
+    }
+
     /** matchString 的结果：新增的候选与新增的显示映射 */
     public static final class Result {
         public final List<String> inputs = new ArrayList<String>();

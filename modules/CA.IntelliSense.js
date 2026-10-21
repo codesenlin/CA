@@ -821,37 +821,8 @@
 		return t;
 	},
 	matchString : function(ps, a, r) {
-		if (Accel.available()) return Accel.matchString(ps, a, r);
-		var t, t2, t3;
-		if (!(r instanceof Object)) r = {};
-		if (!Array.isArray(r.input)) r.input = [];
-		if (!(r.output instanceof Object)) r.output = {};
-		if (Array.isArray(a)) {
-			t = [];
-			a.forEach(function(e) {
-				if (e.indexOf(ps) < 0) return;
-				r.output[e] = e;
-				if (r.input.indexOf(e) < 0) t.push(e);
-			});
-			t.sort();
-			r.input = r.input.concat(t);
-		} else {
-			t = []; t2 = [];
-			Object.keys(a).forEach(function(e) {
-				if (e.indexOf(ps) < 0 && a[e].indexOf(ps) < 0) return;
-				if (a[e]) {
-					t3 = e + " - " + a[e];
-					r.output[t3] = e;
-					if (r.input.indexOf(t3) < 0) t.push(t3);
-				} else {
-					r.output[e] = e;
-					if (r.input.indexOf(e) < 0) t2.push(e);
-				}
-			});
-			t.sort(); t2.sort();
-			r.input = r.input.concat(t, t2);
-		}
-		return r;
+		// 匹配实现在 modules/Accel.js：有 jar 走 Java，没有走那里的等价 JS 实现
+		return Accel.matchString(ps, a, r);
 	},
 	assistJSON : function(param) {
 		CA.Assist.editParamJSON({
