@@ -86,6 +86,34 @@ MapScript.loadModule("Accel", (function() {
 			for (i = 0; i < arr.length; i++) keep.push(arr[i] != null && arr[i].indexOf(p) >= 0);
 			return keep;
 		},
+		/** 版本号数组比较，对应 NeteaseAdapter.compareVersion */
+		compareVersionArray : function(a, b) {
+			if (impl != null) {
+				try { return impl.compareVersionArray(a, b); } catch (e) { }
+			}
+			var n = Math.max(a.length, b.length), i, p1, p2;
+			for (i = 0; i < n; i++) {
+				p1 = isNaN(a[i]) ? -1 : parseInt(a[i]);
+				p2 = isNaN(b[i]) ? -1 : parseInt(b[i]);
+				if (p1 < p2) return -1;
+				if (p1 > p2) return 1;
+			}
+			return 0;
+		},
+		/** 枚举候选分类：1=精确命中 2=模糊命中 0=不命中 */
+		classify : function(keys, descs, ps) {
+			if (impl != null) {
+				try { return impl.classify(keys, descs, String(ps)); } catch (e) { }
+			}
+			var flags = [], i, k, d, p = String(ps);
+			for (i = 0; i < keys.length; i++) {
+				k = keys[i];
+				if (p == k || p.indexOf(k + " ") == 0) { flags.push(1); continue; }
+				d = (i < descs.length && descs[i]) ? descs[i] : "";
+				flags.push((k.indexOf(p) >= 0 || d.indexOf(p) >= 0) ? 2 : 0);
+			}
+			return flags;
+		},
 		// 供单测/调试：强制走 JS 实现
 		_matchStringJS : jsMatchString
 	};

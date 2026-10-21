@@ -91,6 +91,46 @@ public final class Accel {
         return keep;
     }
 
+/**
+     * 版本号数组比较。对应 JS: NeteaseAdapter.compareVersion。
+     * 非数字段按 -1 处理（与原实现一致）。
+     */
+    public static int compareVersionArray(int[] a, int[] b) {
+        int n = Math.max(a == null ? 0 : a.length, b == null ? 0 : b.length);
+        for (int i = 0; i < n; i++) {
+            int p1 = (a != null && i < a.length) ? a[i] : -1;
+            int p2 = (b != null && i < b.length) ? b[i] : -1;
+            if (p1 < p2) return -1;
+            if (p1 > p2) return 1;
+        }
+        return 0;
+    }
+
+    /**
+     * 枚举候选分类。对应 CA.IntelliSense 的 enum 对象分支里那段判定：
+     *
+     *   if (ps.startsWith(e + " ") || ps == e)      -> 精确命中（可结束），位 1
+     *   else if (e.indexOf(ps) >= 0 || t[e].indexOf(ps) >= 0) -> 模糊命中，位 2
+     *
+     * 返回与 keys 等长的标志数组，JS 侧只做位测试，不再碰字符串。
+     */
+    public static int[] classify(String[] keys, String[] descs, String ps) {
+        int n = keys == null ? 0 : keys.length;
+        int[] flags = new int[n];
+        String p = ps == null ? "" : ps;
+        for (int i = 0; i < n; i++) {
+            String k = keys[i];
+            if (k == null) continue;
+            if (p.equals(k) || p.startsWith(k + " ")) {
+                flags[i] = 1;
+                continue;
+            }
+            String d = (descs != null && i < descs.length && descs[i] != null) ? descs[i] : "";
+            if (k.contains(p) || d.contains(p)) flags[i] = 2;
+        }
+        return flags;
+    }
+
     /** matchString 的结果：新增的候选与新增的显示映射 */
     public static final class Result {
         public final List<String> inputs = new ArrayList<String>();

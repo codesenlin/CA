@@ -32,6 +32,8 @@ caaccel/Accel.java         加速层：可选。下载代码的人想快就在�
 | `version` | `String version()` | 加速库版本号 | 返回 `"js"` | 仅调试 |
 | `matchString` | `Result matchString(String ps, Object a)` | 补全的字符串匹配：`a` 是 `List` 或 `Map`，返回新增的 `inputs` 与 `outputs` | `jsMatchString` | `CA.IntelliSense.js:824` |
 | `filter` | `boolean[] filter(String[] arr, String s)` | 保留 `arr` 中含 `s` 的元素，返回下标掩码 | `Accel.js` 内的循环 | `CA.Assist.js:334` |
+| `compareVersionArray` | `int compareVersionArray(int[] a, int[] b)` | 版本号数组比较，缺位按 -1 | `Accel.js` 内循环 | `NeteaseAdapter.compareVersion` |
+| `classify` | `int[] classify(String[] keys, String[] descs, String ps)` | 枚举候选分类：1=精确命中 2=模糊命中 0=不命中 | `Accel.js` 内循环 | `CA.IntelliSense` enum 分支 |
 | `parseColor` | `int parseColor(String)` | `#RRGGBB` → ARGB int | 未接调用点 | — |
 | `compareVersion` | `int compareVersion(String, String)` | 版本号比较 | 未接调用点 | — |
 

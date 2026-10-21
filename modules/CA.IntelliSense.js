@@ -404,21 +404,30 @@
 			} else {
 				t2 = [];
 				r.input = [];
-				Object.keys(t).forEach(function(e, i, a) {
-					if (ps.startsWith(e + " ") || ps == e) {
-						r.length = Math.max(r.length, e.length);
+				// 分类放到 Accel.classify：Java 里一次算完，JS 侧只做位测试，
+				// 不再对每个候选做两次字符串查找（没有 jar 时走等价 JS 实现）
+				var __keys = Object.keys(t), __descs = [], __i, __e, __d, __flags, __f;
+				for (__i = 0; __i < __keys.length; __i++) __descs.push(t[__keys[__i]]);
+				__flags = Accel.classify(__keys, __descs, ps);
+				for (__i = 0; __i < __keys.length; __i++) {
+					__f = __flags[__i];
+					if (__f === 0) continue;
+					__e = __keys[__i];
+					if (__f === 1) {
+						r.length = Math.max(r.length, __e.length);
 						r.canFinish = true;
-					} else if (e.indexOf(ps) >= 0 || t[e].indexOf(ps) >= 0) {
-						r.length = Math.max(r.length, ps.length);
-					} else return;
-					if (t[e]) {
-						r.output[e + " - " + t[e]] = e;
-						r.input.push(e + " - " + t[e]);
 					} else {
-						r.output[e] = e;
-						t2.push(e);
+						r.length = Math.max(r.length, ps.length);
 					}
-				});
+					__d = t[__e];
+					if (__d) {
+						r.output[__e + " - " + __d] = __e;
+						r.input.push(__e + " - " + __d);
+					} else {
+						r.output[__e] = __e;
+						t2.push(__e);
+					}
+				}
 				r.input.sort(); t2.sort(); r.input = r.input.concat(t2);
 			}
 			if (r.length < 0) {

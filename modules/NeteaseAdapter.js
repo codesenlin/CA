@@ -239,6 +239,8 @@ MapScript.loadModule("NeteaseAdapter", {
 		});
 	},
 	compareVersion : function(a, b) {
+		return Accel.compareVersionArray(a, b);   // 有 jar 走 Java，没有走等价 JS
+		// 以下为原始实现，保留在 Accel.js 的回退里
 		var n, i, p1, p2;
 		n = Math.max(a.length, b.length);
 		for (i = 0; i < n; i++) {
