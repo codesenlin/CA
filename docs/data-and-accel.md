@@ -181,3 +181,123 @@ Java 侧没有任何静态引用。release 构建时 R8 会把它整个裁掉—
    解释器开销是次要的。纯算法问题在 JS 里改也一样有效。
 2. **输入规模会随数据增长吗？** 个位数的数组不值得搬，跨 JNI 的开销会吃掉收益。
 3. **真机上哪一步最慢？** 目前只能靠静态分析猜，缺真机 profiling 数据。
+
+---
+
+# 引擎选型与实测记录
+
+## 一、为什么继续用 Rhino
+
+真机实测（OnePlus PERM10 / Android 14 / arm64 / 3000 候选 / 每次补全跑一遍匹配）：
+
+| 引擎 | 每次调用 | 相对 Rhino |
+|---|---|---|
+| Rhino 解释模式（`optimizationLevel = -1`，现用） | 28.03 ms | 1.00x |
+| Rhino 编译模式（`0`，运行时生成 dex） | 23.68 ms | 1.18x |
+| QuickJS（`app.cash.quickjs`） | 0.97 ms | 28.7x |
+| Java（`caaccel.matchString`） | 1.08 ms | 26.0x |
+
+**关键结论：QuickJS ≈ caaccel（差 5%）。**
+
+已经在 Java 里实现的加速点，换成 QuickJS 不会更快；而没加速的点，加一个 Java 实现
+比换引擎便宜得多。
+
+### 编译模式值不值得开
+
+- 真机只有 **1.18x**（桌面 JVM 上是 2.5x，因为 HotSpot 能跨边界优化，ART 不行）
+- 瓶颈不在"函数体怎么执行"，而在 `r.output[e] = e` / `forEach` / `sort` 这些**运行时操作**
+- 会引入运行时 dex 生成、首次启动变慢、调试栈变化
+
+**结论：保持 `-1`。** 18% 换这些复杂度不划算。
+
+### 顺便澄清一个误区：Android 14 不禁这条路
+
+`AndroidContextFactory.createClassLoader` 在 API 26+ 走的是
+`InMemoryDexClassLoader`（dex 全在内存里，不落盘）。Android 14 限制的是
+"从可写目录加载代码文件"，**内存加载不受影响**。
+
+已在 targetSdk 34 + Android 14 真机上验证编译模式可以正常工作。
+
+## 二、QuickJS 当侧车：评估过，暂不做
+
+思路：Rhino 跑所有碰 Java 的代码，另起一个 QuickJS 虚拟机只做纯计算。
+
+- **优点**：以后遇到 JS 热点，不用写 Java 也能提速 28 倍
+- **代价**：多一个 native 库（4 个 ABI）；对象要 JSON 序列化来回
+- **致命限制**：`set`/`get` 只支持基本类型和 String，**没有 Java 桥**。
+  核心脚本里有 342 处 `java.*` / `android.*` 调用，QuickJS 一个都处理不了
+
+成本模型：设原耗时 `T`，QuickJS 是 `T/28`，穿越成本 `C`。只要 `C < 0.96T` 就划算。
+但**结果集不能大**——返回上千个匹配项时，回程 JSON 解析会吃掉收益。
+
+| 函数类型 | 侧车是否划算 |
+|---|---|
+| 匹配/过滤（结果上千条） | ⚠️ 回程成本高 → 不如搬 Java |
+| 查找最佳匹配（结果一个数） | ✅ 划算 |
+| 解析/校验/计算 | ✅ 划算 |
+
+**目前没有"结果小、计算重、又不想写 Java"的函数**，所以暂不上。
+
+真要上的时候：在 `modules/Accel.js` 的决策链里加第三档即可，不影响现有结构。
+
+## 三、desugaring 是不是 Rhino 慢的原因：不是
+
+曾怀疑 `coreLibraryDesugaringEnabled` 让 Rhino 的调用绕了 `j$.util.*` 一层。
+排查后否定：
+
+- APK 里确实有 54 个 `j$` 类（`j$/util/Objects`、`Optional`、`stream/...`）
+- 但同比例对比后不成立：
+
+| 引擎 | 桌面 JVM | 真机 | 倍数 |
+|---|---|---|---|
+| `Accel.matchString` | 0.275 ms | 1.08 ms | 3.9x |
+| Rhino (`-1`) | 6.9 ms | 28.0 ms | 4.1x |
+
+**两个引擎在手机上都慢 4 倍左右**——差异来自运行环境（ART vs HotSpot、后台负载、
+散热），不是 desugaring。
+
+（早期版本说"Java 在手机上反而更快"是错的：那组数字拿的是另一段 Java 实现，
+不是同一段代码。跨设备比较必须先保证代码相同。）
+
+desugaring 只是把 `java.util.Objects.requireNonNull` 换成
+`j$/util/Objects.requireNonNull`，多一次静态调用；而 Rhino 每个 AST 节点要走几十条
+指令，这点开销占比微乎其微。
+
+**要真正定位 Rhino 的热点，得用 debug 包 + Android Studio Profiler 或
+`Debug.startMethodTracing`。** simpleperf 在 release 包上会被 JIT 符号和 UI 噪声稀释。
+
+## 四、两条真实的加速路径（已落地）
+
+| 加速点 | 位置 | 手段 |
+|---|---|---|
+| 命令名匹配 | `CA.IntelliSense.matchString` | `Accel.matchString`，O(n²) 去重 → O(n) |
+| ID 列表过滤 | `CA.Assist.js` 的 `setFilter` | `Accel.filter`，字符串查找一次算完，JS 侧只剩取下标 |
+
+第二条尤其重要：原来的写法是**每个元素都从 Java 回调进 Rhino 做一次
+`String.indexOf`**，上千个元素就是上千次边界穿越。
+
+### 候选规模的真实数据（别再拿总数吓自己）
+
+`matchString` / `filter` 的输入是**当前参数对应的那一个列表**，不是全部 enums：
+
+| | 列表数 | 总项数 | 最大单表 |
+|---|---|---|---|
+| 内置 `default.json` | 25 | 9,002 | `recipe`=1749 |
+| Hiland 6.11.0 拓展包 | 39 | 6,713 | `block`=1485 |
+| 1.18 威力增强版 | 29 | 5,586 | `loot_tool`=1090 |
+
+**单次补全的候选上限约 1,750，中位数只有 142。** 装再多拓展包也不会线性变慢，
+因为同名列表是覆盖而不是相加。
+
+按 3000 候选为基准线性换算（Rhino 28 ms / Java 1.08 ms）：
+
+| 场景 | 候选数 | Rhino | caaccel |
+|---|---|---|---|
+| 中位列表 | 142 | 1.3 ms | 0.05 ms |
+| `block` | 857 | 7.7 ms | 0.27 ms |
+| `recipe`（最大） | 1,749 | 15.7 ms | 0.55 ms |
+
+## 五、可选加速的契约
+
+见 `caaccel/README.md`。一句话：**每个 `Accel.xxx()` 都有等价的 JS 实现**，
+jar 在不在、方法有没有都不影响功能，只影响速度。业务代码直接调用，不判断 jar 是否存在。
