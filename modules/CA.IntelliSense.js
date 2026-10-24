@@ -635,6 +635,16 @@
 				// 组装列表顺序：导航 → 补全 → 闭合 → 报错跳转
 				r.input = navLabels.concat(completionLabels, closeLabels);
 				if (errorNavLabel) r.input.push(errorNavLabel);
+
+				// CA 的 output 约定是「字符串」：proc 里会做 u + output[k]。
+				// 社区版这里给的是 { text, cursor } 对象，直接拼会变成 "[object Object]"，
+				// 所以统一降级成字符串（光标只能落在末尾，暂时放弃精确跳转）。
+				Object.keys(r.output).forEach(function(k) {
+					var v = r.output[k];
+					if (v && typeof v === "object" && typeof v.text === "string") {
+						r.output[k] = v.text;
+					}
+				});
 				break;
 
 

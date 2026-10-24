@@ -4193,11 +4193,11 @@ MapScript.loadModule("CA", {
 					});
 				},
 				hidden : function() {
-					return CA.settings.securityLevel > 1;
+					return CA.settings.securityLevel != 0;
 				}
 			},{
 				text : "新建拓展包",
-				description : "新建一个不包含内容的包",
+				description : "新建一个不包含内容的空包",
 				onclick : function(v, tag) {
 					ExternalStorage.showSaveActions({
 						mimeType: "application/json",
@@ -4213,7 +4213,7 @@ MapScript.loadModule("CA", {
 										"uuid": String(java.util.UUID.randomUUID().toString()),
 										"version": [0, 0, 1],
 										"require": []
-									}));
+									}, null, "\t"));
 									CA.Library.enableLibrary(String(uri));
 									cb(true, function() {
 										Common.toast("拓展包已新建");
@@ -4227,7 +4227,7 @@ MapScript.loadModule("CA", {
 					});
 				},
 				hidden : function() {
-					return CA.settings.securityLevel > 1;
+					return CA.settings.securityLevel != 0;
 				}
 			},{
 				text : "刷新",
@@ -4373,7 +4373,7 @@ MapScript.loadModule("CA", {
 				text : "忽略版本",
 				description : "暂时忽略版本限制",
 				hidden : function() {
-					return CA.settings.securityLevel > 1 || CA.Library.ignoreVersion;
+					return CA.settings.securityLevel != 0 || CA.Library.ignoreVersion;
 				},
 				onclick : function(v, tag) {
 					self.postTask(function(cb) {
@@ -4388,7 +4388,7 @@ MapScript.loadModule("CA", {
 				text : "取消忽略版本",
 				description : "取消忽略版本限制",
 				hidden : function() {
-					return CA.settings.securityLevel > 1 || !CA.Library.ignoreVersion;
+					return CA.settings.securityLevel != 0 || !CA.Library.ignoreVersion;
 				},
 				onclick : function(v, tag) {
 					self.postTask(function(cb) {
@@ -4531,7 +4531,7 @@ MapScript.loadModule("CA", {
 				text : "编辑",
 				description : "用JSON编辑器编辑该拓展包",
 				hidden : function(tag) {
-					return CA.settings.securityLevel > 1 || tag.data.mode != 1;
+					return CA.settings.securityLevel != 0 || tag.data.mode != 1;
 				},
 				onclick : function(v, tag) {
 					var uri = ExternalStorage.toUri(tag.data.src);
@@ -4592,7 +4592,7 @@ MapScript.loadModule("CA", {
 				text : "创建副本",
 				description : "创建该拓展包的副本（副本不会被认为与原拓展包相同）",
 				hidden : function(tag) {
-					return CA.settings.securityLevel > 1 || tag.data.hasError || tag.data.mode >= 2;
+					return CA.settings.securityLevel != 0 || tag.data.hasError || tag.data.mode >= 2;
 				},
 				onclick : function(v, tag) {
 					ExternalStorage.showSaveActions({
@@ -4637,7 +4637,7 @@ MapScript.loadModule("CA", {
 				text : "锁定",
 				description : "锁定拓展包，使其不能被编辑",
 				hidden : function(tag) {
-					return CA.settings.securityLevel > 1 || tag.data.hasError || tag.data.mode != 1;
+					return CA.settings.securityLevel != 0 || tag.data.hasError || tag.data.mode != 1;
 				},
 				onclick : function(v, tag) {
 					Common.showConfirmDialog({
