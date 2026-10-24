@@ -391,7 +391,12 @@ MapScript.loadModule("DBSettings", {
 	createProxy(target, handler) {
 		const cx = org.mozilla.javascript.Context.getCurrentContext();
 		const topScope = eval.call(null, "this");
-		const targetScriptable = new org.mozilla.javascript.NativeJavaObject(topScope, target, org.mozilla.javascript.Scriptable);
+		// Rhino 1.9 的 NativeJavaObject 第三个参数从 Class<?> 换成了 TypeInfo，
+		// 而脚本里 Class.forName 在反射调用下用引导类加载器、找不到应用类，
+		// 所以改由 ScriptInterface 在 Kotlin 侧构造（1.7 的 App 没有这个方法，走旧路径）。
+		const targetScriptable = ScriptInterface.wrapAsScriptable
+			? ScriptInterface.wrapAsScriptable(target, topScope)
+			: new org.mozilla.javascript.NativeJavaObject(topScope, target, org.mozilla.javascript.Scriptable);
 		const OriginCall = (method) => targetScriptable[method].bind(targetScriptable);
 		const Undefined = this.getUndefinedInstance(cx, topScope);
 		const scriptable = new org.mozilla.javascript.Scriptable({
