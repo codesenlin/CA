@@ -53,6 +53,15 @@
 	},
 	loadBuiltinLibraries : function() {
 	var libs = this.builtinLibs;
+	// 清理已经不存在的内置库（比如从构建里移除的），否则每次启动都会报"文件不存在"。
+	// 必须放在下面的提前返回之前：内置库被全部移除时 libs 是空数组，
+	// 提前返回会导致这里永远不执行，残留的 builtin:// URI 就一直报错。
+	[CA.settings.enabledLibrarys, CA.settings.coreLibrarys].forEach(function(list) {
+		var k;
+		for (k = list.length - 1; k >= 0; k--) {
+			if (String(list[k]).indexOf("builtin://") == 0 && !CA.Library.inner[list[k]]) list.splice(k, 1);
+		}
+	});
 	// 若构建时没有注入内置命令库（例如旧脚本），这里仍是占位符字符串，
 	// 字符串没有 forEach，必须直接跳过，否则初始化命令库时会抛 TypeError
 	if (!libs || !libs.length || typeof libs.forEach !== "function") return;
@@ -73,13 +82,6 @@
 			erp(e);
 		}
 	});
-		// 清理已经不存在的内置库（比如从构建里移除的），否则每次启动都会报无法加载
-		[CA.settings.enabledLibrarys, CA.settings.coreLibrarys].forEach(function(list) {
-			var k;
-			for (k = list.length - 1; k >= 0; k--) {
-				if (String(list[k]).indexOf("builtin://") == 0 && !CA.Library.inner[list[k]]) list.splice(k, 1);
-			}
-		});
 },
 	clearCache : function(uriStr) {
 		if (uriStr) {
@@ -193,12 +195,14 @@
 		}
 		if (!rd || rd.error || !rd.data) {
 			this.enableLibrary(uriStr);
+			this.saveState();
 			return "enabled";
 		}
 		data = rd.data;
 		existing = this.findByUUID(data.uuid);
 		if (!existing) {
 			this.enableLibrary(uriStr);
+			this.saveState();
 			return "added";
 		}
 		if (uri == String(existing.src)) {
@@ -213,6 +217,7 @@
 			this.removeLibrary(String(existing.src)); // 低版本直接移除
 		}
 		this.enableLibrary(uriStr);
+		this.saveState();
 		return "updated";
 	},
 	/** 把一批 addLibrary 的返回值汇总成一句提示（只报数量） */
@@ -288,11 +293,12 @@
 	},
 
 	loadLibrary : function(uriStr, targetLib) {
-		var m, cur, resolved;
+		var m, community, cur, resolved;
 		try {
 			if (this.cache[uriStr]) {
 				cur = this.cache[uriStr].data;
 				m = this.cache[uriStr].mode;
+				community = this.cache[uriStr].community;
 			} else {
 				cur = this.readLibrary(uriStr);
 				if (!cur) throw "无法读取或解析拓展包";
@@ -300,6 +306,7 @@
 				if (!(cur.data instanceof Object)) throw "错误的拓展包格式";
 				this.cache[uriStr] = cur;
 				m = cur.mode;
+				community = cur.community;
 				cur = cur.data;
 			}
 			resolved = {
@@ -312,7 +319,8 @@
 				update : cur.update,
 				menu : cur.menu,
 				deprecated : cur.deprecated || this.isDeprecated(cur.uuid, cur.version),
-				mode : m
+				mode : m,
+				community : community === true
 			};
 			resolved.stat = !cur.noCommand && targetLib ? this.resolveLibrary(targetLib, cur) : null;
 			resolved.loaded = true;
@@ -335,67 +343,87 @@
 	},
 	readLibrary : function(uriStr) {
 		var t, er, uri, securityLevel = CA.settings.securityLevel, requiredSecLevel;
-		//-1 禁止所有非内置拓展包
-		//0 允许所有拓展包
-		//1 仅允许锁定拓展包与官方拓展包
-		//2+ 仅允许商店下载的拓展包
+		// 安全级别（越往右越严格）：
+		//   0 禁用：什么都不检查，全部加载
+		//   1 低  ：全部加载，但提醒一次
+		//   2 中  ：只允许已签名的（官方 + 社区）
+		//   3 高  ：只允许官方签名的
+		//   4 受限：只加载内置
 		if (t = CA.Library.inner[uriStr]) {
 			return {
 				data : t,
 				mode : 0
 			};
-		} else {
-			er = {
-				error : "未知错误"
+		}
+		er = {
+			error : "未知错误"
+		};
+		if (securityLevel >= 4) {
+			return {
+				error : "当前安全级别为「受限」，只加载内置命令库\n可在管理拓展包右上角 ▼ 里的“设置安全级别”调整"
 			};
 		}
-		if (securityLevel >= 0) {
-			uri = ExternalStorage.toUri(uriStr);
-			ExternalStorage.tryTakeUriPermission(uri);
-			if (!ExternalStorage.isFile(uri)) {
+		uri = ExternalStorage.toUri(uriStr);
+		ExternalStorage.tryTakeUriPermission(uri);
+		if (!ExternalStorage.isFile(uri)) {
+			return {
+				error : "拓展包文件不存在"
+			};
+		}
+		requiredSecLevel = this.testSecurityLevel(uri); // 2=签名 1=LIBRARY 0=裸JS
+		// 按级别决定"最低要求的包类型"：禁用(0)不限，低(1)要 LIBRARY 以上，中及以上要签名
+		var minRequired = securityLevel <= 0 ? 0 : (securityLevel == 1 ? 1 : 2);
+		if (requiredSecLevel < minRequired) {
+			var levelName = securityLevel >= 3 ? "高" : (securityLevel == 2 ? "中" : "低");
+			return {
+				error : "当前安全级别为「" + levelName + "」，不允许加载" +
+					(minRequired >= 2 ? "未签名的" : "裸 JS 格式的") + "拓展包\n可在管理拓展包右上角 ▼ 里的“设置安全级别”调整"
+			};
+		}
+		// 高：只认官方签名，社区包也拒绝
+		if (securityLevel >= 3 && this.isCommunityLib(uri)) {
+			return {
+				error : "当前安全级别为「高」，不允许加载社区拓展包\n它是由第三方拓展包源的公钥签名的，没有官方背书"
+			};
+		}
+		// 低：允许 LIBRARY 未签名包，但要提醒一次
+		if (securityLevel == 1 && requiredSecLevel < 2) {
+			this.warnLowSecurity();
+		}
+		if (requiredSecLevel >= 2) {
+			if (t = CA.Library.loadSignedV1(uri, null, er)) {
 				return {
-					error : "拓展包文件不存在"
+					data : t,
+					mode : 3,
+					community : this.isCommunityLib(uri)
 				};
 			}
-			requiredSecLevel = this.testSecurityLevel(uri);
-			if (requiredSecLevel < securityLevel) {
+		} else if (requiredSecLevel == 1) {
+			if (t = CA.Library.loadPrefixed(uri, null, er)) {
 				return {
-					error : "您正在使用的安全等级不允许加载此拓展包\n您可以在右上角▼处打开菜单，然后点击“设置安全级别”来调整当前安全级别"
+					data : t,
+					mode : 2
 				};
 			}
-			if (requiredSecLevel >= 2) {
-				if (t = CA.Library.loadSignedV1(uri, null, er)) {
-					return {
-						data : t,
-						mode : 3
-					};
-				}
-			} else if (requiredSecLevel == 1) {
-				if (t = CA.Library.loadPrefixed(uri, null, er)) {
-					return {
-						data : t,
-						mode : 2
-					};
-				}
-			} else if (requiredSecLevel == 0) {
-				t = ExternalStorage.readFileContent(uri, "UTF-8", (error) => void (er = { error }))
+		} else if (requiredSecLevel == 0) {
+			t = ExternalStorage.readFileContent(uri, "UTF-8", (error) => void (er = { error }))
+			if (t) {
+				t = this.safeEval(uri, t, er);
 				if (t) {
-					t = this.safeEval(uri, t, er);
-					if (t) {
-						return {
-							data : t,
-							mode : 1
-						};
-					}
+					return {
+						data : t,
+						mode : 1
+					};
 				}
-			} else {
-				return {
-					error : "无法解析此命令库"
-				};
 			}
+		} else {
+			return {
+				error : "无法解析此命令库"
+			};
 		}
 		return er;
 	},
+
 	evalLib : function(uri, code) {
 		return Loader.evalSpecial("(" + code + ")", ExternalStorage.uriToName(uri), 0, {
 			path : String(uri.getPath()),
@@ -1014,6 +1042,7 @@
 			builtin : false
 		};
 		this.getSources().push(src);
+		this.saveSources();
 		return src;
 	},
 	removeSource : function(url) {
@@ -1022,6 +1051,7 @@
 			if (list[i] && this.normalizeSourceUrl(list[i].url) == this.normalizeSourceUrl(url)) {
 				if (list[i].builtin) throw "内置源不能删除";
 				list.splice(i, 1);
+				this.saveSources();
 				return true;
 			}
 		}
@@ -1032,6 +1062,31 @@
 		if (!src) return false;
 		if (!enabled && src.builtin) throw "内置源不能禁用";
 		src.enabled = !!enabled;
+		this.saveSources();
+		return true;
+	},
+	/**
+	 * 把设置立刻写盘。
+	 * 之前源的增删改、拓展包的启用/禁用/安装只改内存里的 CA.settings，
+	 * 进程被系统杀掉（或用户手动结束）后这些改动就全丢了。
+	 */
+	saveState : function() {
+		try {
+			if (typeof CA.trySave == "function") CA.trySave();
+		} catch(e) {
+			Log.e(e);
+		}
+	},
+	/** 兼容旧名字 */
+	saveSources : function() {
+		this.saveState();
+	},
+	/** 改源备注并保存 */
+	setSourceNote : function(url, note) {
+		var src = this.findSource(url);
+		if (!src) return false;
+		src.note = String(note || "").trim();
+		this.saveSources();
 		return true;
 	},
 	getVerify : function(source) {
@@ -1088,6 +1143,20 @@
 			var dataStart = 9 + signlen;
 			signature.update(arr, dataStart, arr.length - dataStart);
 			if (!signature.verify(arr, 9, signlen)) throw "库的签名不正确";
+			// 判断这是不是"社区包"：拿验签用的公钥和**官方源的公钥**比。
+			// - 一致       → [官方]，有官方源背书
+			// - 不一致     → [社区]，源自己的 key 验的签，能装但没官方背书
+			// - 官方 key 拿不到 → 无法判定，按 [官方] 处理（不误标）
+			// 注意这里不能拿 ScriptInterface.getVerifyKey() 来比：那是 App 内置的
+			// hotfix 公钥，和官方拓展包源用的 verify.key 是两把不同的钥匙。
+			// 两把 key 都必须存在才可能判为社区包。
+			var isCommunity = false;
+			if (source && !source.builtin) {
+				// 非官方源的包：默认就是社区包；若它的 key 恰好等于官方 key
+				// （例如官方源的镜像），仍按官方处理。
+				var officialKey = this.getOfficialVerify();
+				isCommunity = !officialKey || !this.bytesEqual(verify, officialKey);
+			}
 			libraryFile.getParentFile().mkdirs();
 			os = new java.io.FileOutputStream(libraryFile);
 			os.write(new java.lang.String("LIBSIGN01").getBytes("UTF-8"));
@@ -1108,6 +1177,17 @@
 			os = new java.io.FileOutputStream(new java.io.File(libraryFile.getParent(), libraryFile.getName() + ".hash"));
 			os.write(bytes);
 			os.close();
+			// 社区包标记；官方包则清掉可能残留的旧标记
+			var markFile = new java.io.File(libraryFile.getParent(), libraryFile.getName() + ".community");
+			if (isCommunity) {
+				// Rhino 里没有 byte 这个类型，new byte[0] 会报"byte 未定义"；
+				// 写一个空字符串的字节就是 0 字节文件。
+				os = new java.io.FileOutputStream(markFile);
+				os.write(new java.lang.String("").getBytes("UTF-8"));
+				os.close();
+			} else if (markFile.exists()) {
+				markFile.delete();
+			}
 		} else {
 			libraryFile.getParentFile().mkdirs();
 			os = new java.io.FileOutputStream(libraryFile);
@@ -1162,6 +1242,57 @@
 			return defaultValue;
 		}
 	},
+	/**
+	 * 官方源的公钥（DER）；取不到时返回 null。
+	 * 注意：getSources() 的元素只有 {url,name,enabled,builtin}，
+	 * pubkey 字段来自 info.json，必须先 requestSourceInfoCached 再取。
+	 */
+	getOfficialVerify : function() {
+		var sources = this.getSources(), i, src = null, info;
+		for (i = 0; i < sources.length; i++) {
+			if (sources[i] && sources[i].builtin) {
+				src = sources[i];
+				break;
+			}
+		}
+		if (!src || !src.url) return null;
+		try {
+			info = this.requestSourceInfoCached(src.url);
+			if (!info || !info.pubkey) return null;
+			return this.getVerify(info);
+		} catch(e) {
+			return null;
+		}
+	},
+	/** 两个字节数组是否完全相同 */
+	bytesEqual : function(a, b) {
+		var i;
+		if (!a || !b || a.length != b.length) return false;
+		for (i = 0; i < a.length; i++) {
+			if (a[i] != b[i]) return false;
+		}
+		return true;
+	},
+	/** 低安全级别下对未签名包的提醒（每次运行只提示一次） */
+	warnLowSecurity : function() {
+		if (this.lowSecurityWarned) return;
+		this.lowSecurityWarned = true;
+		try {
+			G.ui(function() {try {
+				Common.toast("安全级别为「低」：LIBRARY 格式（未签名）的拓展包也会被加载");
+			} catch(e) {erp(e)}});
+		} catch(e) {}
+	},
+	/** 是否为社区包：由非官方公钥验签通过、且带 .community 标记的已签名包 */
+	isCommunityLib : function(uri) {
+		try {
+			var file = ExternalStorage.uriToFile(uri);
+			if (!file) return false;
+			return new java.io.File(file.getPath() + ".community").isFile();
+		} catch(e) {
+			return false;
+		}
+	},
 	tryReleaseLibraryFile : function(uri) {
 		const file = ExternalStorage.uriToFile(uri);
 		if (file) {
@@ -1172,9 +1303,13 @@
 			if (inLibraryRoot || inLibraryExternalRoot) {
 				const parentFile = file.getParentFile();
 				const hashFile = new java.io.File(parentFile, file.getName() + ".hash");
+				const communityFile = new java.io.File(parentFile, file.getName() + ".community");
 				file.delete();
 				if (hashFile.exists()) {
 					hashFile.delete();
+				}
+				if (communityFile.exists()) {
+					communityFile.delete();
 				}
 				if (inLibraryRoot) {
 					ExternalStorage.releaseEmptyDirectory(parentFile, libraryRoot);
