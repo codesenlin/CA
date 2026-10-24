@@ -643,6 +643,9 @@ Loader.fromFile("modules/core/MemSaver.js")
 Loader.fromFile("modules/Intl.js")
 Loader.fromFile("modules/Accel.js")
 
+// JSON 补全引擎（jsonPro 参数用）：体积大，放在 CA.js 之前单独加载
+Loader.fromFile("modules/JSONLanguageService.js")
+
 Loader.fromFile("modules/CA.js")
 
 Loader.fromFile("modules/uiCore/PopupWindow.js")

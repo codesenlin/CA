@@ -11842,8 +11842,9 @@
 									"target": "player"
 								},
 								{
-									"type": "rawjson",
-									"name": "JSON文本"
+									"type": "jsonPro",
+									"name": "JSON文本",
+									"schema": "rawtext"
 								}
 							]
 						}

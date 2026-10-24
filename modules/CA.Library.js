@@ -14,6 +14,7 @@
 			enums : {},
 			selectors : {},
 			json : {},
+			jsonSchema : {},
 			help : {},
 			tutorials : [],
 			idlist : [],
@@ -790,6 +791,8 @@
 			if (!(l.commands instanceof Object)) l.commands = {};
 			if (!(l.enums instanceof Object)) l.enums = {};
 			if (!(l.selectors instanceof Object)) l.selectors = {};
+			// 拓展包可以携带 JSON Schema，供 jsonPro 类型的参数做补全与校验
+			if (!(l.jsonSchema instanceof Object)) l.jsonSchema = {};
 			if (!(l.help instanceof Object)) l.help = {};
 			for (i in l.commands) {
 				if (l.mode == "remove") {
@@ -829,6 +832,13 @@
 					delete cur.json[i];
 				} else {
 					cur.json[i] = l.json[i];
+				}
+			}
+			for (i in l.jsonSchema) {
+				if (l.mode == "remove") {
+					delete cur.jsonSchema[i];
+				} else {
+					cur.jsonSchema[i] = l.jsonSchema[i];
 				}
 			}
 			for (i in l.help) {

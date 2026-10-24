@@ -14,6 +14,8 @@
 	patterns : [],
 	mode : 0,
 	last : {},
+	// jsonPro 参数的 JSON Language Service 实例缓存（按 schema 名）
+	jsonLanguageServices : {},
 	callDelay : function self(s) {
 		if (CA.settings.iiMode != 2 && CA.settings.iiMode != 3) return;
 		if (!self.pool) {
@@ -291,6 +293,350 @@
 				canFinish : true
 			};
 			break;
+
+			case "jsonPro":
+				var schema = this.library.jsonSchema[cp.schema];
+				if (!schema) {
+					r = {
+						length: ps.length,
+						canFinish: false,
+						description: "找不到Schema: " + cp.schema
+					};
+					break;
+				}
+
+				// 获取或创建缓存的 Language Service
+				var ls = this.jsonLanguageServices[cp.schema];
+				if (!ls) {
+					ls = JSONLanguageService.getLanguageService({
+						schemaRequestService: function (uri) { return null; }
+					});
+					ls.configure({
+						schemas: [{
+							uri: 'ca://' + cp.schema + '.json',
+							fileMatch: ['ca://json.json'],
+							schema: schema
+						}]
+					});
+					this.jsonLanguageServices[cp.schema] = ls;
+				}
+
+				// 计算光标位置
+				var cursorOffset = cp._cursorOffset !== undefined ? cp._cursorOffset : ps.length;
+				if (cursorOffset < 0) cursorOffset = 0;
+				if (cursorOffset > ps.length) cursorOffset = ps.length;
+
+				// 创建 TextDocument 并获取补全
+				var doc = JSONLanguageService.TextDocument.create('ca://json.json', 'json', 1, ps);
+				var jsonDoc = ls.parseJSONDocument(doc);
+				var completions = null;
+				try {
+					var completionResult = ls.doComplete(doc, { line: 0, character: cursorOffset }, jsonDoc);
+					completions = completionResult && completionResult.value ? completionResult.value : completionResult;
+				} catch (e) {
+					Log.e('doComplete 错误: ' + e);
+				}
+
+				// 如果光标在 score.name 字段，添加选择器补全
+				var selectorNode = null;
+				if (jsonDoc.root && cursorOffset >= 0 && cursorOffset <= ps.length) {
+					selectorNode = JSONLanguageService.findNodeAtOffset(jsonDoc.root, cursorOffset, true);
+				}
+				if (selectorNode && selectorNode.parent && selectorNode.parent.type === 'property' && selectorNode.parent.keyNode && selectorNode.parent.keyNode.value === 'name') {
+					var prop = selectorNode.parent;
+					var scoreObj = prop.parent;
+					if (scoreObj && scoreObj.type === 'object' && scoreObj.parent && scoreObj.parent.type === 'property' && scoreObj.parent.keyNode && scoreObj.parent.keyNode.value === 'score') {
+						var valueNode = prop.valueNode || selectorNode;
+						var valueStart = valueNode.offset;
+						var valueEnd = valueNode.offset + valueNode.length;
+						var nameValue = ps.substring(valueStart, valueEnd);
+						if (nameValue.length >= 2 && nameValue[0] === '"' && nameValue[nameValue.length - 1] === '"') {
+							nameValue = nameValue.substring(1, nameValue.length - 1);
+						}
+						var selResult = this.procSelector({}, nameValue);
+						if (selResult && selResult.recommend) {
+							if (!completions) completions = { items: [] };
+							if (!completions.items) completions.items = [];
+							for (var selKey in selResult.recommend) {
+								var selVal = selResult.recommend[selKey];
+								var escapedVal = selVal.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+								var newText = '"' + escapedVal + '"';
+								var selCursor = valueStart + 1 + escapedVal.length;
+								if (escapedVal.indexOf('=') >= 0) {
+									selCursor = valueStart + 1 + escapedVal.indexOf('=') + 1;
+								}
+								completions.items.push({
+									label: selKey,
+									insertText: newText,
+									textEdit: {
+										range: { start: { line: 0, character: valueStart }, end: { line: 0, character: valueEnd } },
+										newText: newText
+									},
+									_selectorCursor: selCursor
+								});
+							}
+						}
+					}
+				}
+
+				// 通用 ca:parser 处理：根据 Schema 自定义属性调用项目解析器
+				try {
+					var matchingSchemas = jsonDoc.getMatchingSchemas(schema, cursorOffset);
+					var parserType = null;
+					var parserNode = null;
+					for (var mi = 0; mi < matchingSchemas.length; mi++) {
+						var ms = matchingSchemas[mi];
+						if (ms.schema && ms.schema['ca:parser']) {
+							parserType = ms.schema['ca:parser'];
+							parserNode = ms.node;
+							break;
+						}
+					}
+					if (parserType) {
+						var parserItems = this.getParserCompletions(parserType, ps, cursorOffset, parserNode);
+						if (parserItems && parserItems.length > 0) {
+							if (!completions) completions = { items: [] };
+							if (!completions.items) completions.items = [];
+							for (var pi = 0; pi < parserItems.length; pi++) {
+								completions.items.push(parserItems[pi]);
+							}
+						}
+					}
+				} catch (e) {
+					// 解析器补全失败不影响主流程
+				}
+
+				// 转换结果
+				r = {
+					length: ps.length,
+					canFinish: false,
+					input: [],
+					output: {},
+					prompt: []
+				};
+				var completionLabels = [];
+
+				if (completions && completions.items) {
+					completions.items.forEach(function (item) {
+						var label = item.label;
+						var newText = item.insertText || label;
+						var start = cursorOffset;
+						var end = cursorOffset;
+
+						if (item.textEdit) {
+							newText = item.textEdit.newText;
+							start = item.textEdit.range.start.character;
+							end = item.textEdit.range.end.character;
+						}
+
+						// 计算光标位置（基于 Snippet 占位符 $1）
+						var snippetText = item.textEdit ? item.textEdit.newText : item.insertText;
+						var cursorInParam = start;
+						if (item._selectorCursor !== undefined) {
+							cursorInParam = item._selectorCursor;
+						} else if (snippetText && snippetText.indexOf('$1') >= 0) {
+							cursorInParam = start + snippetText.indexOf('$1');
+						} else {
+							cursorInParam = start + newText.length;
+						}
+
+						// 去掉 Snippet 占位符 
+						newText = newText.replace(/\$\d+/g, '');
+
+						// 记录是否是对象/数组插入（必须在逗号补全之前记录）
+						var isObjectOrArray = newText.length > 0 && (newText[0] === '{' || newText[0] === '[');
+
+						// 计算替换后的完整参数
+						// 自动补全逗号（当插入对象/数组且前面是 } 或 ] 时）
+						if (isObjectOrArray && start > 0) {
+							var prevChar = ps[start - 1];
+							if (prevChar === "}" || prevChar === "]") {
+								newText = "," + newText;
+								cursorInParam++;
+							}
+						}
+
+						var replacedParam = ps.substring(0, start) + newText + ps.substring(end);
+
+						// 获取字段说明（来自 Schema 的 description）
+						var displayLabel = label;
+						var desc = item.detail;
+
+						// 补全项 detail 中文映射（detail 才是 "New object"/"New array"）
+						if (desc === 'New object') desc = '新建对象';
+						else if (desc === 'New array') desc = '新建数组';
+						if (!desc && item.documentation) {
+							if (typeof item.documentation === 'string') {
+								desc = item.documentation;
+							} else if (item.documentation.value) {
+								desc = item.documentation.value;
+							}
+						}
+						if (desc) {
+							displayLabel = label + " - " + desc.split('\n')[0];
+						}
+
+						// 模拟检测：插入后在光标位置是否还有补全选项
+						// 如果插入的是对象/数组，但光标位置不合法，则过滤掉
+						var isValidCompletion = true;
+						if (isObjectOrArray) {
+							var simDoc = JSONLanguageService.TextDocument.create('ca://json.json', 'json', 1, replacedParam);
+							var simJsonDoc = ls.parseJSONDocument(simDoc);
+							// 如果光标在根节点范围外部，说明这个位置不合法
+							if (simJsonDoc.root && cursorInParam > simJsonDoc.root.offset + simJsonDoc.root.length) {
+								isValidCompletion = false;
+							} else {
+								var simResult = ls.doComplete(simDoc, { line: 0, character: cursorInParam }, simJsonDoc);
+								var simCompletions = simResult && simResult.value ? simResult.value : simResult;
+								if (!simCompletions || !simCompletions.items || simCompletions.items.length === 0) {
+									isValidCompletion = false;
+								}
+							}
+						}
+
+						if (isValidCompletion) {
+							completionLabels.push(displayLabel);
+							r.output[displayLabel] = {
+								text: replacedParam,
+								cursor: cursorInParam
+							};
+						}
+					});
+				}
+
+				// 引号/括号扫描 + 闭合检测 + 字段导航（合并为一次扫描）
+				var unclosed = [];
+				var stringPositions = [];
+				var navLabels = [];
+				var inQuote = false, escapeNext = false;
+				for (var idx = 0; idx < ps.length; idx++) {
+					var ch = ps[idx];
+					if (escapeNext) { escapeNext = false; continue; }
+					if (ch === '\\') { escapeNext = true; continue; }
+					if (ch === '"') {
+						if (!inQuote) {
+							inQuote = true;
+							unclosed.push('quote');
+							stringPositions.push(idx + 1); // 字符串内容起始位置（引号后）
+						} else {
+							inQuote = false;
+							unclosed.pop();
+						}
+						continue;
+					}
+					if (!inQuote) {
+						if (ch === '{') unclosed.push('brace');
+						else if (ch === '}') {
+							for (var j = unclosed.length - 1; j >= 0; j--) {
+								if (unclosed[j] === 'brace') { unclosed.splice(j, 1); break; }
+							}
+						}
+						else if (ch === '[') unclosed.push('bracket');
+						else if (ch === ']') {
+							for (var j = unclosed.length - 1; j >= 0; j--) {
+								if (unclosed[j] === 'bracket') { unclosed.splice(j, 1); break; }
+							}
+						}
+					}
+				}
+
+				// 闭合提示（一次只闭合最内层的一个）
+				var closeLabels = [];
+				var lastUnclosed = unclosed.length > 0 ? unclosed[unclosed.length - 1] : null;
+				if (lastUnclosed === 'quote') {
+					closeLabels.push('" - 闭合引号');
+					r.output['" - 闭合引号'] = { text: ps + '"', cursor: ps.length + 1 };
+				} else if (lastUnclosed === 'brace') {
+					closeLabels.push('} - 闭合对象');
+					r.output['} - 闭合对象'] = { text: ps + '}', cursor: ps.length + 1 };
+				} else if (lastUnclosed === 'bracket') {
+					closeLabels.push('] - 闭合数组');
+					r.output['] - 闭合数组'] = { text: ps + ']', cursor: ps.length + 1 };
+				}
+				if (stringPositions.length > 0) {
+					var prevPos = -1, nextPos = -1;
+					for (var si = 0; si < stringPositions.length; si++) {
+						if (stringPositions[si] < cursorOffset) prevPos = stringPositions[si];
+						if (stringPositions[si] > cursorOffset && nextPos < 0) nextPos = stringPositions[si];
+					}
+					// 边界回退（循环）
+					if (prevPos < 0) prevPos = stringPositions[stringPositions.length - 1];
+					if (nextPos < 0) nextPos = stringPositions[0];
+
+					navLabels.push('◀ 上一个字段');
+					r.output['◀ 上一个字段'] = { text: ps, cursor: prevPos };
+					navLabels.push('▶ 下一个字段');
+					r.output['▶ 下一个字段'] = { text: ps, cursor: nextPos };
+				}
+
+				// JSON 报错检测
+				var errorLabel = null;
+				var allErrors = [];
+				// 语法错误（jsonc-parser）
+				if (jsonDoc.errors && jsonDoc.errors.length > 0) {
+					jsonDoc.errors.forEach(function(err) {
+						var errMsg = "JSON语法错误";
+						switch (err.error) {
+							case 1: errMsg = "非法符号"; break;
+							case 3: errMsg = "缺少属性名"; break;
+							case 4: errMsg = "缺少值"; break;
+							case 5: errMsg = "缺少冒号"; break;
+							case 6: errMsg = "缺少逗号"; break;
+							case 7: errMsg = "缺少右大括号"; break;
+							case 8: errMsg = "缺少右中括号"; break;
+							case 12: errMsg = "字符串未闭合"; break;
+						}
+						allErrors.push({ offset: err.offset, message: errMsg });
+					});
+				}
+				// Schema 验证错误
+				var validationResult = ls.doValidation(doc, jsonDoc);
+				var diagnostics = validationResult && validationResult.value ? validationResult.value : validationResult;
+				if (diagnostics && diagnostics.length > 0) {
+					diagnostics.forEach(function(d) {
+						if (d.severity === 1) { // Error
+							var errMsg = d.message;
+							// 这里的错误信息比较长且不友好，做个映射转换一下
+							switch (errMsg) {
+								case 'Expected a JSON object, array or literal.': errMsg = '需要 对象、数组、字面量'; break;
+								case 'End of file expected.': errMsg = '需要文件结束符'; break;
+								case 'Value expected': errMsg = '需要值'; break;
+								case 'Property expected': errMsg = '需要属性名'; break;
+								case 'Expected comma': errMsg = '需要 ,'; break;
+								case 'Expected comma or closing bracket': errMsg = '需要 , 或 ]'; break;
+								case 'Expected comma or closing brace': errMsg = '需要 , 或 }'; break;
+								case 'Colon expected': errMsg = '需要 :'; break;
+								case 'Trailing comma': errMsg = '多余的 ,'; break;
+								case 'Property keys must be doublequoted': errMsg = '属性名必须用" "包裹'; break;
+								case 'Invalid number format.': errMsg = '数字格式无效'; break;
+								case 'Invalid unicode sequence in string.': errMsg = '字符串中的 Unicode 序列无效'; break;
+								case 'Invalid escape character in string.': errMsg = '字符串中的转义字符无效'; break;
+								case 'Unexpected end of string.': errMsg = '字符串未闭合'; break;
+								case 'Unexpected end of comment.': errMsg = '注释未闭合'; break;
+								case 'Unexpected end of number.': errMsg = '数字未结束'; break;
+								case 'Invalid characters in string. Control characters must be escaped.': errMsg = '字符串中包含非法字符'; break;
+								case 'Duplicate object key': errMsg = '重复的对象键'; break;
+							}
+							allErrors.push({ offset: d.range.start.character, message: errMsg });
+						}
+					});
+				}
+				var errorNavLabel = null;
+				if (allErrors.length > 0) {
+					allErrors.sort(function(a, b) { return a.offset - b.offset; });
+					var firstError = allErrors[0];
+					var pp = new G.SpannableStringBuilder();
+					appendSSB(pp, "JSON错误：" + firstError.message + " (位置: " + firstError.offset + ")", new G.ForegroundColorSpan(Common.theme.criticalcolor));
+					r.prompt.push(pp);
+					errorNavLabel = '跳到报错位置';
+					r.output[errorNavLabel] = { text: ps, cursor: firstError.offset };
+				}
+
+				// 组装列表顺序：导航 → 补全 → 闭合 → 报错跳转
+				r.input = navLabels.concat(completionLabels, closeLabels);
+				if (errorNavLabel) r.input.push(errorNavLabel);
+				break;
+
 
 			case "plain":
 			t = cp.name;
@@ -987,5 +1333,453 @@
 			pp.append(this.prompt[i]);
 		}
 		Common.showTextDialog(pp);
+	},
+
+	getParserCompletions: function(parserType, ps, cursorOffset, node) {
+		var valueStart, valueEnd, value;
+		if (node && (node.type === 'string' || node.type === 'number' || node.type === 'boolean' || node.type === 'null')) {
+			valueStart = node.offset;
+			valueEnd = node.offset + node.length;
+			value = ps.substring(valueStart, valueEnd);
+			if (node.type === 'string' && value.length >= 2 && value[0] === '"' && value[value.length - 1] === '"') {
+				value = value.substring(1, value.length - 1);
+			}
+		} else {
+			valueStart = cursorOffset;
+			valueEnd = cursorOffset;
+			value = '';
+		}
+
+		var result = [];
+		var self = this;
+
+		function addEnumItems(enumName) {
+			var enumData = self.library.enums[enumName];
+			if (!enumData) return;
+			for (var id in enumData) {
+				if (!enumData.hasOwnProperty(id)) continue;
+				var displayName = enumData[id];
+				var newText = '"' + id + '"';
+				result.push({
+					label: id + ' - ' + displayName,
+					insertText: newText,
+					textEdit: {
+						range: { start: { line: 0, character: valueStart }, end: { line: 0, character: valueEnd } },
+						newText: newText
+					}
+				});
+			}
+		}
+
+		if (parserType === 'selector') {
+			var selResult = this.procSelector({}, value);
+			if (selResult && selResult.recommend) {
+				for (var selKey in selResult.recommend) {
+					if (!selResult.recommend.hasOwnProperty(selKey)) continue;
+					var selVal = selResult.recommend[selKey];
+					var escapedVal = selVal.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+					var newText = '"' + escapedVal + '"';
+					var selCursor = valueStart + 1 + escapedVal.length;
+					if (escapedVal.indexOf('=') >= 0) {
+						selCursor = valueStart + 1 + escapedVal.indexOf('=') + 1;
+					}
+					result.push({
+						label: selKey,
+						insertText: newText,
+						textEdit: {
+							range: { start: { line: 0, character: valueStart }, end: { line: 0, character: valueEnd } },
+							newText: newText
+						},
+						_selectorCursor: selCursor
+					});
+				}
+			}
+		} else if (parserType.indexOf('enum:') === 0) {
+			addEnumItems(parserType.substring(5));
+		} else if (this.library.enums[parserType]) {
+			addEnumItems(parserType);
+		}
+
+		return result;
+	},
+
+	isSelectorComplete: function (inputStr) {
+		var stack = []; // 用于跟踪未闭合的括号
+		var inQuote = false; // 标记是否在引号内
+		var leftBrace = 0, rightBrace = 0; // 统计大括号数量
+		var leftBracket = 0, rightBracket = 0; // 统计中括号数量
+		var selectorEnd = -1; // 完整选择器的结束位置
+
+		// 遍历输入字符串的每个字符
+		for (var i = 0; i < inputStr.length; i++) {
+			var c = inputStr[i];
+
+			// 处理引号（字符串内的内容忽略括号匹配）
+			if (c === '"') inQuote = !inQuote;
+			if (inQuote) continue;
+
+			// 处理开括号
+			if (c === '{') {
+				stack.push(c);
+				leftBrace++;
+			}
+			if (c === '[') {
+				stack.push(c);
+				leftBracket++;
+			}
+
+			// 处理闭括号
+			if (c === '}') {
+				rightBrace++;
+				// 如果栈顶是匹配的开括号，则弹出
+				if (stack.length > 0 && stack[stack.length - 1] === '{') stack.pop();
+			}
+			if (c === ']') {
+				rightBracket++;
+				if (stack.length > 0 && stack[stack.length - 1] === '[') stack.pop();
+				// 如果栈已清空且不在引号内，记录选择器结束位置
+				if (stack.length === 0 && !inQuote) {
+					selectorEnd = i + 1;
+					break;
+				}
+			}
+		}
+
+		// 返回检查结果
+		return {
+			// 有效的选择器：栈清空、引号关闭、括号匹配
+			isValid: stack.length === 0 && !inQuote &&
+				leftBrace === rightBrace &&
+				leftBracket === rightBracket,
+			// 调试信息
+			debugInfo: {
+				leftBrace: leftBrace,
+				rightBrace: rightBrace,
+				leftBracket: leftBracket,
+				rightBracket: rightBracket,
+				remainingStack: stack.slice(), // 未闭合的括号栈
+				inQuote: inQuote, // 是否在引号内
+				selectorEnd: selectorEnd // 选择器结束位置
+			}
+		};
+	},
+
+	/**
+	 * 解析选择器路径，确定当前状态和补全路径
+	 * @param {string} inputStr - 要解析的选择器字符串
+	 * @returns {Object} 包含状态、补全路径、当前输入和调试信息的对象
+	 */
+
+	parseSelectorPath: function (inputStr) {
+		// 首先检查选择器是否完整
+		var selectorCompleteResult = this.isSelectorComplete(inputStr);
+
+		// 如果选择器完整，直接返回完成状态
+		if (selectorCompleteResult.isValid) {
+			return {
+				stack: [],
+				state: 'complete',
+				debug: selectorCompleteResult.debugInfo,
+				currentInput: '',
+				keys: []
+			};
+		}
+
+		/**
+		 * 按逗号分割字符串，但忽略嵌套结构内的逗号
+		 * @param {string} str - 要分割的字符串
+		 * @returns {Array} 分割后的段数组
+		 */
+		function _splitByComma(str) {
+			var segments = [];
+			var braceCount = 0, bracketCount = 0; // 跟踪括号嵌套深度
+			var inQuote = false; // 是否在引号内
+			var lastSplit = 0; // 上次分割的位置
+
+			// 遍历字符串
+			for (var i = 0; i < str.length; i++) {
+				var char = str[i];
+
+				// 处理引号
+				if (char === '"') inQuote = !inQuote;
+				if (inQuote) continue;
+
+				// 更新括号计数
+				if (char === '{') braceCount++;
+				else if (char === '}') braceCount--;
+				if (char === '[') bracketCount++;
+				else if (char === ']') bracketCount--;
+
+				// 在顶层（不在嵌套结构内）遇到逗号时分割
+				if (char === ',' && braceCount === 0 && bracketCount === 0) {
+					segments.push(str.substring(lastSplit, i));
+					lastSplit = i + 1; // 更新分割位置
+				}
+			}
+
+			// 添加最后一段
+			segments.push(str.substring(lastSplit));
+			return segments;
+		}
+
+		/**
+		 * 查找顶层的等号（忽略嵌套结构内的等号）
+		 * @param {string} str - 要搜索的字符串
+		 * @returns {number} 等号的位置索引，未找到返回-1
+		 */
+		function _findTopLevelEqual(str) {
+			var braceCount = 0, bracketCount = 0; // 括号嵌套深度
+			var inQuote = false; // 是否在引号内
+
+			// 遍历字符串
+			for (var j = 0; j < str.length; j++) {
+				var c = str[j];
+
+				// 处理引号
+				if (c === '"') inQuote = !inQuote;
+				if (inQuote) continue;
+
+				// 更新括号计数
+				if (c === '{') braceCount++;
+				else if (c === '}') braceCount--;
+				if (c === '[') bracketCount++;
+				else if (c === ']') bracketCount--;
+
+				// 在顶层找到等号
+				if (c === '=' && braceCount === 0 && bracketCount === 0)
+					return j;
+			}
+
+			return -1; // 未找到
+		}
+
+		/**
+		 * 递归解析选择器字符串的核心函数
+		 * @param {string} currentStr - 当前要解析的字符串
+		 * @param {Array} parentStack - 父级解析栈
+		 * @returns {Object} 包含状态、栈和当前输入的对象
+		 */
+		function _recursiveParse(currentStr, parentStack, keys) {
+			if (keys == undefined) {
+				keys = []
+			}
+			currentStr = currentStr.trim();
+			var stack = parentStack.slice(); // 复制父级栈
+
+			// === 处理数组开头 '[' ===
+			if (currentStr.startsWith('[')) {
+				// 判断是否是顶层数组
+				var isTopLevel = parentStack.length === 0;
+				// 推入对应的占位符（顶层为{...}，嵌套为[...]）
+				stack.push(isTopLevel ? '{...}' : '[...]');
+
+				// 提取数组内容（去掉开头的'['）
+				var innerContent = currentStr.slice(1);
+				// 按逗号分割数组元素
+				var items = _splitByComma(innerContent);
+				items.forEach(item => {
+					let key = item.substring(0, _findTopLevelEqual(item)).trim();
+					keys.push(key)
+				})
+
+				// 获取最后一个元素（当前活跃部分）
+				var activeItem = items[items.length - 1].trim();
+
+				// 如果最后一个元素为空
+				if (activeItem === '') {
+					if (stack[stack.length - 1] === '{...}') {
+						// 对象上下文：等待键
+						return { stack: stack, state: 'wait_key', currentInput: '', keys: keys };
+					} else {
+						// 数组上下文：等待数组元素
+						return { stack: stack, state: 'wait_value_array', currentInput: '', keys: keys };
+					}
+				}
+
+				// 递归解析活跃元素
+				return _recursiveParse(activeItem, stack, keys);
+			}
+
+			// === 处理对象开头 '{' ===
+			if (currentStr.startsWith('{')) {
+				// 推入对象占位符
+				stack.push('{...}');
+
+				// 提取对象内容（去掉开头的'{'）
+				var innerContent = currentStr.slice(1);
+				// 按逗号分割键值对
+				var pairs = _splitByComma(innerContent);
+				// 获取最后一个键值对
+				var activeItem = pairs[pairs.length - 1].trim();
+
+				// 如果最后一个键值对为空
+				if (activeItem === '') {
+					// 等待键
+					return { stack: stack, state: 'wait_key', currentInput: '', keys: keys };
+				}
+
+				// 递归解析活跃元素
+				return _recursiveParse(activeItem, stack, keys);
+			}
+
+			// === 处理键值对 ===
+			// 查找顶层的等号（键值对分隔符）
+			var equalIndex = _findTopLevelEqual(currentStr);
+			var key, value, currentInput;
+
+			// 如果找到等号
+			if (equalIndex !== -1) {
+				// 分割键和值
+				key = currentStr.substring(0, equalIndex).trim();
+				value = currentStr.substring(equalIndex + 1).trim();
+				currentInput = value;
+
+				// 如果栈顶是对象占位符，替换为实际键名
+				if (stack.length > 0 && stack[stack.length - 1] === '{...}') {
+					stack.pop();
+				}
+				stack.push(key);
+
+				// 如果值是嵌套结构（数组或对象）
+				if (value.startsWith('[') || value.startsWith('{')) {
+					// 递归解析嵌套值
+					return _recursiveParse(value, stack, keys);
+				} else {
+					// 等待值输入
+					stack.push('...');
+					return {
+						stack: stack,
+						state: 'wait_value',
+						currentInput: currentInput,
+						keys: keys
+					};
+				}
+			}
+			// === 处理没有等号的字符串 ===
+			else {
+				// 如果是空字符串
+				if (currentStr === '') {
+					if (stack.length > 0 && stack[stack.length - 1] === '[...]') {
+						// 在数组中等待元素
+						return {
+							stack: stack,
+							state: 'wait_value_array',
+							currentInput: '',
+							keys: keys
+						};
+					} else {
+						// 等待键
+						return {
+							stack: stack,
+							state: 'wait_key',
+							currentInput: '',
+							keys: keys
+						};
+					}
+				}
+
+				// 如果在对象上下文中
+				if (stack.length > 0 && stack[stack.length - 1] === '{...}') {
+					// 等待键（用户正在输入键名）
+					return {
+						stack: stack,
+						state: 'wait_key',
+						currentInput: currentStr,
+						keys: keys
+					};
+				}
+
+				// 默认情况：等待值
+				return {
+					stack: stack,
+					state: 'wait_value',
+					currentInput: currentStr,
+					keys: keys
+				};
+			}
+		}
+
+		// 开始递归解析
+		var result = _recursiveParse(inputStr.trim(), []);
+		// 添加调试信息
+		result.debug = selectorCompleteResult.debugInfo;
+		return result;
+	},
+
+	/**
+	 * 为选择器参数生成补全建议列表。
+	 *
+	 * @param {string} input - 用户输入，用于过滤补全项。如果提供，则只包含 displayText 包含该输入的补全项。
+	 * @param {string} base - 每个补全建议前缀的基础字符串。
+	 * @param {Object.<string, {name: string} | string>} selectors - 选择器对象，key 为参数名，value 为包含 name 属性的对象或字符串。
+	 * @param {string} addtext - 补全建议的后缀字符串，通常为 "=", 但是默认为"", 用于构建完整的补全字符串。
+	 * @param {boolean} sort - 是否对补全建议列表进行排序。
+	 * @returns {Object.<string, string>} 返回一个对象，key 为显示文本（格式为 "key - selectorName"），value 为对应的补全字符串。
+	 */
+
+	getSelectorParamCompletions: function (input, base, selectors, addtext, sort) {
+		// Common.toast(`getSelectorParamCompletions(\n${JSON.stringify(input).slice(0, 10)}, \n${JSON.stringify(base).slice(0, 10)}, \n${JSON.stringify(selectors).slice(0, 10)}, \n${JSON.stringify(addtext).slice(0, 10)}\n)`)
+		var completions = {};
+		var sortedKeys = Object.keys(selectors);
+		addtext = addtext || ""; // addtext 默认为空字符串
+		sortedKeys.forEach(function (key) {
+			var displayText;
+			if (typeof selectors[key] === 'object' && selectors[key].name) {
+				// 如果值是一个对象并且有 name 属性
+				displayText = key + ' - ' + selectors[key].name;
+			} else {
+				// 如果值是一个字符串
+				displayText = key + ' - ' + selectors[key];
+			}
+			if (input && displayText.indexOf(input) < 0) return;
+			var newBase = base;
+			if (input && newBase.endsWith(input)) {
+				newBase = newBase.slice(0, -input.length);
+			}
+			completions[displayText] = newBase + key + addtext;
+		});
+
+		// 如果需要排序，根据 displayText 排序
+		if (sort) {
+			var sortedCompletions = {};
+			Object.keys(completions).sort().forEach(function (key) {
+				sortedCompletions[key] = completions[key];
+			});
+			return sortedCompletions;
+		}
+
+		return completions;
+	},
+
+	getSchemaByContext: function (contextValue, type) {
+		const blockStates = this &&
+			this.library &&
+			this.library.states &&
+			this.library.states[type] || [];
+
+		for (var i = 0; i < blockStates.length; i++) {
+			var item = blockStates[i];
+			var ctx = item.context;
+			if (Array.isArray(ctx)) {
+				for (var j = 0; j < ctx.length; j++) {
+					if (ctx[j] === contextValue) {
+						return item.schema || null;
+					}
+				}
+			}
+		}
+		return null;
+	},
+
+	removeKeysFromSchema: function (schema, keys) {
+		if (!schema || typeof schema !== 'object') return {};
+
+		var result = {};                // 浅拷贝
+		for (var k in schema) {
+			if (schema.hasOwnProperty(k) && keys.indexOf(k) === -1) {
+				result[k] = schema[k];
+			}
+		}
+		return result;
 	}
 })

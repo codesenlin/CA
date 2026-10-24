@@ -12,6 +12,8 @@ CA.Library.inner["addition"] = Loader.fromFile("../data/idlibs/addition.json");
 CA.Library.inner["education"] = Loader.fromFile("../data/idlibs/education.json");
 CA.Library.inner["experiment"] = Loader.fromFile("../data/idlibs/experiment.json");
 CA.Library.inner["basicedu"] = Loader.fromFile("../data/idlibs/basicedu.json");
+// JSON Schema 包：给 jsonPro 参数提供补全/校验用的 schema
+CA.Library.inner["JSONSchema"] = Loader.fromFile("../data/idlibs/JSONSchema.json");
 CA.Library.defaultDisabled = Object.keys(CA.Library.inner).filter(function(e) { 
 	return CA.Library.recommended.indexOf(e) < 0;
 });
