@@ -78,6 +78,11 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
     npm run build              # 正式版
     npm run buildSnapshot      # 快照版
 
+    # 渠道参数要放在 -- 后面（npm 会把 -- 之后的参数传给脚本）
+    npm run build -- -beta      # 测试渠道
+    npm run build -- -dev       # 开发渠道
+    npm run build -- -canary    # 前沿渠道
+
     # 等价于直接调用构建脚本
     node ./cabuildtools/main.js buildRelease
     node ./cabuildtools/main.js buildSnapshot
@@ -104,17 +109,25 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 这类判断不受影响。
 
 `.lib` 是安装器：装进 App 后把该渠道的脚本设为调试源并建快捷方式。每个渠道固定一个 uuid，
-版本号取构建日期 `[年, 月, 日]`，重新构建的包会被识别为更新。**快照形态沿用作者原来的
+版本号取构建时刻 `[年, 月, 日, 时, 分, 秒]`，同一天重新构建的包也会被识别为更新。**快照形态沿用作者原来的
 `f6cf1729-...` uuid**（唯一特例，保证老的快照包还能被覆盖更新）；**同版本号下渠道优先级
 `canary > dev > beta > standard`**，低优先级不会覆盖高优先级。
 
 ### 生成 APP
 
-    node ./cabuildtools/main.js shellBuildRelease        # 正式版 APK
-    node ./cabuildtools/main.js shellBuildReleaseHotfix  # 热更新包
+    npm run gradlew               # 正式版 APK
+    npm run gradlew -- -debug     # 调试版 APK
 
-产物在 `build/dist/`。本仓库没有 `npm run gradlew` 这类脚本，壳子的 Gradle 任务由
-`shellGradle` 内部调用，不需要手动执行。
+    # 等价于
+    node ./cabuildtools/main.js shellBuildRelease
+    node ./cabuildtools/main.js shellBuildDebug
+
+正式版产物在 `build/dist/`，调试版在 `build/outputs/debugApk/app-debug.apk`。
+壳子的 Gradle 任务由 `shellGradle` 内部调用，不需要手动执行。
+
+> 调试包也开启了 R8（`minifyEnabled true`）。Rhino 1.9 的 `SlotMapOwner$ThreadedAccess`
+> 用了 `MethodHandle.invoke`，D8 在 minSdk 21 下不会做兼容转换，不开 R8 会直接报
+> `Error while dexing`；release 一直是开着的，所以只有 debug 会撞上。
 
 ## 内置命令库
 

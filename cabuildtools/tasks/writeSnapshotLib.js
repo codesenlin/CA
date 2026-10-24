@@ -38,7 +38,8 @@ module.exports = function(context, args) {
 			'o.description=' + JSON.stringify("命令助手" + libName + "安装器\n") + ';',
 			'o.uuid=' + JSON.stringify(uuid) + ';',
 			'o.author="命令助手制作组";',
-			'o.version=' + JSON.stringify(context.buildConfig.date.split(/[-/]/).map(function(v) { return parseInt(v, 10) || 0; })) + ';',
+			// 版本号取构建时刻（年月日时分秒）：同一天重新构建也会被识别为更新
+			'o.version=' + JSON.stringify((function() { var t = new Date(context.buildConfig.publishTime || context.buildConfig.date); return [t.getFullYear(), t.getMonth() + 1, t.getDate(), t.getHours(), t.getMinutes(), t.getSeconds()]; })()) + ';',
 			// 版本号相同的话，只有渠道优先级更高时才允许覆盖
 			'if(id<CA.publishDate){return void(o.description+="您正在使用本' + libName + '或更高版本\\n\\n")}',
 			'if(id==CA.publishDate&&rank(' + JSON.stringify(channel) + ')<rank(CA.variants)){',
