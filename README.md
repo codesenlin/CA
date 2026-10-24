@@ -25,10 +25,15 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 
 ## 目录结构
 
-- `modules/` — CA 的核心 JS 模块
-- `cabuildtools/` — 构建工具（git subtree）
-- `caclib/` — 内置命令库源码（git subtree）
-- `config/` — 构建配置
+- `modules/` — CA 的核心 JS 模块（`main.js` 里用 `Loader.fromFile` 按顺序拼装）
+- `data/` — 从代码里剥出来的纯数据：内置命令库（`idlibs/`）、主题、提示语等
+- `intl/` — 界面文案（`zh_CN` / `en_US`）
+- `cabuildtools/` — 构建工具（git subtree），AST 加载器、签名打包、壳子任务都在这里
+- `config/` — 构建配置（版本号、渠道、发布方式等，见下一节）
+- `caclib/` — 内置命令库源码（git subtree）。**当前为空**，内置库已迁到 `data/idlibs/`
+- `caaccel/` — Java 加速库源码（配合 `modules/Accel.js`）
+- `docs/` — 开发文档（分支约定、数据外置方案等）
+- `examples/` — 可独立运行的小例子（如 `clib-update` 的更新流程模拟）
 - `build/` — 构建产物（不入版本库）
 
 ## 生成
@@ -68,17 +73,16 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
    > 注意：`caclib/signature/`（clib 签名私钥）和 `caclib/outputs/` 不入库，所以 `clibspawn`
    > 在全新检出的仓库里跑不起来，需要自己准备私钥后才会生成产物。
 
-### 生成正式版 JS
+### 构建代码
 
-    npm run build
+    npm run build              # 正式版
+    npm run buildSnapshot      # 快照版
 
-产物导出至 `build/outputs/release/main.js`。
+    # 等价于直接调用构建脚本
+    node ./cabuildtools/main.js buildRelease
+    node ./cabuildtools/main.js buildSnapshot
 
-### 生成快照版 JS
-
-    npm run buildSnapshot
-
-产物导出至 `build/outputs/snapshot/main.js`。
+产物导出至 `build/outputs/release/main.js` 与 `build/outputs/snapshot/main.js`。
 
 ### 生成渠道版 JS（standard / beta / dev / canary）
 
@@ -104,13 +108,28 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 `f6cf1729-...` uuid**（唯一特例，保证老的快照包还能被覆盖更新）；**同版本号下渠道优先级
 `canary > dev > beta > standard`**，低优先级不会覆盖高优先级。
 
-### 生成正式版 APP
+### 生成 APP
 
-    npm run shellBuildRelease
+    node ./cabuildtools/main.js shellBuildRelease        # 正式版 APK
+    node ./cabuildtools/main.js shellBuildReleaseHotfix  # 热更新包
+
+产物在 `build/dist/`。本仓库没有 `npm run gradlew` 这类脚本，壳子的 Gradle 任务由
+`shellGradle` 内部调用，不需要手动执行。
 
 ## 内置命令库
 
-`caclib/index.json` 列出的命令库会在构建时被嵌入到最终 JS 中，运行时通过 `CA.Library.builtinLibs` 注册到 `CA.Library.inner`，用户无需手动导入。
+内置命令库有两套机制，**当前只使用后一套**：
+
+1. `caclib/index.json`（旧）：列出的库由 `builtinlibs.js` 在构建时内嵌，运行时通过
+   `CA.Library.builtinLibs` 注册。**现在这个清单是空的**，四个历史内置库都已迁到下一套。
+2. `data/idlibs/*.json`（现用）：由 `modules/builtinData.js` 用 `Loader.fromFile` 直接内联成
+   `CA.Library.inner["default"]` 等对象，用户同样无需手动导入。
+
+新增内置库时改 `data/idlibs/` 并在 `builtinData.js` 里注册；`CA.Library.recommended`
+决定哪些默认启用。
+
+`data/idlibs` 里除了命令库，还有 `schema_v1.json`（库格式的 JSON Schema）和
+`JSONSchema.json`（内置的 rawtext schema，供 `jsonPro` 参数补全）。
 
 ## 命令库的签名格式
 
@@ -135,20 +154,46 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 
 ## 拓展包源
 
-拓展包的「检测更新」和「在线拓展包」都支持多个源。入口：「拓展包管理」菜单 →「**拓展包源**」。
+拓展包的「检测更新」和「在线拓展包」都支持多个源。入口：**设置 → 智能补全 → 拓展包源**，
+打开独立的「管理拓展包源」页面（左上角标题、右上角 ▼）。
 
 - **内置官方源**默认存在，列表里带 `[官方]` 前缀，不能禁用或删除
-- **添加源**：填源站根目录（或它的 `info.json` 地址），先请求 `info.json` 校验，成功才保存
-- **点按源**：启用 / 禁用（禁用后不参与更新检查和在线列表）
-- **备注**：每个源可以写一行备注，显示在源列表和在线列表的「来源」后面
-- **删除**：非官方源可删除（二次确认）
-- 配置存在 `CA.settings.librarySources`，源对象为 `{url, name, enabled, note, builtin}`
+- **添加源**：右上角 ▼ →「添加拓展包源」，填源站根目录（或它的 `info.json` 地址）。
+  读 `info.json` 是网络请求，走后台线程；失败会把输入回填到输入框
+- **点按源**：备注 / 禁用 / 删除（官方源只有备注）
+- 源不再出现在「管理拓展包」列表里——源不是拓展包
+- 配置存在 `CA.settings.librarySources`，源对象为 `{url, name, enabled, note, builtin}`，
+  增删改都会立刻 `CA.trySave()`（否则进程被系统杀掉后新加的源会丢失）
 
 检查更新时（`requestUpdateUrlFromDefSrc`）按顺序遍历启用中的源，第一个给出该 uuid 更新地址的源
 胜出；源内部仍然校验 `sourceId`、SHA-1 与 RSA 签名。
 
-「在线拓展包」会汇总**所有启用中的源**，同一个 uuid 只显示版本最高的那个，每项名称下面显示
-`来源 : <源名称>（备注）`，下载时用该条目所属的源验签。
+「在线拓展包」会汇总**所有启用中的源**，同一个 uuid 只显示版本最高的那个，下载时用该条目
+所属的源验签。
+
+## 拓展包的信任分级
+
+签名包按**验签用的公钥**分两级，显示在「管理拓展包」列表里：
+
+| 标记 | 判定方式 |
+| --- | --- |
+| `[官方]` | 用官方源（`builtin: true` 的那个源）的公钥验签通过 |
+| `[社区]` | 用第三方源自己的公钥验签通过；下载时会在包旁边写一个 `.community` 标记 |
+| `[内置]` | `builtin://` 内置库 |
+| `[锁定]` | `LIBRARY` 前缀格式 |
+
+安全级别共五档（0–4），决定什么类型的包能被加载：
+
+| 值 | 名称 | 允许加载 |
+| --- | --- | --- |
+| 0 | 禁用 | 全部（含裸 JS） |
+| 1 | 低 | 签名包 + `LIBRARY`（没有签名也行，会提示一次） |
+| 2 | 中（默认） | 只加载签名包（官方 + 社区） |
+| 3 | 高 | 只加载官方签名的包（社区包也拒绝） |
+| 4 | 受限 | 只加载内置库 |
+
+编辑 / 锁定 / 创建副本 / 新建拓展包这些开发操作**只有「禁用」级别才可见**，而且编辑器只能
+处理 JSON 格式的包（`JSON.parse` 失败会直接提示）。
 
 > 已移除原先"从 GitHub 自动下载远程拓展包"的机制（`modules/RemoteLibrary.js` 与
 > `libraries.json`）。
