@@ -29,7 +29,10 @@ MapScript.loadModule("CA", {
 	initialize : function() {try {
 		this.plugin = Plugins.inject(this);
 		this.load();
-		if (!(this.settings.readAgreement > Date.parse(BuildConfig.licenceUpdate))) {
+		// suppressAgreement：运行时重建（如"恢复默认数据"）不能走同步等待协议的路径，
+		// 那会卡在主线程上等用户点同意，而设置页此时还没退场，弹窗出不来 → 死锁。
+		// 这种情况由调用方在初始化完成后异步弹协议。
+		if (!this.suppressAgreement && !(this.settings.readAgreement > Date.parse(BuildConfig.licenceUpdate))) {
 			this.showAgreementSync();
 		}
 		this.checkFeatures();
@@ -118,7 +121,8 @@ MapScript.loadModule("CA", {
 				});
 			}
 			if (!f.settings.customExpression) f.settings.customExpression = [];
-			if (!(f.settings.securityLevel >= -9 && f.settings.securityLevel <= 9)) f.settings.securityLevel = 1;
+			if (!(f.settings.securityLevel >= -9 && f.settings.securityLevel <= 9)) f.settings.securityLevel = 2;
+			this.migrateSecurityLevel(f.settings);
 			if (f.settings.customTips) this.tips = f.settings.customTips;
 			if (isNaN(f.settings.libraryAutoUpdate)) f.settings.libraryAutoUpdate = 1;
 			if (!f.settings.quickBarActions) f.settings.quickBarActions = Object.copy(CA.quickBarDefaultActions);
@@ -186,7 +190,8 @@ MapScript.loadModule("CA", {
 				libraryAutoUpdate : 1,
 				// 拓展包源（{url, name, enabled, builtin}），至少含内置官方源
 				librarySources : [],
-				securityLevel : 1,
+				securityLevel : 2,
+				securityLevelMigrated : true,
 				enabledLibrarys : this.Library.recommended,
 				coreLibrarys : [],
 				disabledLibrarys : this.Library.defaultDisabled,
@@ -249,6 +254,20 @@ MapScript.loadModule("CA", {
 		i = folder.indexOf(data);
 		if (i < 0) return;
 		folder.splice(i, 1);
+	},
+	/**
+	 * 安全级别编号迁移。
+	 * 旧：-1 受限 / 0 低 / 1 中 / 2 高
+	 * 新：-1 受限 / 0 禁用 / 1 低 / 2 中 / 3 高
+	 * 不迁移的话，老用户的「中」会变成新的「低」，等于被悄悄放宽了。
+	 */
+	migrateSecurityLevel : function(settings) {
+		settings = settings || this.settings;
+		if (!settings || settings.securityLevelMigrated) return;
+		var v = settings.securityLevel;
+		// 只有「受限」换了编号（-1 → 4），其余档位的含义本来就一一对应，不需要平移
+		if (v === -1) settings.securityLevel = 4;
+		settings.securityLevelMigrated = true;
 	},
 	trySave : function() {
 		try {
@@ -2644,8 +2663,8 @@ MapScript.loadModule("CA", {
 				type : "custom",
 				onclick : function() {
 					try {
-						if (!AndroidBridge.viewUri("afd://app/openapp?params=%7B%22url%22:%22https://afdian.net/a/projectxero%22,%22type%22:%221%22%7D")) {
-							AndroidBridge.viewUri("https://afdian.net/a/projectxero");
+						if (!AndroidBridge.viewUri("afd://app/openapp?params=%7B%22url%22:%22https://ifdian.net/a/projectxero%22,%22type%22:%221%22%7D")) {
+							AndroidBridge.viewUri("https://ifdian.net/a/projectxero");
 						}
 					} catch(e) {
 						Common.toast("爱发电打开失败");
@@ -3145,7 +3164,7 @@ MapScript.loadModule("CA", {
 				name : "在线拓展包",
 				type : "custom",
 				onclick : function(fset) {
-					if (CA.settings.securityLevel >= 0) {
+					if (CA.settings.securityLevel < 4) {
 						CA.showOnlineLib(fset);
 					} else {
 						Common.toast("您正在使用的安全等级不允许加载外部的拓展包");
@@ -3275,7 +3294,18 @@ MapScript.loadModule("CA", {
 							G.ui(function() {try {
 								CA.resetGUI();
 								SafeFileUtils.delete(new java.io.File(CA.profilePath));
-								CA.initialize();
+								// 配置已删，readAgreement 归零。这里不能同步等协议：
+								// 设置页还在，弹窗出不来，主线程会卡在 awaitPromise 上。
+								// 先跳过协议完成初始化，再异步弹协议让用户重新同意。
+								CA.suppressAgreement = true;
+								try {
+									CA.initialize();
+								} finally {
+									CA.suppressAgreement = false;
+								}
+								CA.showAgreement(function() {
+									CA.trySave();
+								});
 								Common.toast("命令助手已重新启动");
 							} catch(e) {erp(e)}});
 						}
@@ -3931,95 +3961,186 @@ MapScript.loadModule("CA", {
 	},
 
 	/** 拓展包源管理：添加 / 启用禁用 / 删除 */
+	/** 拓展包源管理页：列表 + 右上角 ▼（添加源）；点按某项可禁用/改备注 */
 	showSourceMan : function self() {G.ui(function() {try {
-		var list = [], changed = false;
-		var reopen = function() {
-			if (!changed) return;
-			changed = false;
-			CA.showSourceMan();
-		};
-		list.push({
-			text : "添加源…",
-			description : "填写源站根目录或 info.json 的地址",
-			onclick : function(e, tag) {
+		if (!self.linear) {
+			self.contextMenu = [{
+				text : "添加拓展包源…",
+				description : "填写源站根目录或 info.json 的地址",
+				onclick : function(v, tag) {
+					self.promptAddSource("");
+				}
+			}];
+			// 添加源：读取 info.json 是网络请求，必须在后台线程执行。
+			// 直接在对话框回调（UI 线程）里调 addSource 会抛 NetworkOnMainThreadException，
+			// 异常被 requestSourceInfo 内部 catch 掉后返回 undefined，界面只会提示"读取失败"。
+			self.promptAddSource = function(defaultValue) {
 				Common.showInputDialog({
 					title : "添加拓展包源",
 					description : "例如 https://ca.projectxero.top/clib/",
+					defaultValue : defaultValue || "",
 					callback : function(text) {
-						var src;
-						try {
-							src = CA.Library.addSource(text);
-						} catch(err) {
-							Common.toast("添加失败：" + err);
-							return true; // 留在输入框里方便修改
-						}
-						Common.toast("已添加源：" + src.name);
-						CA.showSourceMan();
+						Common.showProgressDialog(function(dia) {
+							var src, err;
+							dia.setText("正在读取源信息…");
+							try {
+								src = CA.Library.addSource(text);
+							} catch(e) {
+								err = e;
+							}
+							G.ui(function() {try {
+								if (err) {
+									Common.toast("添加失败：" + err);
+									self.promptAddSource(text); // 预填，方便改
+									return;
+								}
+								Common.toast("已添加源：" + src.name);
+								self.refresh();
+							} catch(e) {erp(e)}});
+						});
 					}
 				});
-				return false;
-			}
-		});
-		CA.Library.getSources().forEach(function(src) {
-			var desc = src.url;
-			if (src.note) desc += "\n备注：" + src.note;
-			desc += src.builtin ? "\n内置源，不能禁用或删除" : "\n点按" + (src.enabled ? "禁用" : "启用");
-			list.push({
-				text : (src.enabled ? "" : "（已禁用）") + (src.builtin ? "[官方] " : "") + (src.name || src.url),
-				description : desc,
-				onclick : function(e, tag) {
-					try {
-						CA.Library.setSourceEnabled(src.url, !src.enabled);
-					} catch(err) {
-						Common.toast(String(err));
-						return false;
-					}
-					changed = true;
-					return false;
-				}
-			});
-			list.push({
-				text : "　备注：" + (src.builtin ? "[官方] " : "") + (src.name || src.url),
-				description : src.note ? src.note : "（未设置，点按编辑）",
-				onclick : function(e, tag) {
-					Common.showInputDialog({
-						title : "编辑源备注",
-						description : src.url,
-						defaultValue : src.note || "",
-						callback : function(text) {
-							src.note = String(text || "").trim();
-							CA.showSourceMan();
-						}
-					});
-					return false;
-				}
-			});
-			if (!src.builtin) {
-				list.push({
-					text : "删除：" + (src.name || src.url),
-					description : "移除后不再从这个源检查更新",
-					onclick : function(e, tag) {
-						Common.showConfirmDialog({
-							title : "删除拓展包源？",
+			};
+			self.refresh = function() {
+				self.adpt.setArray(CA.Library.getSources().slice());
+			};
+			self.vmaker = function(holder) {
+				var layout = new G.LinearLayout(ctx),
+					text1 = holder.text1 = new G.TextView(ctx),
+					text2 = holder.text2 = new G.TextView(ctx);
+				layout.setLayoutParams(new G.AbsListView.LayoutParams(-1, -2));
+				layout.setOrientation(G.LinearLayout.VERTICAL);
+				layout.setPadding(15 * G.dp, 15 * G.dp, 15 * G.dp, 15 * G.dp);
+				text1.setLayoutParams(new G.LinearLayout.LayoutParams(-1, -2));
+				text1.setEllipsize(G.TextUtils.TruncateAt.MIDDLE);
+				text1.setSingleLine(true);
+				layout.addView(text1);
+				text2.setPadding(0, 5 * G.dp, 0, 0);
+				text2.setLayoutParams(new G.LinearLayout.LayoutParams(-1, -2));
+				Common.applyStyle(text2, "textview_prompt", 1);
+				layout.addView(text2);
+				return layout;
+			};
+			self.vbinder = function(holder, src, i, a) {
+				var title = [], detail = [];
+				title.push(src.builtin ? "[官方] " : "");
+				title.push(src.name || src.url);
+				title.push(src.enabled ? "（已启用）" : "（已禁用）");
+				holder.text1.setText(title.join(""));
+				Common.applyStyle(holder.text1, src.enabled ? "item_default" : "item_disabled", 3);
+				detail.push("地址 : " + src.url);
+				// 备注只显示内容，不加“备注”字样
+				if (src.note) detail.push(src.note);
+				detail.push("", src.builtin ? "内置源，不能禁用" : "点按可修改备注或禁用");
+				holder.text2.setText(detail.join("\n"));
+			};
+			self.adpt = SimpleListAdapter.getController(new SimpleListAdapter([], self.vmaker, self.vbinder, null, true));
+
+			self.linear = new G.LinearLayout(ctx);
+			self.linear.setOrientation(G.LinearLayout.VERTICAL);
+			self.linear.setPadding(15 * G.dp, 15 * G.dp, 15 * G.dp, 0);
+			Common.applyStyle(self.linear, "message_bg");
+
+			self.header = new G.LinearLayout(ctx);
+			self.header.setOrientation(G.LinearLayout.HORIZONTAL);
+			self.header.setPadding(0, 0, 0, 10 * G.dp);
+			self.header.setOnClickListener(new G.View.OnClickListener({onClick : function(v) {try {
+				Common.showOperateDialog(self.contextMenu, {
+					callback : function() {G.ui(function() {try {
+						self.refresh();
+					} catch(e) {erp(e)}})}
+				});
+				return true;
+			} catch(e) {erp(e)}}}));
+
+			self.title = new G.TextView(ctx);
+			self.title.setText("管理拓展包源");
+			self.title.setGravity(G.Gravity.LEFT | G.Gravity.CENTER);
+			self.title.setPadding(10 * G.dp, 0, 10 * G.dp, 0);
+			Common.applyStyle(self.title, "textview_default", 4);
+			self.header.addView(self.title, new G.LinearLayout.LayoutParams(0, -2, 1.0));
+
+			self.menu = new G.TextView(ctx);
+			self.menu.setText("▼");
+			self.menu.setPadding(10 * G.dp, 0, 10 * G.dp, 0);
+			self.menu.setGravity(G.Gravity.CENTER);
+			Common.applyStyle(self.menu, "button_highlight", 3);
+			self.header.addView(self.menu, new G.LinearLayout.LayoutParams(-2, -1));
+			self.linear.addView(self.header, new G.LinearLayout.LayoutParams(-1, -2));
+
+			self.list = new G.ListView(ctx);
+			self.list.setAdapter(self.adpt.self);
+			self.list.setOnItemClickListener(new G.AdapterView.OnItemClickListener({onItemClick : function(parent, view, pos, id) {try {
+				var src = parent.getAdapter().getItem(pos), mnu = [];
+				mnu.push({
+					text : src.note ? "编辑备注…" : "添加备注…",
+					onclick : function(v, tag) {
+						Common.showInputDialog({
+							title : "拓展包源备注",
 							description : src.url,
-							callback : function(id) {
-								if (id != 0) return;
-								try {
-									CA.Library.removeSource(src.url);
-									Common.toast("已删除");
-								} catch(err) {
-									Common.toast(String(err));
-								}
-								CA.showSourceMan();
+							defaultValue : src.note || "",
+							callback : function(text) {
+								CA.Library.setSourceNote(src.url, text);
+								Common.toast(src.note ? "备注已保存" : "已清除备注");
 							}
 						});
-						return false;
 					}
 				});
-			}
-		});
-		Common.showOperateDialog(list, null, reopen);
-	} catch(e) {erp(e)}}); },
+				if (!src.builtin) {
+					mnu.push({
+						text : src.enabled ? "禁用该拓展包源" : "启用该拓展包源",
+						onclick : function(v, tag) {
+							try {
+								CA.Library.setSourceEnabled(src.url, !src.enabled);
+							} catch(err) {
+								Common.toast(String(err));
+							}
+						}
+					});
+					mnu.push({
+						text : "删除该拓展包源",
+						onclick : function(v, tag) {
+							Common.showConfirmDialog({
+								title : "删除拓展包源？",
+								description : src.url,
+								callback : function(id) {
+									if (id != 0) return;
+									try {
+										CA.Library.removeSource(src.url);
+										Common.toast("已删除");
+									} catch(err) {
+										Common.toast(String(err));
+									}
+								}
+							});
+						}
+					});
+				}
+				Common.showOperateDialog(mnu, {
+					data : src,
+					callback : function() {G.ui(function() {try {
+						self.refresh();
+					} catch(e) {erp(e)}})}
+				});
+			} catch(e) {erp(e)}}}));
+			self.linear.addView(self.list, new G.LinearLayout.LayoutParams(-1, 0, 1.0));
+
+			self.exit = new G.TextView(ctx);
+			self.exit.setText("关闭");
+			self.exit.setGravity(G.Gravity.CENTER);
+			self.exit.setPadding(10 * G.dp, 20 * G.dp, 10 * G.dp, 20 * G.dp);
+			Common.applyStyle(self.exit, "button_critical", 3);
+			self.exit.setOnClickListener(new G.View.OnClickListener({onClick : function(v) {try {
+				self.popup.exit();
+			} catch(e) {erp(e)}}}));
+			self.linear.addView(self.exit, new G.LinearLayout.LayoutParams(-1, -2));
+
+			self.popup = new PopupPage(self.linear, "ca.SourceMan");
+			PWM.registerResetFlag(self, "linear");
+		}
+		self.refresh();
+		self.popup.enter();
+	} catch(e) {erp(e)}})},
 
 	showLibraryMan : function self(callback) {G.ui(function() {try {
 		if (!self.linear) {
@@ -4047,7 +4168,7 @@ MapScript.loadModule("CA", {
 					});
 				},
 				hidden : function() {
-					return CA.settings.securityLevel < 0;
+					return CA.settings.securityLevel >= 4;
 				}
 			},{
 				text : "从外部存储加载",
@@ -4072,7 +4193,7 @@ MapScript.loadModule("CA", {
 					});
 				},
 				hidden : function() {
-					return CA.settings.securityLevel != 0;
+					return CA.settings.securityLevel > 1;
 				}
 			},{
 				text : "新建拓展包",
@@ -4106,7 +4227,7 @@ MapScript.loadModule("CA", {
 					});
 				},
 				hidden : function() {
-					return CA.settings.securityLevel != 0;
+					return CA.settings.securityLevel > 1;
 				}
 			},{
 				text : "刷新",
@@ -4159,32 +4280,45 @@ MapScript.loadModule("CA", {
 				}
 			},{
 				text : "设置安全级别",
-				secLevels : [0, 1, 2, -1],
+				// 按"允许加载的类型"逐级放宽：
+				//  0 禁用：完全加载（裸 JS 也加载）
+				//  1 低  ：+ LIBRARY 格式
+				//  2 中  ：+ 社区签名（仍要求有签名）
+				//  3 高  ：只认官方签名
+				//  4 受限：只加载内置
+				secLevels : [0, 1, 2, 3, 4],
 				secLevelDetails : {
-					"-1" : {
-						text : "受限",
-						description : "禁止所有来自外部的拓展包加载",
-						confirm : "当前的安全级别将禁止你加载任何外部的拓展包，是否继续？"
-					},
 					"0" : {
-						text : "低",
-						description : "允许所有拓展包加载",
-						confirm : "当前的安全级别将允许你加载任何外部的拓展包，这可能导致某些恶意拓展包被加载。\n如果你不是拓展包开发者请不要使用此等级"
+						text : "禁用",
+						description : "完全加载：签名包、LIBRARY、裸 JS 都会加载",
+						confirm : "「禁用」会关掉所有安全检查，任何文件都会被当作拓展包执行。\n恶意拓展包可以借机运行任意代码，确定要这么做吗？"
 					},
 					"1" : {
-						text : "中",
-						description : "（推荐）仅允许锁定的拓展包和官方的拓展包加载"
+						text : "低",
+						description : "允许签名包和 LIBRARY 格式，裸 JS 不加载",
+						confirm : "「低」会允许加载 LIBRARY 格式（未签名）的拓展包，这类包没有来源担保。\n如果你的拓展包都是签名的，建议使用「中」"
 					},
 					"2" : {
+						text : "中",
+						description : "（推荐）只允许签名包：官方与社区",
+						confirm : "「中」及以上只加载已签名的拓展包，LIBRARY 和裸 JS 都会被拒绝"
+					},
+					"3" : {
 						text : "高",
-						description : "仅允许官方的拓展包加载"
+						description : "只允许官方签名的拓展包，社区包也拒绝"
+					},
+					"4" : {
+						text : "受限",
+						description : "只加载内置命令库，任何外部拓展包都不加载",
+						confirm : "「受限」下只加载内置命令库，所有外部拓展包（包括已安装的）都不会生效，是否继续？"
 					}
 				},
 				onclick : function(v, tag) {
 					var self2 = this, t = this.secLevels.indexOf(CA.settings.securityLevel);
 					Common.showSlider({
 						max : this.secLevels.length - 1,
-						progress : t < 0 ? 1 : t,
+						// 找不到当前级别时默认落在「中」上（新数组里 1 的索引是 2）
+						progress : t < 0 ? 2 : t,
 						prompt : function(progress) {
 							var e = self2.secLevelDetails[self2.secLevels[progress]];
 							return e.text + "\n\n" + e.description;
@@ -4223,15 +4357,6 @@ MapScript.loadModule("CA", {
 					return false;
 				}
 			},{
-				text : "拓展包源",
-				description : "管理从哪些源检查拓展包更新",
-				hidden : function() {
-					return CA.settings.securityLevel < 0;
-				},
-				onclick : function(v, tag) {
-					CA.showSourceMan();
-				}
-			},{
 				text : "切换版本",
 				description : "切换命令所属版本",
 				onclick : function(v, tag) {
@@ -4248,7 +4373,7 @@ MapScript.loadModule("CA", {
 				text : "忽略版本",
 				description : "暂时忽略版本限制",
 				hidden : function() {
-					return CA.settings.securityLevel != 0 || CA.Library.ignoreVersion;
+					return CA.settings.securityLevel > 1 || CA.Library.ignoreVersion;
 				},
 				onclick : function(v, tag) {
 					self.postTask(function(cb) {
@@ -4263,7 +4388,7 @@ MapScript.loadModule("CA", {
 				text : "取消忽略版本",
 				description : "取消忽略版本限制",
 				hidden : function() {
-					return CA.settings.securityLevel != 0 || !CA.Library.ignoreVersion;
+					return CA.settings.securityLevel > 1 || !CA.Library.ignoreVersion;
 				},
 				onclick : function(v, tag) {
 					self.postTask(function(cb) {
@@ -4406,7 +4531,7 @@ MapScript.loadModule("CA", {
 				text : "编辑",
 				description : "用JSON编辑器编辑该拓展包",
 				hidden : function(tag) {
-					return CA.settings.securityLevel != 0 || tag.data.mode != 1;
+					return CA.settings.securityLevel > 1 || tag.data.mode != 1;
 				},
 				onclick : function(v, tag) {
 					var uri = ExternalStorage.toUri(tag.data.src);
@@ -4467,7 +4592,7 @@ MapScript.loadModule("CA", {
 				text : "创建副本",
 				description : "创建该拓展包的副本（副本不会被认为与原拓展包相同）",
 				hidden : function(tag) {
-					return CA.settings.securityLevel != 0 || tag.data.hasError || tag.data.mode >= 2;
+					return CA.settings.securityLevel > 1 || tag.data.hasError || tag.data.mode >= 2;
 				},
 				onclick : function(v, tag) {
 					ExternalStorage.showSaveActions({
@@ -4512,7 +4637,7 @@ MapScript.loadModule("CA", {
 				text : "锁定",
 				description : "锁定拓展包，使其不能被编辑",
 				hidden : function(tag) {
-					return CA.settings.securityLevel != 0 || tag.data.hasError || tag.data.mode != 1;
+					return CA.settings.securityLevel > 1 || tag.data.hasError || tag.data.mode != 1;
 				},
 				onclick : function(v, tag) {
 					Common.showConfirmDialog({
@@ -4635,7 +4760,9 @@ MapScript.loadModule("CA", {
 				} else if (e.mode == 2) {
 					title.push("[锁定] ");
 				} else if (e.mode == 3) {
-					title.push("[官方] ");
+					// 已签名包按验签用的公钥分级：
+					//   官方公钥 → [官方]；源自己的公钥（非官方）→ [社区]
+					title.push(e.community ? "[社区] " : "[官方] ");
 				}
 				title.push(e.name);
 				if (!e.disabled && !e.hasError) {
@@ -4772,6 +4899,8 @@ MapScript.loadModule("CA", {
 					data : data,
 					callback : function() {G.ui(function() {try {
 						self.refresh();
+						// 启用/禁用/删除/设为核心都改了 CA.settings，必须立刻落盘
+						CA.trySave();
 					} catch(e) {erp(e)}})}
 				});
 			} catch(e) {erp(e)}}}));
