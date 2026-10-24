@@ -389,6 +389,43 @@ MapScript.loadModule("DBSettings", {
     return org.mozilla.javascript.Undefined.instance;
 },
 	createProxy(target, handler) {
+		// Rhino 1.9 起内置了 ES6 Proxy（全局 Proxy，实现是 NativeProxy），
+		// 1.7 没有，所以当年只能用 Scriptable 手写一套 trap 模拟。
+		// 有原生 Proxy 就走它：语义标准、少两百行代码、数组/JSON.stringify 等都正常；
+		// 拿不到（旧版 Rhino）再退回下面的手写实现。
+		if (typeof Proxy == "function") {
+			var traps = {};
+			if (handler.get) {
+				traps.get = function(t, k, r) {
+					return handler.get(t, k, r);
+				};
+			}
+			traps.set = function(t, k, v, r) {
+				if (handler.set) return handler.set(t, k, v, r) !== false;
+				t[k] = v;
+				return true;
+			};
+			traps.deleteProperty = function(t, k) {
+				if (handler.deleteProperty) handler.deleteProperty(t, k);
+				return true; // 原生 Proxy 要求返回布尔值，返回 undefined 会被当成删除失败
+			};
+			if (handler.has) {
+				traps.has = function(t, k) {
+					return handler.has(t, k);
+				};
+			}
+			if (handler.ownKeys) {
+				traps.ownKeys = function(t) {
+					return handler.ownKeys(t);
+				};
+			}
+			if (handler.getPrototypeOf) {
+				traps.getPrototypeOf = function(t) {
+					return handler.getPrototypeOf(t);
+				};
+			}
+			return new Proxy(target, traps);
+		}
 		const cx = org.mozilla.javascript.Context.getCurrentContext();
 		const topScope = eval.call(null, "this");
 		// Rhino 1.9 的 NativeJavaObject 第三个参数从 Class<?> 换成了 TypeInfo，
