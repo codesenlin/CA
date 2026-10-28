@@ -16,6 +16,9 @@
     "help": "node ./cabuildtools/main.js help",
     "pack": "node ./cabuildtools/libtool.js pack",
     "unpack": "node ./cabuildtools/libtool.js unpack",
-    "libinfo": "node ./cabuildtools/libtool.js info"
+    "libinfo": "node ./cabuildtools/libtool.js info",
+    "caaccel": "node ./caaccel/cli.js build",
+    "caaccel:test": "node ./caaccel/cli.js test",
+    "caaccel:bench": "node ./caaccel/cli.js bench"
   }
 }

@@ -21,7 +21,7 @@ modules/Accel.js           决策层：jar 在不在？方法有没有？
 caaccel/Accel.java         加速层：可选。下载代码的人想快就在这里实现
 ```
 
-**想让某个操作变快**：在 `Accel.java` 里实现对应方法，重新 `./build.sh`，把 jar 放进
+**想让某个操作变快**：在 `Accel.java` 里实现对应方法，重新 `npm run caaccel`，把 jar 放进
 `cadroid/app/libs/`。
 **不想管**：什么都不做。`Accel.js` 会走纯 JS 实现，功能完全一样。
 
@@ -42,16 +42,19 @@ caaccel/Accel.java         加速层：可选。下载代码的人想快就在�
 ## 构建
 
 ```sh
-./build.sh     # 产出 build/caaccel.jar
-./test.sh      # 单测
-./bench.sh     # 与 Rhino 的对比基准（需要 rhino-runtime jar）
+npm run caaccel        # 产出 build/caaccel.jar
+npm run caaccel:test   # 单测
+npm run caaccel:bench  # 与 Rhino 的对比基准（需要 rhino-runtime jar）
+
+# 等价的直接调用（不经过 npm）
+node ./caaccel/cli.js build|test|bench
 ```
 
-`build.sh` 需要 javac/jar：优先用 `$JAVA_HOME/bin`，没有就用 PATH 里的。
+`cli.js` 需要 javac/jar/java：优先用 `$JAVA_HOME/bin`，没有就用 PATH 里的。
 
 ## 接入 Android（可选）
 
-1. `./build.sh` 产出 `caaccel.jar`
+1. `npm run caaccel` 产出 `caaccel.jar`
 2. 复制到 `cadroid/app/libs/`
 3. `app/build.gradle` 里已有：
    ```gradle
@@ -69,7 +72,7 @@ caaccel/Accel.java         加速层：可选。下载代码的人想快就在�
 ## 新增加速点
 
 1. `Accel.java` 加 static 方法（无状态）
-2. `caaccel/test/` 加用例，跑 `./test.sh`
+2. `caaccel/test/` 加用例，跑 `npm run caaccel:test`
 3. `modules/Accel.js` 加同名包装 + **JS 等价实现**（关键：没人实现 Java 时靠它）
 4. 业务代码直接 `Accel.xxx(...)`，不需要判断 jar 在不在
 5. `app/proguard-rules.pro` 的 keep 规则已覆盖整个包，不用改
