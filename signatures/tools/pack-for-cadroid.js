@@ -3,10 +3,11 @@ const path = require("path");
 const zlib = require("zlib");
 const os = require("os");
 
-// 配置
-const INPUT_JS = "main.js";
-const KEY_PEM  = "testkey.x509.pem";
-const OUTPUT   = "~/StudioProjects/cadroid/app/src/main/assets/script.js";
+// 配置（输入/证书相对 signatures/ 目录；输出可传参覆盖）
+const BASE = path.join(__dirname, "..");
+const INPUT_JS = path.join(BASE, "build", "main.js");
+const KEY_PEM  = path.join(BASE, "keys", "testkey.x509.pem");
+const OUTPUT   = process.argv[2] || "~/StudioProjects/cadroid/app/src/main/assets/script.js";
 
 // 展开 ~
 function expandHome(p) {

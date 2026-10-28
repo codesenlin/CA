@@ -1,7 +1,10 @@
 import gzip
 import base64
+import os
 import re
 import sys
+
+BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # ===== 用法 =====
 #   python3 decrypt_script.py <加密的 script.js> <证书文件>
@@ -16,8 +19,8 @@ import sys
 # 校验是不是同一张证书：sha256 的 base64（cadroid 的 verifyApk 里记过原作者的）
 #   HmzSXz/O6M/qIPo8mvhmFuXusTaKk3caC/vjP+ymxzw=
 
-SRC = sys.argv[1] if len(sys.argv) > 1 else 'script.js'
-KEY = sys.argv[2] if len(sys.argv) > 2 else 'testkey.x509.pem'
+SRC = sys.argv[1] if len(sys.argv) > 1 else os.path.join(BASE, 'build', 'script.js')
+KEY = sys.argv[2] if len(sys.argv) > 2 else os.path.join(BASE, 'keys', 'testkey.x509.pem')
 
 def load_der(path):
     data = open(path, 'rb').read()

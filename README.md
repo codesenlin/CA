@@ -71,8 +71,7 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 
    `caclib/` 里还有 clib 自己的元数据：`config.txt`（发布源设置）、`config/publish.txt`
    （发布方式）、`src/*/library.txt`（每个命令库的 id/名称/版本/entry）。
-   `caclib/` 是作者的 git subtree，**保持原样**；`clibspawn.js` / `builtinlibs.js`
-   已适配 `.txt` 格式（同时也兼容 `.js`）。
+   `caclib/` 是作者的 git subtree，**保持原样**；`clibspawn.js` 已适配 `.txt` 格式（同时也兼容 `.js`）。
 
    > 注意：`caclib/signature/`（clib 签名私钥）和 `caclib/outputs/` 不入库，所以 `clibspawn`
    > 在全新检出的仓库里跑不起来，需要自己准备私钥后才会生成产物。

@@ -1,11 +1,13 @@
 import gzip
 import base64
+import os
 import re
 
-# ===== 配置 =====
-RAW_JS = 'main.js'          # cabuild 生成的原始 JS
-PEM    = 'testkey.x509.pem'            # 你签名 cadroid 用的证书
-OUTPUT = 'script.js'
+# ===== 配置（相对 signatures/ 目录，不依赖工作目录）=====
+BASE   = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+RAW_JS = os.path.join(BASE, 'build', 'main.js')            # 原始 JS
+PEM    = os.path.join(BASE, 'keys', 'testkey.x509.pem')    # 签名证书
+OUTPUT = os.path.join(BASE, 'build', 'script.js')          # 加密产物
 
 # 1. 读取原始 JS
 with open(RAW_JS, 'rb') as f:
