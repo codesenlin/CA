@@ -15,6 +15,7 @@
 | [idlibs/experiment.md](idlibs/experiment.md) | `data/idlibs/experiment.json` | 实验性玩法命令库 |
 | [idlibs/basicedu.md](idlibs/basicedu.md) | `data/idlibs/basicedu.json` | 基础教学库 |
 | [JSONSchema.md](JSONSchema.md) | `data/idlibs/JSONSchema.json` | 内置的 JSON Schema 包（jsonPro 用） |
+| [states.md](states.md) | `data/idlibs/states.json` | 方块状态包（status 参数补全用） |
 
 ## 维护约定
 

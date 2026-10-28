@@ -140,7 +140,8 @@
 		return r;
 	},
 	procParams : function(c) {
-		var i, j, cm = this.library.commands[c.cmdname], ps, pa, ci, cp, t, f = true, k, u, ms, pp, cpl = [], nn = false, erm = [];
+		var i, j, cm = this.library.commands[c.cmdname], ps, pa, ci, cp, t, f = true, k, u, ms, pp, cpl = [], nn = false, erm = [],
+			parsedParams = [], paramStart;
 
 		//别名处理
 		while (cm.alias) cm = this.library.commands[cm.alias];
@@ -153,6 +154,7 @@
 		for (i in ps) {
 			pa = ps[i].params;
 			ci = 0;
+			parsedParams = [];
 
 			//重置提示
 			pp = new G.SpannableStringBuilder((c.hasSlash ? "/" : "") + c.cmdname);
@@ -163,11 +165,15 @@
 				cp = pa[j];
 
 				//匹配参数
-				t = this.matchParam(cp, c.strParam.slice(ci));
+				paramStart = ci;
+				t = this.matchParam(cp, c.strParam.slice(ci), parsedParams);
 
 				if (t && t.length >= 0 && ((/^\s?$/).test(c.strParam.slice(ci += t.length, ++ci)))) {
 					//分类 - 匹配成功
 					ci += (/^\s*/).exec(c.strParam.slice(ci))[0].length;
+					//记下这个参数的值，给后续参数当上下文（方块状态要靠方块 id 找 schema）
+					t2 = c.strParam.slice(paramStart, paramStart + t.length).trim();
+					if (t2) parsedParams.push(t2);
 
 					if (ci > c.strParam.length) {
 						//分类 - 到达末尾
@@ -269,7 +275,7 @@
 		}
 		c.mode = f ? this.UNKNOWN_PATTERN : this.COMMAND_WITH_PATTERN;
 	},
-	matchParam : function(cp, ps) {
+	matchParam : function(cp, ps, parsedParams) {
 		var i, r, t, t2, t3, t4;
 		switch (cp.type) {
 			case "text":
@@ -647,6 +653,62 @@
 				});
 				break;
 
+
+			case "status":
+			// 方块状态补全（param 形如 {"type":"status","subject":"block"}）
+			// 输入形如 [facing_direction=1, ...]，必须以 [ 开头且不跨空格
+			var recommend = {}, recommendEnums = {}, selResult, contextValue, curInput, stateSchema, pathArr, selKeys,
+				subParam, subRec, prefix, rk, ek;
+			r = {
+				length : ps.length,
+				canFinish : false,
+				recommend : {},
+				input : []
+			};
+			if (ps.charAt(0) !== "[") {
+				// 没在写方块状态
+				r.length = 0;
+				r.canFinish = true;
+				break;
+			}
+			selResult = this.parseSelectorPath(ps);
+			if (selResult.state == "complete") {
+				r.length = selResult.debug.selectorEnd;
+				r.canFinish = true;
+				return r;
+			}
+			// 上下文取上一个参数的原始值（比如 setblock 的方块 id）
+			contextValue = (parsedParams && parsedParams.length) ? parsedParams[parsedParams.length - 1] : "";
+			curInput = selResult.currentInput || "";
+			stateSchema = this.getSchemaByContext(contextValue, cp.subject);
+			if (!stateSchema) {
+				stateSchema = {};
+				r.description = "无法找到该命令的状态参数信息";
+			}
+			pathArr = selResult.stack ? selResult.stack.slice() : [];
+			selKeys = selResult.keys;
+			if (selResult.state == "wait_key") {
+				recommendEnums = this.getSelectorParamCompletions(curInput, ps, this.removeKeysFromSchema(stateSchema, selKeys), "=");
+			} else if (selResult.state == "wait_value") {
+				if (curInput.length >= 1) {
+					recommend[", - 下一个参数"] = ps + ",";
+					recommend["] - 结束参数"] = ps + "] ";
+				}
+				if (pathArr[pathArr.length - 2] && stateSchema[pathArr[pathArr.length - 2]]) {
+					subParam = this.matchParam(stateSchema[pathArr[pathArr.length - 2]], curInput, []);
+					subRec = (subParam && (subParam.output || subParam.recommend)) || {};
+					prefix = ps.slice(0, ps.lastIndexOf("=") + 1);
+					for (rk in subRec) {
+						if (subRec.hasOwnProperty(rk)) recommendEnums[rk] = prefix + subRec[rk];
+					}
+				}
+			}
+			for (ek in recommendEnums) {
+				if (recommendEnums.hasOwnProperty(ek)) recommend[ek] = recommendEnums[ek];
+			}
+			r.recommend = recommend;
+			r.input = Object.keys(recommend);
+			break;
 
 			case "plain":
 			t = cp.name;

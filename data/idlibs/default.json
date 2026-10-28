@@ -13522,8 +13522,9 @@
 									"suggestion": "block"
 								},
 								{
-									"type": "string",
-									"name": "方块状态"
+									"type": "status",
+									"name": "方块状态",
+									"subject": "block"
 								}
 							]
 						}
@@ -13548,9 +13549,10 @@
 									"suggestion": "block"
 								},
 								{
-									"type": "string",
+									"type": "status",
 									"name": "方块状态",
-									"optional": true
+									"optional": true,
+									"subject": "block"
 								},
 								{
 									"type": "enum",
@@ -13577,8 +13579,9 @@
 									"suggestion": "block"
 								},
 								{
-									"type": "string",
-									"name": "方块状态"
+									"type": "status",
+									"name": "方块状态",
+									"subject": "block"
 								},
 								{
 									"type": "plain",
@@ -13591,9 +13594,10 @@
 									"suggestion": "block"
 								},
 								{
-									"type": "string",
+									"type": "status",
 									"name": "被替换方块状态",
-									"optional": true
+									"optional": true,
+									"subject": "block"
 								}
 							]
 						}
@@ -13613,9 +13617,10 @@
 									"suggestion": "block"
 								},
 								{
-									"type": "string",
+									"type": "status",
 									"name": "方块状态",
-									"optional": true
+									"optional": true,
+									"subject": "block"
 								},
 								{
 									"type": "enum",
@@ -13858,9 +13863,10 @@
 									"suggestion": "block"
 								},
 								{
-									"type": "string",
+									"type": "status",
 									"name": "方块状态",
-									"optional": true
+									"optional": true,
+									"subject": "block"
 								}
 							]
 						}
@@ -15172,8 +15178,9 @@
 									"suggestion": "block"
 								},
 								{
-									"type": "string",
-									"name": "方块状态"
+									"type": "status",
+									"name": "方块状态",
+									"subject": "block"
 								},
 								{
 									"type": "subcommand",
@@ -15675,9 +15682,10 @@
 									"suggestion": "block"
 								},
 								{
-									"type": "string",
+									"type": "status",
 									"name": "方块状态",
-									"optional": true
+									"optional": true,
+									"subject": "block"
 								}
 							]
 						}
@@ -15702,8 +15710,9 @@
 									"suggestion": "block"
 								},
 								{
-									"type": "string",
-									"name": "方块状态"
+									"type": "status",
+									"name": "方块状态",
+									"subject": "block"
 								},
 								{
 									"type": "enum",
@@ -15764,9 +15773,10 @@
 									"suggestion": "block"
 								},
 								{
-									"type": "string",
+									"type": "status",
 									"name": "被替换方块状态",
-									"optional": true
+									"optional": true,
+									"subject": "block"
 								}
 							]
 						}
@@ -15786,8 +15796,9 @@
 									"suggestion": "block"
 								},
 								{
-									"type": "string",
-									"name": "方块状态"
+									"type": "status",
+									"name": "方块状态",
+									"subject": "block"
 								},
 								{
 									"type": "enum",

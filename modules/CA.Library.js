@@ -15,6 +15,7 @@
 			selectors : {},
 			json : {},
 			jsonSchema : {},
+			states : {},
 			help : {},
 			tutorials : [],
 			idlist : [],
@@ -883,6 +884,7 @@
 			if (!(l.selectors instanceof Object)) l.selectors = {};
 			// 拓展包可以携带 JSON Schema，供 jsonPro 类型的参数做补全与校验
 			if (!(l.jsonSchema instanceof Object)) l.jsonSchema = {};
+			if (!(l.states instanceof Object)) l.states = {};
 			if (!(l.help instanceof Object)) l.help = {};
 			for (i in l.commands) {
 				if (l.mode == "remove") {
@@ -929,6 +931,14 @@
 					delete cur.jsonSchema[i];
 				} else {
 					cur.jsonSchema[i] = l.jsonSchema[i];
+				}
+			}
+			// 方块状态（status 参数用）：namespace（如 block）→ 状态表
+			for (i in l.states) {
+				if (l.mode == "remove") {
+					delete cur.states[i];
+				} else {
+					cur.states[i] = l.states[i];
 				}
 			}
 			for (i in l.help) {
