@@ -398,7 +398,7 @@ MapScript.loadModule("Updater", {
 			{
 				extra : [
 					{
-						text : "命令助手 " + BuildConfig.version,
+						text : "命令助手 " + CA.getVersionLabel(),
 						bold : true
 					}, "\n", function() {
 						switch (BuildConfig.variants) {

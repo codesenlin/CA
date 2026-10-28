@@ -30,10 +30,9 @@ const TASK_DESC = {
 };
 
 const CHANNEL_DESC = [
-	["（不带）", "standard，正式版"],
-	["-beta", "测试渠道"],
-	["-dev", "开发渠道"],
-	["-canary", "前沿渠道"]
+	["-beta", "测试渠道（可选）"],
+	["-dev", "开发渠道（可选）"],
+	["-canary", "前沿渠道（可选）"]
 ];
 
 const OUTPUT_DESC = [
@@ -106,7 +105,9 @@ module.exports = function() {
 		others.forEach(function(name) { lines.push("  " + name); });
 	}
 	lines.push("");
-	lines.push("渠道参数（加在任务后面）");
+	lines.push("渠道参数（可选，加在任务后面）");
+	lines.push("  不写渠道参数就是默认渠道 standard；写了就按该渠道出包");
+	lines.push("");
 	CHANNEL_DESC.forEach(function(row) {
 		lines.push("  " + pad(row[0], 12) + row[1]);
 	});

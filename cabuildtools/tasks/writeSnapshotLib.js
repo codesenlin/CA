@@ -36,7 +36,8 @@ module.exports = function(context, args) {
 			'}',
 			'o.name=' + JSON.stringify("命令助手" + libName + "包 - ") + '+id;',
 			'o.installer=true;', // 安装器包：进列表但不参与更新检查
-			'o.shortcutName=' + JSON.stringify(libName + "命令助手") + ';',
+			// 快捷方式统一命名：不管哪个渠道，装上去的都是「快照版」入口
+			'o.shortcutName=' + JSON.stringify("命令助手快照版") + ';',
 			'o.description=' + JSON.stringify("命令助手" + libName + "安装器\n") + ';',
 			'o.uuid=' + JSON.stringify(uuid) + ';',
 			'o.author="命令助手制作组";',
@@ -54,7 +55,7 @@ module.exports = function(context, args) {
 			// 自身有 bug（setIcon 传了 object），失败时退回标准 API 自己建一个。
 			'var scIntent=new android.content.Intent("com.xero.ca.DEBUG_EXEC")' +
 				'.setComponent(new android.content.ComponentName(ctx.getPackageName(),"com.xero.ca.MainActivity"))' +
-				'.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),scName=' + JSON.stringify(libName + "命令助手") + ',scIcon=com.xero.ca.R.mipmap.icon_small;',
+				'.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),scName=' + JSON.stringify("命令助手快照版") + ',scIcon=com.xero.ca.R.mipmap.icon_small;',
 			'try{',
 				'AndroidBridge.createShortcut(scIntent,scName,scIcon);',
 			'}catch(e){',

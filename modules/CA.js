@@ -21,6 +21,11 @@ MapScript.loadModule("CA", {
 	uuid : "d4235eed-520c-4e23-9b67-d024a30ed54c",
 	version : BuildConfig.versionCode,
 	versionName : BuildConfig.version,
+	/** 关于面板/版本信息里显示的版本号：默认只有版本名，带渠道构建时追加「-渠道」 */
+	getVersionLabel : function() {
+		var channel = BuildConfig.channel;
+		return BuildConfig.version + (channel && channel != "standard" ? "-" + channel : "");
+	},
 	publishDate : BuildConfig.date,
 	// 供拓展包/插件读取当前渠道（BuildConfig 是模块内的局部变量，eval 出来的作用域看不到）
 	variants : BuildConfig.variants,
@@ -2579,7 +2584,7 @@ MapScript.loadModule("CA", {
 					title = new G.TextView(ctx);
 					title.setPadding(0, 15 * G.dp, 0, 0);
 					title.setGravity(G.Gravity.CENTER);
-					title.setText("命令助手  " + BuildConfig.version);
+					title.setText("命令助手  " + CA.getVersionLabel());
 					title.setLayoutParams(new G.LinearLayout.LayoutParams(-1, -2));
 					Common.applyStyle(title, "textview_default", 4);
 					linear.addView(title);
@@ -4598,7 +4603,11 @@ MapScript.loadModule("CA", {
 				text : "重新创建快捷方式",
 				description : "向桌面重新请求为安装器创建快捷方式",
 				hidden : function(tag) {
-					return !tag.data.installer; // 只有安装器才有快捷方式
+					var rec;
+					if (!tag.data.installer) return true;
+					// 只有自带快捷方式的安装器（快照/渠道包）才显示；尝鲜包安装器没有快捷方式
+					rec = CA.Library.getInstallerRecord(tag.data.src);
+					return !(rec && rec.shortcutName);
 				},
 				onclick : function(v, tag) {
 					self.postTask(function(cb) {Threads.run(function() {try {
