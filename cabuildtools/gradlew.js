@@ -1,5 +1,6 @@
 /**
  * npm run gradlew 的入口：按参数选择 Release / debug 形态。
+ * （放在 cabuildtools/ 下，和 main.js 同级）
  *
  *   npm run gradlew              # 正式版 APK（shellBuildRelease）
  *   npm run gradlew -- -debug    # 调试版 APK（shellBuildDebug）
@@ -18,7 +19,7 @@ console.log("[gradlew] " + (isDebug ? "调试版" : "正式版") + " → " + tas
 
 const result = spawnSync(
 	process.execPath,
-	[path.join(__dirname, "..", "cabuildtools", "main.js"), task],
+	[path.join(__dirname, "main.js"), task],
 	{ stdio: "inherit" }
 );
 

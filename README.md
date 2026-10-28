@@ -43,7 +43,7 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 ### 准备工作
 
 1. 安装依赖：`npm install`
-2. 配置（一般不用改）。`config/shell.js` 与 `config/import.js` 里只写和机器无关的默认值，
+2. 配置（一般不用改）。`config/shell.json` 与 `config/import.json` 里只写和机器无关的默认值，
    构建时会自动探测本机路径：
 
    | 要找到的东西 | 探测顺序 |
