@@ -73,7 +73,7 @@ CA/
 
 ## 三、注释文件的形式
 
-`data/notes/idlibs.default.js` 用**纯注释**写成，不参与构建（不会被 loader 打包），
+`docs/data-notes/` 下每个数据文件对应一篇 markdown 说明，不参与构建（不会被 loader 打包），
 作用是"改数据前先看这里"：
 
 ```js
@@ -91,8 +91,8 @@ CA/
  */
 ```
 
-约定：**`data/notes/` 的目录结构镜像 `data/`，每个 JSON 对应一个同名 `.js`**，内容只有注释。
-例如 `data/idlibs/default.json` ↔ `data/notes/idlibs/default.js`。
+约定：**`docs/data-notes/` 的目录结构镜像 `data/`，每个 JSON 对应一篇同名 `.md`**。
+例如 `data/idlibs/default.json` ↔ `docs/data-notes/idlibs/default.md`。
 
 ## 四、加速库的调用约定
 

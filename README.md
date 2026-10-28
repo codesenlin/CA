@@ -27,13 +27,14 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 
 - `modules/` — CA 的核心 JS 模块（`main.js` 里用 `Loader.fromFile` 按顺序拼装）
 - `data/` — 从代码里剥出来的纯数据：内置命令库（`idlibs/`）、主题、提示语等
+  （每个数据文件都有对应说明，见 `docs/data-notes/`）
 - `intl/` — 界面文案（`zh_CN` / `en_US`）
 - `cabuildtools/` — 构建工具（git subtree），AST 加载器、签名打包、壳子任务都在这里
 - `config/` — 构建配置（版本号、渠道、发布方式等，见下一节）
 - `caclib/` — 作者的 clib 源码（git subtree，**保持原样不要手改**）：在线拓展包源的工程，
   由 `clibspawn` 打包发布，**不参与 App 构建**
 - `caaccel/` — Java 加速库源码（配合 `modules/Accel.js`）
-- `docs/` — 开发文档（分支约定、数据外置方案、构建配置说明等）
+- `docs/` — 开发文档：分支约定、构建配置、数据外置方案、`data/` 各文件说明等
 - `community-clib/` — 社区拓展包源：`src/` 放原始包，`build.js` 解包重签后生成
   `info.json` / 索引 / `packs/*.lib` / `verify.key`，GitHub 上直接对外提供（见该目录 README）
 - `build/` — 构建产物（不入版本库）
