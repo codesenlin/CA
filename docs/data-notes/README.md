@@ -16,6 +16,7 @@
 | [idlibs/basicedu.md](idlibs/basicedu.md) | `data/idlibs/basicedu.json` | 基础教学库 |
 | [idlibs/schema_v1.md](idlibs/schema_v1.md) | `data/idlibs/schema_v1.json` | 命令库格式的 JSON Schema |
 | [idlibs/schema_update_v1.md](idlibs/schema_update_v1.md) | `data/idlibs/schema_update_v1.json` | Schema 的版本更新补丁 |
+| [JSONSchema.md](JSONSchema.md) | `data/idlibs/JSONSchema.json` | 内置的 JSON Schema 包（jsonPro 用） |
 
 ## 维护约定
 
