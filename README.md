@@ -95,7 +95,7 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 
     node ./cabuildtools/main.js buildRelease            # 命令助手(2026-10-15) standard.js + 命令助手standard<日期>.lib
     node ./cabuildtools/main.js buildRelease -beta      # 命令助手(2026-10-15) beta.js + 命令助手beta<日期>.lib
-    node ./cabuildtools/main.js buildSnapshot           # build/outputs/snapshot/snapshot.js + 命令助手standard<日期>.lib
+    node ./cabuildtools/main.js buildSnapshot           # build/outputs/snapshot/snapshot.js + 命令助手snapshot<日期>.lib
     node ./cabuildtools/main.js buildSnapshot -dev      # dev.js + 命令助手dev<日期>.lib
     node ./cabuildtools/main.js buildSnapshot -canary   # canary.js + 命令助手canary<日期>.lib
 
