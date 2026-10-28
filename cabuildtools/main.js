@@ -6,7 +6,8 @@ const pathUtils = require("path");
 var Tasks = require("./tasks");
 var Build = {
 	execute : function(task, args) {
-		console.log("Process " + task);
+	// help 只是打印用法，不需要 Process/Success 这类流水线日志
+	if (task != "help") console.log("Process " + task);
 		return executeTask(task, args)
 			.then(result => {
 				console.log("Success " + task);
@@ -40,13 +41,14 @@ function procArgs() {
 	for (i = 3; i < args.length; i++) {
 		taskArgs.push(args[i]);
 	}
-	console.log("Process " + task);
+	// help 只是打印用法，不需要 Process/Success 这类流水线日志
+	if (task != "help") console.log("Process " + task);
 	try {
 		if (!(task in Tasks)) throw new Error("Task not found: " + task);
 		if (Tasks[task].input != "cli") throw new Error("Task is not available in CLI: " + task);
 		executeTask(task, taskArgs)
 			.then(result => {
-				console.log("Success " + task + " in " + ((Date.now() - time) / 1000).toFixed(2) + "s");
+				if (task != "help") console.log("Success " + task + " in " + ((Date.now() - time) / 1000).toFixed(2) + "s");
 				return result;
 			}, reason => {
 				console.log("Failed  " + task);

@@ -12,6 +12,7 @@
     "build": "node ./cabuildtools/main.js buildRelease",
     "buildSnapshot": "node ./cabuildtools/main.js buildSnapshot",
     "postinstall": "node scripts/check-legacy.js",
-    "gradlew": "node ./scripts/gradlew.js"
+    "gradlew": "node ./scripts/gradlew.js",
+    "help": "node ./cabuildtools/main.js help"
   }
 }
