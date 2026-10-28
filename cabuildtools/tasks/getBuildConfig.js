@@ -14,7 +14,7 @@ module.exports = function(context, args) {
 		variants = args;
 	}
 	if (!channel) channel = variants == "release" || variants == "snapshot" ? "standard" : variants;
-	context.buildConfig = Object.assign({}, require(path.resolve("./config/build.js")));
+	context.buildConfig = Object.assign({}, require(path.resolve("./config/build.json")));
 	context.buildConfig.variants = variants;
 	context.buildConfig.channel = channel;
 	context.buildConfig.publishTime = Date.now();

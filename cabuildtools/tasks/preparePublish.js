@@ -3,13 +3,13 @@ const path = require("path");
 const readConfig = require("../readconfig");
 
 /**
- * 读发布配置：优先 .js（require 一个对象），其次 .json，最后兼容老的 .txt（readConfig 解析）。
- * 这样 CA 根目录用 config/publish.js，caclib 子树里那份 config/publish.json 也还能用。
+ * 读发布配置：优先 .json，其次 .js（兼容老配置），最后兼容老的 .txt（readConfig 解析）。
+ * CA 根目录用 config/publish.json，caclib 子树里那份 config/publish.txt 也能读。
  */
 function loadPublishConfig(base) {
 	var stem = base.replace(/\.(js|json|txt)$/, "");
-	if (fs.existsSync(stem + ".js")) return require(path.resolve(stem + ".js"));
 	if (fs.existsSync(stem + ".json")) return JSON.parse(fs.readFileSync(stem + ".json", "utf-8"));
+	if (fs.existsSync(stem + ".js")) return require(path.resolve(stem + ".js"));
 	if (fs.existsSync(stem + ".txt")) return readConfig(fs.readFileSync(stem + ".txt", "utf-8"));
 	throw new Error("找不到发布配置：" + base + "（.js / .json / .txt 均可）");
 }
@@ -43,7 +43,7 @@ module.exports = function(context, args) {
 	context.publishConfig = loadPublishConfig("./config/publish");
 	if (args) {
 		var name = context.publishConfig[args];
-		if (!name) throw new Error("发布配置里没有名为 " + args + " 的目标（检查 config/publish.js）");
+		if (!name) throw new Error("发布配置里没有名为 " + args + " 的目标（检查 config/publish.json）");
 		publishCfg = loadPublishConfig(path.resolve("./config", name));
 	} else {
 		publishCfg = context.publishConfig;

@@ -5,11 +5,11 @@ const path = require("path");
 /**
  * shell / import 配置的解析器。
  *
- * config/shell.js、config/import.js 里只写「和机器无关的默认值 + 平台差异」，
+ * config/shell.json、config/import.json 里只写「和机器无关的默认值 + 平台差异」，
  * 具体路径由这里补齐：
  *   - cadroid 项目：CA 仓库旁边叫 cadroid / ca 的目录（含 app/build.gradle），可用 CA_CADROID 覆盖
  *   - Android SDK：ANDROID_HOME / ANDROID_SDK_ROOT → cadroid/local.properties 的 sdk.dir → 常见安装位置
- *   - Build Tools：优先 config/shell.js 里的 buildToolVersion，否则取已安装的最高版本
+ *   - Build Tools：优先 config/shell.json 里的 buildToolVersion，否则取已安装的最高版本
  *   - JDK：JAVA_HOME → Android Studio 自带的 JBR → ~/.jdks（优先 17）
  *   - android.jar：SDK 里最新的 platforms/android-NN/android.jar
  *
@@ -188,9 +188,9 @@ function loadConfigFile(root, name) {
 	return require(path.join(root, "config", name));
 }
 
-/** 解析 config/shell.js，返回可直接使用的 shellConfig */
+/** 解析 config/shell.json，返回可直接使用的 shellConfig */
 function shell(root) {
-	var raw = loadConfigFile(root, "shell.js");
+	var raw = loadConfigFile(root, "shell.json");
 
 	var cadroid = findCadroid(root, raw.shellPath);
 	if (!cadroid) {
@@ -222,14 +222,14 @@ function shell(root) {
 	return config;
 }
 
-/** 解析 config/import.js，返回 generateImport 用的配置 */
+/** 解析 config/import.json，返回 generateImport 用的配置 */
 function importConfig(root) {
-	var raw = loadConfigFile(root, "import.js");
+	var raw = loadConfigFile(root, "import.json");
 	var cadroid = findCadroid(root, raw.shellPath);
 	var sdk = findSdk(cadroid, raw.androidSdk);
 	var jar = findAndroidJar(sdk, raw.androidJarPath);
 	if (!jar) {
-		throw new Error("找不到 android.jar：设 ANDROID_HOME，或在 config/import.js 里写 androidJarPath");
+		throw new Error("找不到 android.jar：设 ANDROID_HOME，或在 config/import.json 里写 androidJarPath");
 	}
 	return { androidJarPath: jar, androidSdk: sdk };
 }

@@ -1,7 +1,7 @@
 const path = require("path");
 const shellconfig = require("../shellconfig");
 module.exports = function(context, args) {
-	// 解析 config/import.js（androidJarPath 留空时自动找 SDK 里最新的 platform）
+	// 解析 config/import.json（androidJarPath 留空时自动找 SDK 里最新的 platform）
 	var importConfig = shellconfig.importConfig(path.resolve(".")), jarClasses = [];
 	shellconfig.writeGenerated("./build/generated/importConfig.json", importConfig);
 	return context.execute("getBuildConfig", "inspect")

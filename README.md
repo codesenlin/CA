@@ -33,7 +33,7 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 - `caclib/` — 作者的 clib 源码（git subtree，**保持原样不要手改**）：在线拓展包源的工程，
   由 `clibspawn` 打包发布，**不参与 App 构建**
 - `caaccel/` — Java 加速库源码（配合 `modules/Accel.js`）
-- `docs/` — 开发文档（分支约定、数据外置方案等）
+- `docs/` — 开发文档（分支约定、数据外置方案、构建配置说明等）
 - `community-clib/` — 社区拓展包源：`src/` 放原始包，`build.js` 解包重签后生成
   `info.json` / 索引 / `packs/*.lib` / `verify.key`，GitHub 上直接对外提供（见该目录 README）
 - `build/` — 构建产物（不入版本库）
@@ -50,23 +50,23 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
    | --- | --- |
    | cadroid 项目 | 环境变量 `CA_CADROID` → CA 旁边的 `cadroid/` 或 `ca/` |
    | Android SDK | `ANDROID_HOME` / `ANDROID_SDK_ROOT` → cadroid 的 `local.properties`（`sdk.dir`）→ 常见安装位置 |
-   | Build Tools | 优先 `config/shell.js` 的 `buildToolVersion`（默认 34.0.0），否则取已安装的最高版本 |
+   | Build Tools | 优先 `config/shell.json` 的 `buildToolVersion`（默认 34.0.0），否则取已安装的最高版本 |
    | JDK | `JAVA_HOME` → `~/.jdks`（优先 17）→ Android Studio 自带的 JBR → `/usr/lib/jvm` |
    | android.jar | SDK 里最新的 platform |
 
    解析结果会写到 `build/generated/shellConfig.json`（`generateImport` 则写 `importConfig.json`），
    排查问题时直接看这份就知道用了哪个 SDK / JDK / cadroid。要固定某个路径，改
-   `config/shell.js` 里对应字段即可（填了就不再探测）。
+   `config/shell.json` 里对应字段即可（填了就不再探测）。
 
-   配置一览（都在 `config/` 下，全部是 JS，按注释改即可）：
+   配置一览（都在 `config/` 下，**全部是 JSON**；字段说明见 [docs/config.md](docs/config.md)）：
 
    | 文件 | 内容 |
    | --- | --- |
-   | `build.js` | 版本号、versionCode、日期、许可更新日期、更新说明（会写进核心的 BuildConfig 与 update.json） |
-   | `update-sources.js` | 客户端检查更新用的源地址（可按渠道配置、可清空关闭），以及发布端的下载地址表、更新站点根目录 |
-   | `publish.js` | 发布方式（`local` 复制到目录 / `sftp` 上传）、目标路径与 SSH 参数 |
-   | `shell.js` | 壳子打包相关路径（一般不用改，自动探测） |
-   | `import.js` | `generateImport` 用的 android.jar（自动探测） |
+   | `build.json` | 版本号、versionCode、日期、许可更新日期、更新说明（会写进核心的 BuildConfig 与 update.json） |
+   | `update-sources.json` | 客户端检查更新用的源地址（可按渠道配置、可清空关闭），以及发布端的下载地址表、更新站点根目录 |
+   | `publish.json` | 发布方式（`local` 复制到目录 / `sftp` 上传）、目标路径与 SSH 参数 |
+   | `shell.json` | 壳子打包相关路径（一般不用改，自动探测） |
+   | `import.json` | `generateImport` 用的 android.jar（自动探测） |
 
    `caclib/` 里还有 clib 自己的元数据：`config.txt`（发布源设置）、`config/publish.txt`
    （发布方式）、`src/*/library.txt`（每个命令库的 id/名称/版本/entry）。

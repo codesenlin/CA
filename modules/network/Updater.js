@@ -47,7 +47,7 @@ MapScript.loadModule("Updater", {
 		}
 	},
 	checkUpdate : function(statusListener, silently) {
-		// 未配置更新源（config/update-sources.js 里 content 为空）就什么都不做
+		// 未配置更新源（config/update-sources.json 里 content 为空）就什么都不做
 		if (!this.sources || !this.sources.content || !this.sources.content.length) {
 			if (statusListener) statusListener("completed", 0);
 			if (!silently) Common.toast("未配置更新源");
@@ -462,7 +462,7 @@ MapScript.loadModule("Updater", {
 		
 	},
 	cacheUpdateData : {},
-	// 更新源见 config/update-sources.js（构建时注入 UpdateSources），按顺序 fallback
+	// 更新源见 config/update-sources.json（构建时注入 UpdateSources），按顺序 fallback
 	sources : UpdateSources.release,
 	betaSources : UpdateSources.beta
 });
