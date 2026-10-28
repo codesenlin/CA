@@ -36,7 +36,6 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 - `docs/` — 开发文档（分支约定、数据外置方案等）
 - `community-clib/` — 社区拓展包源：`src/` 放原始包，`build.js` 解包重签后生成
   `info.json` / 索引 / `packs/*.lib` / `verify.key`，GitHub 上直接对外提供（见该目录 README）
-- `examples/` — 可独立运行的小例子（如 `clib-update` 的更新流程模拟）
 - `build/` — 构建产物（不入版本库）
 
 ## 生成
