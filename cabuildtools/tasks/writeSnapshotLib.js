@@ -35,6 +35,8 @@ module.exports = function(context, args) {
 				'o.close();',
 			'}',
 			'o.name=' + JSON.stringify("命令助手" + libName + "包 - ") + '+id;',
+			'o.installer=true;', // 安装器包：进列表但不参与更新检查
+			'o.shortcutName=' + JSON.stringify(libName + "命令助手") + ';',
 			'o.description=' + JSON.stringify("命令助手" + libName + "安装器\n") + ';',
 			'o.uuid=' + JSON.stringify(uuid) + ';',
 			'o.author="命令助手制作组";',
@@ -64,7 +66,7 @@ module.exports = function(context, args) {
 				'}catch(e2){Log.w(e2)}',
 			'}',
 			'Common.showTextDialog(o.description+="' + libName + '已安装完毕，您可以在桌面找到' + libName + '版的快捷方式");',
-			'CA.Library.removeLibrary(String((typeof LibInfo!="undefined"&&LibInfo&&LibInfo.uri)||path));',
+			// 不再自删：安装器以 [安装器] 身份留在列表里，执行过一次后只显示不再执行
 		'})'
 	].join("\n"))));
 	fs.copyFileSync("./build/outputs/snapshotLib/" + fileName, "./build/dist/命令助手" + channel + context.buildConfig.date + ".lib");

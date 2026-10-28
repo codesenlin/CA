@@ -191,6 +191,9 @@ MapScript.loadModule("CA", {
 				// 拓展包源（{url, name, enabled, builtin}），至少含内置官方源
 				librarySources : [],
 				securityLevel : 2,
+				// 已执行过的安装器包：{ uri: {name, uuid, version, installer:true} }
+				// 记录后就只显示在列表里，不再重新执行（否则每次启动都会重写脚本、重建快捷方式）
+				installedInstallers : {},
 				securityLevelMigrated : true,
 				enabledLibrarys : this.Library.recommended,
 				coreLibrarys : [],
@@ -4481,7 +4484,7 @@ MapScript.loadModule("CA", {
 				text : "检测更新",
 				description : "如果可行，连接服务器检测是否有更新",
 				hidden : function(tag) {
-					return tag.data.mode == 0;
+					return tag.data.installer || tag.data.mode == 0; // 安装器不参与更新
 				},
 				onclick : function(v, tag) {
 					self.postTask(function(cb) {Threads.run(function() {try {
@@ -4567,6 +4570,9 @@ MapScript.loadModule("CA", {
 			},{
 				text : "导出",
 				description : "将该拓展包保存到一个新文件里",
+				hidden : function(tag) {
+					return tag.data.installer; // 安装器只是一次性执行体，没有可导出的源码
+				},
 				onclick : function(v, tag) {
 					if (tag.data.hasError) {
 						Common.toast("拓展包“" + tag.data.name + "”有错误，请先解决错误再导出");
@@ -4588,11 +4594,40 @@ MapScript.loadModule("CA", {
 						});
 					}
 				}
+			}, {
+				text : "重新创建快捷方式",
+				description : "向桌面重新请求为安装器创建快捷方式",
+				hidden : function(tag) {
+					return !tag.data.installer; // 只有安装器才有快捷方式
+				},
+				onclick : function(v, tag) {
+					self.postTask(function(cb) {Threads.run(function() {try {
+						var rec = CA.Library.getInstallerRecord(tag.data.src) || {},
+							name = rec.shortcutName || (tag.data.name || "命令助手");
+						var scIntent = new android.content.Intent("com.xero.ca.DEBUG_EXEC")
+							.setComponent(new android.content.ComponentName(ctx.getPackageName(), "com.xero.ca.MainActivity"))
+							.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+						try {
+							AndroidBridge.createShortcut(scIntent, name, com.xero.ca.R.mipmap.icon_small);
+						} catch(e) {
+							// 旧壳子或部分启动器上 createShortcut 会失败，退回系统快捷方式接口
+							var mgr = ctx.getSystemService(ctx.SHORTCUT_SERVICE),
+								si = new android.content.pm.ShortcutInfo.Builder(ctx, name)
+									.setShortLabel(name).setLongLabel(name).setIntent(scIntent)
+									.setIcon(android.graphics.drawable.Icon.createWithResource(ctx, com.xero.ca.R.mipmap.icon_small))
+									.build();
+							mgr.requestPinShortcut(si, null);
+						}
+						cb(true, function() {
+							Common.toast("已向桌面请求创建快捷方式\n如果没反应，可在桌面长按空白处手动添加");
+						});
+					} catch(e) {erp(e); cb(false)}})});
+				}
 			},{
 				text : "创建副本",
 				description : "创建该拓展包的副本（副本不会被认为与原拓展包相同）",
 				hidden : function(tag) {
-					return CA.settings.securityLevel != 0 || tag.data.hasError || tag.data.mode >= 2;
+					return tag.data.installer || CA.settings.securityLevel != 0 || tag.data.hasError || tag.data.mode >= 2;
 				},
 				onclick : function(v, tag) {
 					ExternalStorage.showSaveActions({
@@ -4637,7 +4672,7 @@ MapScript.loadModule("CA", {
 				text : "锁定",
 				description : "锁定拓展包，使其不能被编辑",
 				hidden : function(tag) {
-					return CA.settings.securityLevel != 0 || tag.data.hasError || tag.data.mode != 1;
+					return tag.data.installer || CA.settings.securityLevel != 0 || tag.data.hasError || tag.data.mode != 1;
 				},
 				onclick : function(v, tag) {
 					Common.showConfirmDialog({
@@ -4755,7 +4790,10 @@ MapScript.loadModule("CA", {
 			}
 			self.vbinder = function(holder, e, i, a) {
 				var title = [], detail = [];
-				if (e.mode == 0) {
+				if (e.installer) {
+					// 安装器包：进列表但以特殊方式存在，不参与更新检查
+					title.push("[安装器] ");
+				} else if (e.mode == 0) {
 					title.push("[内置] ");
 				} else if (e.mode == 2) {
 					title.push("[锁定] ");
@@ -4765,7 +4803,7 @@ MapScript.loadModule("CA", {
 					title.push(e.community ? "[社区] " : "[官方] ");
 				}
 				title.push(e.name);
-				if (!e.disabled && !e.hasError) {
+				if (!e.disabled && !e.hasError && !e.installer) {
 					if (e.core) {
 						title.push(" (已优先启用)");
 					} else {

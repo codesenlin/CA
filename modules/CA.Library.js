@@ -119,6 +119,12 @@
 		fl = Common.removeSet(CA.settings.enabledLibrarys, uriStr) || fl;
 		fl = Common.removeSet(CA.settings.coreLibrarys, uriStr) || fl;
 		return Common.removeSet(CA.settings.disabledLibrarys, uriStr) || fl;
+		// 安装器记录一并清掉，重新导入时才会再执行
+		if (CA.settings.installedInstallers) {
+			delete CA.settings.installedInstallers[String(uriStr)];
+			delete CA.settings.installedInstallers[this.installerNameKey(uriStr)];
+			try { CA.trySave(); } catch (e) {}
+		}
 	},
 	enableCoreLibrary : function(uriStr) {
 		Common.removeSet(CA.settings.enabledLibrarys, uriStr);
@@ -187,13 +193,30 @@
 	 *   "enabled" 读不出元数据时按原行为启用（后续加载会报具体错误）
 	 * 这里不弹提示：批量导入时由调用方汇总数量，只提示包的数量。
 	 */
+	// TMP-TRACE 临时埋点：加载/安装/更新链路的追踪，排查“加载快照就触发更新”用，查完删掉
+	T : function() {
+		try {
+			var a = [];
+			for (var i = 0; i < arguments.length; i++) a.push(String(arguments[i]));
+			android.util.Log.i("CA_TRACE", a.join(" | "));
+		} catch (e) {}
+	},
 	addLibrary : function(uriStr) {
 		var uri = String(uriStr), rd, data, existing, cmp;
+		this.T("addLibrary 进入", uri, "secLevel=" + CA.settings.securityLevel);
+		// 手动导入 = 重新安装：先清掉旧记录，让这一份真的执行一次
+		// （启动时加载则相反，靠记录跳过，不再执行）
+		if (CA.settings.installedInstallers) {
+			delete CA.settings.installedInstallers[uri];
+			delete CA.settings.installedInstallers[this.installerNameKey(uri)];
+		}
 		try {
 			rd = this.readLibrary(uri);
 		} catch(e) {
 			rd = null;
 		}
+		// 安装器包：加载/卸载本身就会触发一次重新加载，别让它连带跑一轮全量更新检查
+		if (rd && rd.data && rd.data.installer) this.installerDirty = true;
 		if (!rd || rd.error || !rd.data) {
 			this.enableLibrary(uriStr);
 			this.saveState();
@@ -321,7 +344,9 @@
 				menu : cur.menu,
 				deprecated : cur.deprecated || this.isDeprecated(cur.uuid, cur.version),
 				mode : m,
-				community : community === true
+				community : community === true,
+				// 安装器包（安装完会把自己删掉的特殊包）：进列表，但不参与更新检查
+				installer : cur.installer === true
 			};
 			resolved.stat = !cur.noCommand && targetLib ? this.resolveLibrary(targetLib, cur) : null;
 			resolved.loaded = true;
@@ -343,7 +368,7 @@
 		}
 	},
 	readLibrary : function(uriStr) {
-		var t, er, uri, securityLevel = CA.settings.securityLevel, requiredSecLevel;
+		var t, er, uri, done, securityLevel = CA.settings.securityLevel, requiredSecLevel;
 		// 安全级别（越往右越严格）：
 		//   0 禁用：什么都不检查，全部加载
 		//   1 低  ：全部加载，但提醒一次
@@ -372,6 +397,7 @@
 			};
 		}
 		requiredSecLevel = this.testSecurityLevel(uri); // 2=签名 1=LIBRARY 0=裸JS
+		this.T("readLibrary", uriStr, "requiredSecLevel=" + requiredSecLevel, "secLevel=" + securityLevel); // TMP-TRACE
 		// 按级别决定"最低要求的包类型"：禁用(0)不限，低(1)要 LIBRARY 以上，中及以上要签名
 		var minRequired = securityLevel <= 0 ? 0 : (securityLevel == 1 ? 1 : 2);
 		if (requiredSecLevel < minRequired) {
@@ -409,6 +435,16 @@
 		} else if (requiredSecLevel == 0) {
 			t = ExternalStorage.readFileContent(uri, "UTF-8", (error) => void (er = { error }))
 			if (t) {
+				// 安装器包执行过一次后只保留元数据：进列表，但不重新执行。
+				// 否则每次启动都会重写脚本、重建快捷方式、重复弹窗。
+				done = this.getInstallerRecord(uriStr);
+				if (done) {
+					this.T("安装器已执行过，跳过 eval", uriStr); // TMP-TRACE
+					return {
+						data : done,
+						mode : 1
+					};
+				}
 				t = this.safeEval(uri, t, er);
 				if (t) {
 					return {
@@ -425,12 +461,75 @@
 		return er;
 	},
 
+	/** 安装器副本的文件名（重复导入会复制到不同目录，文件名不变） */
+	installerNameKey : function(uriStr) {
+		var name;
+		try {
+			name = ExternalStorage.uriToName(ExternalStorage.toUri(String(uriStr)));
+		} catch (e) {
+			name = String(uriStr).split("/").pop();
+		}
+		try { name = decodeURIComponent(String(name)); } catch (e) {}
+		return "name:" + name;
+	},
+	/** 查这个安装器是否已经执行过（先按 uri，再按文件名——同名副本只执行一次） */
+	getInstallerRecord : function(uriStr) {
+		var m = CA.settings.installedInstallers, rec;
+		if (!m) return null;
+		rec = m[String(uriStr)] || m[this.installerNameKey(uriStr)] || null;
+		if (!rec) return null;
+		// 老版本存的记录可能缺字段：checkLibrary 会要求 require/version 是数组，
+		// 读出来先补全，免得升级后报「require 不是数组」。
+		if (!Array.isArray(rec.require)) rec.require = [];
+		if (!Array.isArray(rec.version)) rec.version = [rec.version];
+		if (!Array.isArray(rec.menu)) rec.menu = [];
+		rec.noCommand = true;
+		rec.installer = true;
+		return rec;
+	},
+	/** 记下「这个安装器已经执行过」：只存元数据，之后进列表但不再执行 */
+	markInstallerExecuted : function(uriStr, data) {
+		var rec;
+		if (!CA.settings.installedInstallers) CA.settings.installedInstallers = {};
+		// 必须补齐插件信息里 checkLibrary 会校验的字段（require/version 都要是数组），
+		// 否则下次启动读到缓存记录时会报「require 不是数组」。
+		rec = {
+			name : data.name,
+			author : data.author,
+			description : data.description,
+			uuid : data.uuid,
+			version : Array.isArray(data.version) ? data.version : [data.version],
+			require : Array.isArray(data.require) ? data.require : [],
+			menu : [],
+			// 安装器不提供命令，标记成 noCommand：加载时不必再走 resolveLibrary
+			noCommand : true,
+			installer : true,
+			shortcutName : data.shortcutName || ""
+		};
+		CA.settings.installedInstallers[String(uriStr)] = rec;
+		// 同名副本（重复导入）也认这条记录，避免每份都执行一次、弹多次提示
+		CA.settings.installedInstallers[this.installerNameKey(uriStr)] = rec;
+		this.installerDirty = true;
+		try { CA.trySave(); } catch (e) {}
+		this.T("记录安装器已执行", uriStr, data.uuid); // TMP-TRACE
+	},
 	evalLib : function(uri, code) {
-		return Loader.evalSpecial("(" + code + ")", ExternalStorage.uriToName(uri), 0, {
-			path : String(uri.getPath()),
+		var key = String(uri), done, t;
+		// LIBRARY / 裸 JS 两条读取路径最后都走这里，安装器的「只执行一次」就放在这个总口上：
+		//   已经执行过 → 直接返回元数据（进列表，但不重新写脚本、不重复弹窗）
+		done = this.getInstallerRecord(key);
+		if (done) {
+			this.T("安装器已执行过，跳过 eval", key); // TMP-TRACE
+			return done;
+		}
+		this.T("evalLib 执行库代码", key, "代码长度=" + (code ? code.length : 0)); // TMP-TRACE
+		t = Loader.evalSpecial("(" + code + ")", ExternalStorage.uriToName(uri), 0, {
+			path : String(uri.getPath ? uri.getPath() : uri),
 			code,
 			LibInfo : { uri, code }
 		}, this);
+		if (t && t.installer === true) this.markInstallerExecuted(key, t);
+		return t;
 	},
 	safeEval : function(uri, code, defaultValue, error) {
 		try {
@@ -498,7 +597,14 @@
 			lib.command_snap[e] = t2.description ? t2.description : "";
 		});
 		Tutorial.library = lib.tutorials;
-		this.updateLibraries(CA.settings.libraryAutoUpdate);
+		this.T("onLibraryLoadFinished 完成", "libraryAutoUpdate=" + CA.settings.libraryAutoUpdate, "库数=" + lib.info.length, "installerDirty=" + !!this.installerDirty); // TMP-TRACE
+		if (this.installerDirty) {
+			// 安装器加载/卸载自己导致的重载：不触发更新检查，否则一次安装会连查两轮
+			this.installerDirty = false;
+			this.T("跳过更新检查（安装器触发）"); // TMP-TRACE
+		} else {
+			this.updateLibraries(CA.settings.libraryAutoUpdate);
+		}
 		lib.info.forEach(function(e) {
 			if (e.deprecated && !e.updateInfo) Common.addSet(CA.settings.deprecatedLibrarys, e.src);
 		});
@@ -1410,11 +1516,14 @@
 	},
 	updateLibraries : function(level) {
 		var fUpdate = level == 2, updateCount = 0;
+		this.T("updateLibraries 进入", "level=" + level, "fUpdate=" + fUpdate); // TMP-TRACE
 		if (level <= 0) return 0;
 		CA.IntelliSense.library.info.forEach(function(e) {
+			if (e.installer) return; // 安装器包不参与更新检查
 			e.updateState = "checking";
 			Threads.awaitDefault(function() {try {
 				CA.Library.requestUpdateInfo(e, function(statusCode, arg1, arg2) {
+					CA.Library.T("requestUpdateInfo 回调", e.name, "statusCode=" + statusCode); // TMP-TRACE
 					if (statusCode == 1) {
 						e.updateInfo = arg1;
 						e.updateState = "ready";

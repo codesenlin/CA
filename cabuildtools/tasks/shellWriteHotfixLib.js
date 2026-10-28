@@ -12,12 +12,13 @@ module.exports = function(context, args) {
 				'o.close();',
 			'}',
 			'o.name="命令助手尝鲜包 - "+pub;',
+			'o.installer=true;', // 安装器包：进列表但不参与更新检查
 			'o.description="命令助手Beta版安装器\\n";',
 			'o.uuid="64ac6220-cf64-465a-8af8-1c9dd2835cd0";',
 			'o.author="命令助手制作组";',
 			'o.version=ver;',
 			'if (Date.parse(CA.publishDate)>=Date.parse(pub)){',
-				'CA.Library.removeLibrary(path);',
+				// 不再自删：以 [安装器] 身份留在列表里
 				'return void(o.description+="您正在使用本尝鲜版或更高版本\\n\\n"+ds);',
 			'}',
 			'if(MapScript.host!="Android")return void(o.description+="本安装器仅在App版上可用");',
