@@ -1,7 +1,3 @@
-# ===== Python 缓存 =====
-__pycache__/
-*.pyc
-
 # ===== 依赖 =====
 node_modules/
 
@@ -19,16 +15,16 @@ npm-debug.log*
 # ===== 系统文件 =====
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# ===== IDE =====
+# ===== 编辑器 / IDE =====
 .idea/
+.vscode/
 *.iml
+*.swp
+*~
 
-# ===== 备份文件 =====
+# ===== 临时/备份文件 =====
 *.bak
 *.backup
-
-# ===== 样例自带的临时产物 =====
-# 注：examples/clib-update/ 下有自己的 .gitignore（site/ keys/ simulated-local.lib），
-# 这里只补它没覆盖的嵌套仓库
-examples/clib-update/CA_Reforged/
+*.tmp

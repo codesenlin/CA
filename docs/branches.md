@@ -1,18 +1,23 @@
 # 分支约定
 
-> 这个仓库同时承载「原作者官方版」和「我们的改造」，两条线不能混。
-> 推错分支会把官方版覆盖掉，所以约定写在这里。
+> 这个仓库的分支有着不同的角色：`main` 是历史主线（停更），`dev` 是现在的开发线，
+> `canary` / `beta` 跟随 `dev`。推错分支会把别人的线覆盖掉，所以约定写在这里。
 
 ## 一、四个分支的职责
 
-| 分支 | 归属 | 用途 | 能不能推 |
+| 分支 | 角色 | 用途 | 能不能推 |
 |---|---|---|---|
-| `main` | **原作者官方版** | 上游发布内容，保持原样 | **不要推** |
-| `dev` | 我们 | 开发主线，所有改造都落在这里 | 可以推 |
-| `canary` | 我们 | 前沿版，跟 `dev` 对齐 | 可以推 |
-| `beta` | 我们 | 测试版，跟 `dev` 对齐 | 可以推 |
+| `main` | 历史主线 | fork 的默认分支，内容停在 2026-10-18（旧的 `feat(library)` 那一批） | **不要再推** |
+| `dev` | 开发主线 | 所有新改动都落在这里 | 可以推 |
+| `canary` | 前沿版 | 跟 `dev` 对齐 | 可以推 |
+| `beta` | 测试版 | 跟 `dev` 对齐 | 可以推 |
 
-`main` 是官方版的镜像，**任何情况下都不要往里推**。我们要发布的东西一律走 `dev → canary / beta`。
+`main` 早期当过主线，后来切到 `dev`，两边已经分叉 84 个提交。
+**不要再往 `main` 推**：它是别人（包括 GitHub 默认页）看到的那份，也当作对照用。
+新的东西一律走 `dev → canary / beta`。
+
+上游作者的原仓库没有配置成 remote；如果以后要同步，自行 `git remote add upstream …`，
+流程见下面第三节。
 
 ## 二、日常流程
 
@@ -31,15 +36,16 @@ git push origin dev:dev dev:canary dev:beta
 
 ## 三、同步官方更新
 
-官方版更新后，把它合进 `dev`，不要反过来：
+如果要把上游作者的改动合进来，先把上游加成 remote：
 
 ```bash
-git fetch origin main
+git remote add upstream <上游仓库地址>
+git fetch upstream
 
-git log --oneline dev..origin/main   # 官方有哪些新提交
-git log --oneline origin/main..dev   # 我们比官方多了什么
+git log --oneline dev..upstream/main   # 上游有哪些新提交
+git log --oneline upstream/main..dev   # 我们多了什么
 
-git merge origin/main                # 在 dev 上合并官方改动
+git merge upstream/main                # 在 dev 上合并上游改动
 git push origin dev:dev dev:canary dev:beta
 ```
 
@@ -59,16 +65,17 @@ git push origin dev:dev dev:canary dev:beta
 
 强推（`--force-with-lease`）会从远程抹掉那些提交，只在**确认内容已经没用**时才用，而且要先打 tag。
 
-## 五、当前状态（2026-10-24）
+## 五、当前状态（2026-10-28）
 
 ```
-main      d7c1bc3   原作者官方版，未改动
-dev       dc04305   我们的开发线
-canary    dc04305
-beta      dc04305
+main      d7c1bc3   历史主线（停在 2026-10-18）
+dev       （当前）  开发线，领先 main 84 个提交
+canary    （远程）  最近一次推送是 a6e9afd
+beta      （远程）  最近一次推送是 a60d3e5
 ```
 
-本地有一个备份标签 `backup-beta-20261024`，指向合并前的 `beta`。
+本地只有 `dev` 一个分支（整理时删掉了已经并入 `dev` 的备份分支和标签）。
+`dev` 上还有一批未推送的提交，推送时机自己把握。
 
 ## 六、相关仓库
 
