@@ -30,7 +30,8 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 - `intl/` — 界面文案（`zh_CN` / `en_US`）
 - `cabuildtools/` — 构建工具（git subtree），AST 加载器、签名打包、壳子任务都在这里
 - `config/` — 构建配置（版本号、渠道、发布方式等，见下一节）
-- `caclib/` — 内置命令库源码（git subtree）。**当前为空**，内置库已迁到 `data/idlibs/`
+- `caclib/` — 作者的 clib 源码（git subtree，**保持原样不要手改**）：在线拓展包源的工程，
+  由 `clibspawn` 打包发布，**不参与 App 构建**
 - `caaccel/` — Java 加速库源码（配合 `modules/Accel.js`）
 - `docs/` — 开发文档（分支约定、数据外置方案等）
 - `community-clib/` — 社区拓展包源：`src/` 放原始包，`build.js` 解包重签后生成
@@ -68,9 +69,10 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
    | `shell.js` | 壳子打包相关路径（一般不用改，自动探测） |
    | `import.js` | `generateImport` 用的 android.jar（自动探测） |
 
-   `caclib/` 里还有 clib 自己的元数据：`config.js`（发布源设置）、`config/publish.js`
-   （发布方式）、`src/*/library.js`（每个命令库的 id/名称/版本/entry）。这些原来也是
-   `@key value` 的 txt，现在统一成 JS 模块（可写注释；`preparePublish` 也兼容 `.js` / `.json` / `.txt`）。
+   `caclib/` 里还有 clib 自己的元数据：`config.txt`（发布源设置）、`config/publish.txt`
+   （发布方式）、`src/*/library.txt`（每个命令库的 id/名称/版本/entry）。
+   `caclib/` 是作者的 git subtree，**保持原样**；`clibspawn.js` / `builtinlibs.js`
+   已适配 `.txt` 格式（同时也兼容 `.js`）。
 
    > 注意：`caclib/signature/`（clib 签名私钥）和 `caclib/outputs/` 不入库，所以 `clibspawn`
    > 在全新检出的仓库里跑不起来，需要自己准备私钥后才会生成产物。
@@ -135,15 +137,13 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 
 ## 内置命令库
 
-内置命令库有两套机制，**当前只使用后一套**：
+内置命令库只有一套来源：`data/idlibs/*.json`。由 `modules/builtinData.js` 用
+`Loader.fromFile` 直接内联成 `CA.Library.inner["default"]` 等对象，用户无需手动导入。
 
-1. `caclib/index.json`（旧）：列出的库由 `builtinlibs.js` 在构建时内嵌，运行时通过
-   `CA.Library.builtinLibs` 注册。**现在这个清单是空的**，四个历史内置库都已迁到下一套。
-2. `data/idlibs/*.json`（现用）：由 `modules/builtinData.js` 用 `Loader.fromFile` 直接内联成
-   `CA.Library.inner["default"]` 等对象，用户同样无需手动导入。
-
-新增内置库时改 `data/idlibs/` 并在 `builtinData.js` 里注册；`CA.Library.recommended`
-决定哪些默认启用。
+`caclib/` 不参与 App 构建——它是作者 **在线拓展包源**（clib）的工程仓库，通过
+`git subtree` 同步进来，由 `cabuildtools/clibspawn.js` 打包成 SIGNLIB01 发布到源站
+（对应 `pages/clib/` 的那套结构）。两者不要混：
+把 caclib 的库内嵌成内置包会导致同一份内容在列表里出现两次。
 
 `data/idlibs` 里除了命令库，还有 `schema_v1.json`（库格式的 JSON Schema）和
 `JSONSchema.json`（内置的 rawtext schema，供 `jsonPro` 参数补全）。

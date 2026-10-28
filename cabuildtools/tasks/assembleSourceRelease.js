@@ -1,18 +1,16 @@
 const fs = require("fs");
 const loader = require("../loader-ast");
-const builtinlibs = require("../builtinlibs");
 const postprocess = require("../postprocess");
 
 module.exports = function(context, args) {
-	var libs = builtinlibs.collect();
 	var result = loader.load("./main.js", {
 		buildConfig : context.buildConfig,
 		// 更新源配置（config/update-sources.js），注入成核心里的 UpdateSources
-		updateSources : require("../../config/update-sources.js"),
-		builtinLibs : libs
+		updateSources : require("../../config/update-sources.js")
 	}, "utf-8", { transformAsync: true });
 	result = postprocess(result, context.buildConfig);
-	result = builtinlibs.inject(result, libs);
+	// caclib 是在线源工程，不参与打包：占位符替换成空数组
+	result = result.replace('"__BUILTIN_LIBS__"', "[]");
 	fs.writeFileSync("./build/outputs/releaseSource/main.js", result);
 	return result;
 }

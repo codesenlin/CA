@@ -1,6 +1,5 @@
 const fs = require("fs");
 const loader = require("../loader-ast");
-const builtinlibs = require("../builtinlibs");
 const postprocess = require("../postprocess");
 
 module.exports = function(context, args) {
@@ -10,7 +9,8 @@ module.exports = function(context, args) {
 		updateSources : require("../../config/update-sources.js")
 	}, "utf-8", { transformAsync: true });
 	result = postprocess(result, context.buildConfig);
-	result = builtinlibs.inject(result, builtinlibs.collect());
+	// caclib 是在线源工程，不参与打包：占位符替换成空数组
+	result = result.replace('"__BUILTIN_LIBS__"', "[]");
 	fs.writeFileSync("./build/outputs/snapshotSource/main.js", result);
 	return result;
 }

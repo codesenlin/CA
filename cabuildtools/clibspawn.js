@@ -6,9 +6,51 @@ const loader = require("./loader");
 const js2lib = require("./js2lib");
 const js2signlib = require("./js2signlib");
 
+/** 解析 @key value / @end 的 txt 元数据（作者子树里的 library.txt / config.txt 格式） */
+function readTxtMeta(file) {
+	var meta = {}, key = null, buf = [];
+	fs.readFileSync(file, "utf-8").split(/\r?\n/).forEach(function(line) {
+		var m = /^@([A-Za-z_]+)\s*(.*)$/.exec(line);
+		if (m) {
+			if (key) meta[key] = buf.join("\n").trim();
+			key = m[1];
+			buf = [m[2]];
+			return;
+		}
+		if (line.trim() === "@end") {
+			if (key) meta[key] = buf.join("\n").trim();
+			key = null;
+			buf = [];
+			return;
+		}
+		buf.push(line);
+	});
+	if (key) meta[key] = buf.join("\n").trim();
+	if (typeof meta.versionCode === "string") {
+		try {
+			meta.versionCode = JSON.parse(meta.versionCode);
+		} catch(e) {}
+	}
+	return meta;
+}
+
+/** 读 clib 的 config：.txt（原作者格式）优先，没有再用 .js */
+function readConfig(dir) {
+	var txt = path.resolve(dir, "config.txt");
+	if (fs.existsSync(txt)) return readTxtMeta(txt);
+	return require(path.resolve(dir, "config.js"));
+}
+
+/** 读库元数据：library.txt 优先，兼容 library.js */
+function readLibMeta(dir) {
+	var txt = path.resolve(dir, "library.txt");
+	if (fs.existsSync(txt)) return readTxtMeta(txt);
+	return require(path.resolve(dir, "library.js"));
+}
+
 function main() {
 	var indexFile = JSON.parse(fs.readFileSync("./index.json", "utf-8"));
-	var config = require(path.resolve("./config.js"));
+	var config = readConfig(".");
 	var lockFile;
 	try {
 		lockFile = JSON.parse(fs.readFileSync("./index.lock.json", "utf-8"));
@@ -52,7 +94,7 @@ function digestSHA1(data) {
 function resolveLib(info, config) {
 	var lib;
 	if (info.path) {
-		lib = require(path.resolve(info.path, "library.js"));
+		lib = readLibMeta(info.path);
 	} else {
 		throw new Error("not supported");
 	}
