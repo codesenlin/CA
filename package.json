@@ -13,6 +13,9 @@
     "buildSnapshot": "node ./cabuildtools/main.js buildSnapshot",
     "postinstall": "node scripts/check-legacy.js",
     "gradlew": "node ./scripts/gradlew.js",
-    "help": "node ./cabuildtools/main.js help"
+    "help": "node ./cabuildtools/main.js help",
+    "pack": "node ./cabuildtools/libtool.js pack",
+    "unpack": "node ./cabuildtools/libtool.js unpack",
+    "libinfo": "node ./cabuildtools/libtool.js info"
   }
 }

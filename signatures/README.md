@@ -20,9 +20,8 @@ certs/
   release.signature     证书 DER（正式版异或密钥）
   debug.signature       内容与 release.signature 完全相同（AOSP testkey 只有一张证书）
 tools/
-  encrypt_script.py     旧打包：main.js → gzip → 用证书 DER 异或 → script.js
-  decrypt_script.py     反向解出明文，用来排查
-  pack-for-cadroid.js   同一件事的 Node 版，可选直接写到 cadroid 的 assets
+  pack-for-cadroid.js   壳子脚本加密：main.js → gzip → 用证书 DER 异或 → script.js
+                        （可传参指定输出，默认写到 cadroid 的 assets）
 build/
   main.js               历史打包输入（1.3 MB，某个时间点的构建产物）
   script.js             对应的加密产物
@@ -34,7 +33,7 @@ build/
   公钥 DER 的 SHA-256 是 `ef57b690165cb561…`，证书指纹是
   `A4:0D:A8:0A:59:D1:70:CA…`（AOSP testkey）。
 - `build/` 里的两个文件是**历史快照**，彼此是同一批的输入/输出，但**不是当前代码的产物**，
-  需要最新的就用 `tools/` 重新生成。
+  需要最新的就用 `tools/pack-for-cadroid.js` 重新生成。
 - 壳子（cadroid）实际用的是它自己 `app/signatures/` 下的副本，那个目录在 `.gitignore` 里。
 - 因为用的是公开测试密钥，签名只能证明"内容没被损坏"，**不能证明是谁签的** ——
   要防伪造得自己生成一对新密钥。

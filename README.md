@@ -147,6 +147,31 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 `data/idlibs` 里除了命令库，还有 `schema_v1.json`（库格式的 JSON Schema）和
 `JSONSchema.json`（内置的 rawtext schema，供 `jsonPro` 参数补全）。
 
+## 打包与解包 .lib
+
+`cabuildtools/libtool.js` 提供三条命令，js / json 与 .lib 之间互转：
+
+```bash
+# json 或 js → .lib（默认 LIBRARY 锁定包）
+npm run pack -- 我的库.json                    # 生成 我的库.lib
+npm run pack -- 插件.js -o 输出.lib
+
+# 打成分发格式（SIGNLIB01），需要私钥
+npm run pack -- 我的库.json --sign signatures/keys/testkey_private.pem
+
+# 输入已经是 .lib 也行：解出内容再按目标格式重打（可用来补签名）
+npm run pack -- 旧包.lib --sign 私钥.pem -o 新包.lib
+
+# .lib → js / json（自动识别 LIBRARY / SIGNLIB01 / LIBSIGN01）
+npm run unpack -- 我的库.lib                   # JSON 内容输出 .json（格式化），否则 .js
+npm run unpack -- 已签名.lib --key 公钥.pem     # 顺带验签，失败退出码 2
+
+# 只看容器信息
+npm run info -- 我的库.lib
+```
+
+内容会先做合法性检查：JSON 必须能解析，JS 必须能作为表达式求值。
+
 ## 命令库的签名格式
 
 命令库有三种容器，`01` 是格式版本号：
