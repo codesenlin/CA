@@ -10,7 +10,7 @@ UUID：9c190ced-8a85-4f65-a231-30d3349ab960
 
 ## 字段说明
 
-  - `$schema` —— 指向本目录的 schema_v1.json，校验用
+  - `$schema` —— 命令库格式定义，线上地址 `https://ca.projectxero.top/clib/schema_v1.json`
   - `name` —— 命令库显示名
   - `author` —— 作者
   - `description` —— 一句话说明这个库包含什么、什么时候该启用
