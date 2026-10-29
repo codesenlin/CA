@@ -88,7 +88,7 @@ MapScript.loadModule("AndroidBridge", {
 						if (flag) {
 							Common.toast("拓展包加载完毕");
 						} else {
-							Common.toast("有至少1个拓展包无法加载，请在设置中查看详情");
+							Common.toast("有拓展包未能加载，可在「管理拓展包」里查看原因");
 						}
 					});
 				}

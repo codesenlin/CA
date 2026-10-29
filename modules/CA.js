@@ -152,7 +152,7 @@ MapScript.loadModule("CA", {
 			}
 
 			this.Library.initLibrary(function(flag) {
-				if (!flag) Common.toast("有至少1个拓展包无法加载，请在设置中查看详情");
+				if (!flag) Common.toast("有拓展包未能加载，可在「管理拓展包」里查看原因");
 			});
 			if (Date.parse(f.publishDate) < Date.parse(this.publishDate)) {
 				Updater.showNewVersionInfo(f.publishDate);
@@ -266,14 +266,14 @@ MapScript.loadModule("CA", {
 	/**
 	 * 安全级别编号迁移。
 	 * 旧：-1 受限 / 0 低 / 1 中 / 2 高
-	 * 新：-1 受限 / 0 禁用 / 1 低 / 2 中 / 3 高
+	 * 新：-1 → 4（严格）/ 0 完全加载 / 1 不允许开放拓展包 / 2 中 / 3 高
 	 * 不迁移的话，老用户的「中」会变成新的「低」，等于被悄悄放宽了。
 	 */
 	migrateSecurityLevel : function(settings) {
 		settings = settings || this.settings;
 		if (!settings || settings.securityLevelMigrated) return;
 		var v = settings.securityLevel;
-		// 只有「受限」换了编号（-1 → 4），其余档位的含义本来就一一对应，不需要平移
+		// 只有原来的「受限」换了编号（-1 → 4，现在叫「严格」），其余档位含义一一对应，不需要平移
 		if (v === -1) settings.securityLevel = 4;
 		settings.securityLevelMigrated = true;
 	},
@@ -3175,7 +3175,7 @@ MapScript.loadModule("CA", {
 					if (CA.settings.securityLevel < 4) {
 						CA.showOnlineLib(fset);
 					} else {
-						Common.toast("您正在使用的安全等级不允许加载外部的拓展包");
+						Common.toast("当前安全级别下不加载外部拓展包");
 					}
 				}
 			}];
@@ -4288,37 +4288,38 @@ MapScript.loadModule("CA", {
 				}
 			},{
 				text : "设置安全级别",
-				// 按"允许加载的类型"逐级放宽：
-				//  0 禁用：完全加载（裸 JS 也加载）
-				//  1 低  ：+ LIBRARY 格式
-				//  2 中  ：+ 社区签名（仍要求有签名）
-				//  3 高  ：只认官方签名
-				//  4 受限：只加载内置
+				// 按"允许加载的类型"逐级收紧：
+				//  0 禁用：完全加载，不使用安全机制（未打包的 .js/.json 也加载）
+				//  1 低：只放行打包过的拓展包（锁定包 / 签名包），未打包的不加载
+				//  2 中（推荐）：+ 社区签名（仍要求有签名）
+				//  3 高：只认官方签名
+				//  4 严格：只加载内置
 				secLevels : [0, 1, 2, 3, 4],
 				secLevelDetails : {
 					"0" : {
 						text : "禁用",
-						description : "完全加载：签名包、LIBRARY、裸 JS 都会加载",
-						confirm : "「禁用」会关掉所有安全检查，任何文件都会被当作拓展包执行。\n恶意拓展包可以借机运行任意代码，确定要这么做吗？"
+						summary : "完全加载，不使用安全机制",
+						confirm : "切到这一档会关闭所有来源检查：任何文件（包括没打包、没签名的 .js/.json）都会被当作拓展包执行。\n恶意文件可以借此运行任意代码，确定要切换吗？"
 					},
 					"1" : {
 						text : "低",
-						description : "允许签名包和 LIBRARY 格式，裸 JS 不加载",
-						confirm : "「低」会允许加载 LIBRARY 格式（未签名）的拓展包，这类包没有来源担保。\n如果你的拓展包都是签名的，建议使用「中」"
+						summary : "只放行打包过的拓展包",
+						confirm : "这一档会额外允许加载未签名的锁定包（LIBRARY），这类包没有来源保证。\n如果手上的包都已经签名，建议留在「中」。是否继续？"
 					},
 					"2" : {
-						text : "中",
-						description : "（推荐）只允许签名包：官方与社区",
-						confirm : "「中」及以上只加载已签名的拓展包，LIBRARY 和裸 JS 都会被拒绝"
+						text : "中（推荐）",
+						summary : "只加载签名包：官方 + 社区",
+						confirm : "「中」会加载社区签名的拓展包，它们的来源由各自拓展包源保证，没有官方背书。是否继续？"
 					},
 					"3" : {
 						text : "高",
-						description : "只允许官方签名的拓展包，社区包也拒绝"
+						summary : "只加载官方签名",
+						confirm : "「高」会拒绝社区签名的拓展包（已安装的也不再加载），只保留官方签名和内置包。是否继续？"
 					},
 					"4" : {
-						text : "受限",
-						description : "只加载内置命令库，任何外部拓展包都不加载",
-						confirm : "「受限」下只加载内置命令库，所有外部拓展包（包括已安装的）都不会生效，是否继续？"
+						text : "严格",
+						summary : "只加载内置命令库",
+						confirm : "「严格」下只加载内置命令库，所有外部拓展包（包括已安装的）都不会生效。是否继续？"
 					}
 				},
 				onclick : function(v, tag) {
@@ -4328,15 +4329,16 @@ MapScript.loadModule("CA", {
 						// 找不到当前级别时默认落在「中」上（新数组里 1 的索引是 2）
 						progress : t < 0 ? 2 : t,
 						prompt : function(progress) {
-							var e = self2.secLevelDetails[self2.secLevels[progress]];
-							return e.text + "\n\n" + e.description;
+							// 只给一句话；确认框在放宽级别时才弹，那里的文案单独写
+							return self2.secLevelDetails[self2.secLevels[progress]].summary;
 						},
 						callback : function(progress) {
-							var d = self2.secLevelDetails[self2.secLevels[progress]], self3 = this;
-							if (self2.secLevels[progress] == CA.settings.securityLevel) return;
-							if (d.confirm) {
+							var target = self2.secLevels[progress], d = self2.secLevelDetails[target], self3 = this;
+							if (target == CA.settings.securityLevel) return;
+							// 数字越小越宽松：只有放宽级别时才需要确认风险，收紧直接生效
+							if (d.confirm && target < CA.settings.securityLevel) {
 								Common.showConfirmDialog({
-									title : "警告",
+									title : "放宽安全级别",
 									description : d.confirm,
 									callback : function(id) {
 										if (id != 0) return;
@@ -4353,7 +4355,7 @@ MapScript.loadModule("CA", {
 							self.postTask(function(cb) {
 								cb(true, function() {
 									var d = self2.secLevelDetails[CA.settings.securityLevel];
-									Common.toast("安全级别已被设置为 " + (d ? d.text : "未知"));
+									Common.toast("安全级别已切换为「" + (d ? d.text : "未知") + "」");
 								});
 							});
 						}
@@ -4361,7 +4363,7 @@ MapScript.loadModule("CA", {
 				},
 				hidden : function() {
 					var d = this.secLevelDetails[CA.settings.securityLevel];
-					this.description = "当前安全级别为 " + (d ? d.text : "未知");
+					this.description = d ? "当前：" + d.text + " —— " + d.summary : "当前安全级别未知";
 					return false;
 				}
 			},{

@@ -361,12 +361,12 @@
 	},
 	readLibrary : function(uriStr) {
 		var t, er, uri, done, securityLevel = CA.settings.securityLevel, requiredSecLevel;
-		// 安全级别（越往右越严格）：
-		//   0 禁用：什么都不检查，全部加载
-		//   1 低  ：全部加载，但提醒一次
+		// 安全级别（数字越大越严格）：
+		//   0 完全加载，不使用安全机制：什么都不检查
+		//   1 不允许开放拓展包：放行未签名的锁定包，但提醒一次
 		//   2 中  ：只允许已签名的（官方 + 社区）
 		//   3 高  ：只允许官方签名的
-		//   4 受限：只加载内置
+		//   4 严格：只加载内置
 		if (t = CA.Library.inner[uriStr]) {
 			return {
 				data : t,
@@ -378,7 +378,7 @@
 		};
 		if (securityLevel >= 4) {
 			return {
-				error : "当前安全级别为「受限」，只加载内置命令库\n可在管理拓展包右上角 ▼ 里的“设置安全级别”调整"
+				error : "当前安全级别为「严格」，只加载内置命令库\n可在「管理拓展包」右上角 ▼ 的「设置安全级别」里调整"
 			};
 		}
 		uri = ExternalStorage.toUri(uriStr);
@@ -389,19 +389,18 @@
 			};
 		}
 		requiredSecLevel = this.testSecurityLevel(uri); // 2=签名 1=LIBRARY 0=裸JS
-		// 按级别决定"最低要求的包类型"：禁用(0)不限，低(1)要 LIBRARY 以上，中及以上要签名
+		// 按级别决定"最低要求的包类型"：0 不限，1 要 LIBRARY 以上，2 及以上要签名
 		var minRequired = securityLevel <= 0 ? 0 : (securityLevel == 1 ? 1 : 2);
 		if (requiredSecLevel < minRequired) {
-			var levelName = securityLevel >= 3 ? "高" : (securityLevel == 2 ? "中" : "低");
 			return {
-				error : "当前安全级别为「" + levelName + "」，不允许加载" +
-					(minRequired >= 2 ? "未签名的" : "裸 JS 格式的") + "拓展包\n可在管理拓展包右上角 ▼ 里的“设置安全级别”调整"
+				error : "当前安全级别不允许加载" +
+					(minRequired >= 2 ? "未签名的" : "未打包的") + "拓展包\n可在「管理拓展包」右上角 ▼ 的「设置安全级别」里调整"
 			};
 		}
 		// 高：只认官方签名，社区包也拒绝
 		if (securityLevel >= 3 && this.isCommunityLib(uri)) {
 			return {
-				error : "当前安全级别为「高」，不允许加载社区拓展包\n它是由第三方拓展包源的公钥签名的，没有官方背书"
+				error : "当前安全级别为「高」，不允许加载社区拓展包\n它由第三方拓展包源签名，没有官方背书；切到「中」可以加载"
 			};
 		}
 		// 低：允许 LIBRARY 未签名包，但要提醒一次
@@ -1389,7 +1388,7 @@
 		this.lowSecurityWarned = true;
 		try {
 			G.ui(function() {try {
-				Common.toast("安全级别为「低」：LIBRARY 格式（未签名）的拓展包也会被加载");
+				Common.toast("当前安全级别会加载未签名的锁定包（LIBRARY），请确认来源可信");
 			} catch(e) {erp(e)}});
 		} catch(e) {}
 	},
