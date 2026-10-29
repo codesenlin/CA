@@ -1099,15 +1099,20 @@
 
 	/** 取源列表；第一次使用时补上内置官方源 */
 	getSources : function() {
+		var name = "命令助手官方拓展包源", builtin;
 		var list = CA.settings.librarySources;
 		if (!Array.isArray(list)) list = CA.settings.librarySources = [];
-		if (!list.some(function(s) { return s && s.builtin; })) {
+		builtin = list.filter(function(s) { return s && s.builtin; })[0];
+		if (!builtin) {
 			list.unshift({
 				url : this.getOriginSourceUrl(),
-				name : "官方源",
+				name : name,
 				enabled : true,
 				builtin : true
 			});
+		} else if (builtin.name != name) {
+			// 旧版本叫“官方源”/“命令助手拓展包源”，统一改名（内置源的显示名不开放编辑，直接覆盖）
+			builtin.name = name;
 		}
 		return list;
 	},

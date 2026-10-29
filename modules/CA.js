@@ -4030,15 +4030,15 @@ MapScript.loadModule("CA", {
 				return layout;
 			};
 			self.vbinder = function(holder, src, i, a) {
-				var title = [], detail = [];
-				title.push(src.builtin ? "[官方] " : "");
-				title.push(src.name || src.url);
+				var title = [], detail = [], name = src.name || src.url;
+				// 有备注就把备注当标题（大字），原名退到下面的小字里
+				if (src.builtin) title.push("[官方] ");
+				title.push(src.note ? src.note : name);
 				title.push(src.enabled ? "（已启用）" : "（已禁用）");
 				holder.text1.setText(title.join(""));
 				Common.applyStyle(holder.text1, src.enabled ? "item_default" : "item_disabled", 3);
+				if (src.note) detail.push("原名：" + name);
 				detail.push("地址 : " + src.url);
-				// 备注只显示内容，不加“备注”字样
-				if (src.note) detail.push(src.note);
 				detail.push("", src.builtin ? "内置源，不能禁用" : "点按可修改备注或禁用");
 				holder.text2.setText(detail.join("\n"));
 			};
