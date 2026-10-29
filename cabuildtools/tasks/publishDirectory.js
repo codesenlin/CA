@@ -22,16 +22,31 @@ module.exports = function(context, args) {
 	}
 }
 
-// readdirSync 的 recursive 选项（Node 20.1+）直接给出所有层级的条目，
-// 省掉手写递归；parentPath 是它所在目录的绝对路径。
+// fs.globSync（Node 22+）一次列出一层下的所有条目，省掉手写递归。
+// 用 {*,.*} 是因为 glob 默认跳过以点开头的条目；但 ** 不会深入隐藏目录，
+// 所以遇到隐藏目录再单独递归进去（构建产物里一般没有，兜底用）。
 function prepareUpload(operations, localPath, remotePath) {
-	fs.readdirSync(localPath, { recursive : true, withFileTypes : true }).forEach(function(entry) {
-		if (entry.isDirectory()) return;
-		var relative = path.relative(localPath, path.join(entry.parentPath, entry.name));
+	var seen = Object.create(null);
+	function addFile(entry) {
+		var absolute = path.join(entry.parentPath, entry.name);
+		var relative = path.relative(localPath, absolute);
+		// 隐藏目录靠递归兜底时会和通配结果重叠，这里按相对路径去重
+		if (seen[relative]) return;
+		seen[relative] = true;
 		operations.push({
-			localPath : path.join(localPath, relative),
+			localPath : absolute,
 			remotePath : remotePath + "/" + relative.split(path.sep).join("/")
 		});
-	});
+	}
+	function collect(dir) {
+		fs.globSync("**/{*,.*}", { cwd : dir, withFileTypes : true }).forEach(function(entry) {
+			if (!entry.isDirectory()) {
+				addFile(entry);
+			} else if (entry.name.charAt(0) === ".") {
+				collect(path.join(entry.parentPath, entry.name));
+			}
+		});
+	}
+	collect(localPath);
 	return operations;
 }

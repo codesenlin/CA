@@ -61,12 +61,10 @@ function run(command, args, options) {
 /** 收集所有 .java 源文件 */
 function listJava(dir) {
 	if (!fs.existsSync(dir)) return [];
-	return fs.readdirSync(dir, { recursive : true, withFileTypes : true })
-		.filter(function(entry) {
-			return !entry.isDirectory() && entry.name.endsWith(".java");
-		})
-		.map(function(entry) {
-			return path.join(entry.parentPath, entry.name);
+	// fs.globSync 是 Node 22 起的内置实现，省掉手写递归
+	return fs.globSync("**/*.java", { cwd : dir })
+		.map(function(rel) {
+			return path.join(dir, rel);
 		})
 		.sort();
 }

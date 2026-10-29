@@ -20,6 +20,8 @@
     "caaccel": "node ./caaccel/cli.js build",
     "caaccel:test": "node ./caaccel/cli.js test",
     "caaccel:bench": "node ./caaccel/cli.js bench",
-    "test": "node ./cabuildtools/tests/async-transform.test.js && node ./cabuildtools/tests/loader-ast.test.js"
+    "test": "node ./cabuildtools/tests/async-transform.test.js && node ./cabuildtools/tests/loader-ast.test.js",
+    "deps": "node ./cabuildtools/deps.js check",
+    "deps:update": "node ./cabuildtools/deps.js update"
   }
 }

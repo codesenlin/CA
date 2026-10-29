@@ -145,6 +145,21 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
     node ./cabuildtools/tests/async-transform.test.js
     node ./cabuildtools/tests/loader-ast.test.js
 
+### 检查 / 更新依赖
+
+    npm run deps                      # 检查：有可更新的依赖就返回码 1（适合 CI）
+    npm run deps -- --json            # 机器可读输出
+    npm run deps -- --no-error        # 只看报告，不靠返回码卡流程
+
+    npm run deps:update               # 升「范围内」的版本（npm update），然后跑 npm test
+    npm run deps:update -- --latest   # 连大版本一起升（只动直接依赖的声明）
+    npm run deps:update -- --verify   # 更新后再跑一次 npm run build
+    npm run deps:update -- --dry-run  # 只打印会做什么，不改文件
+
+依赖检查靠 `npm outdated`，workspace 里的包也能识别；大版本默认不升，
+因为跨大版本可能有 ESM/API 变化（比如 Babel 7 → 8），需要自己确认后
+再 `--latest`。更新完会自动跑测试，加 `--verify` 还会再构建一次。
+
 ## 内置命令库
 
 内置命令库只有一套来源：`data/idlibs/*.json`。由 `modules/builtinData.js` 用
