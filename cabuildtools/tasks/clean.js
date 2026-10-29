@@ -1,17 +1,8 @@
 const fs = require("fs");
-function rmdir(path) {
-	if (!fs.existsSync(path)) return;
-	var e, files = fs.readdirSync(path);
-	for (e of files) {
-		if (fs.statSync(path + "/" + e).isDirectory()) {
-			rmdir(path + "/" + e);
-		} else {
-			fs.unlinkSync(path + "/" + e);
-		}
-	}
-	fs.rmdirSync(path);
-}
+
+// Node 14.14+ 的 fs.rmSync 自带递归删除和 force（不存在也不报错），
+// 不用再手写 rmdir 递归。
 module.exports = function(context, args) {
-	rmdir("./build");
+	fs.rmSync("./build", { recursive : true, force : true });
 }
 module.exports.input = "cli";

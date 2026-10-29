@@ -11,6 +11,10 @@ module.exports = function(context, args) {
 				resolve({ sftp : sftp, connection : conn });
 			});
 		});
-		conn.connect(args);
+		conn.connect(Object.assign({
+			readyTimeout : 30000,      // 握手超时，默认 20s，网络差时容易误判
+			keepaliveInterval : 15000, // 上传大文件时保活，避免中途被断开
+			keepaliveCountMax : 3
+		}, args));
 	});
 }

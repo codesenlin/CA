@@ -18,6 +18,7 @@ const fs = require("fs");
 const path = require("path");
 const zlib = require("zlib");
 const crypto = require("crypto");
+const { parseArgs : parseCliArgs } = require("util");
 
 const MAGIC_LIBRARY = "LIBRARY";
 const MAGIC_SIGNED = "SIGNLIB01";
@@ -45,17 +46,27 @@ function fail(msg) {
 }
 
 function parseArgs(argv) {
-	const out = { _: [] };
-	for (let i = 0; i < argv.length; i++) {
-		const a = argv[i];
-		if (a === "-o" || a === "--out") out.out = argv[++i];
-		else if (a === "--sign") out.sign = argv[++i];
-		else if (a === "--key") out.key = argv[++i];
-		else if (a === "--raw") out.raw = true;
-		else if (a === "-h" || a === "--help") out.help = true;
-		else out._.push(a);
+	let parsed;
+	try {
+		parsed = parseCliArgs({
+			args : argv,
+			options : {
+				out : { type : "string", short : "o" },
+				sign : { type : "string" },
+				key : { type : "string" },
+				raw : { type : "boolean" },
+				help : { type : "boolean", short : "h" }
+			},
+			allowPositionals : true,
+			strict : true
+		});
+	} catch (e) {
+		// 未知参数 / 缺值时直接报错，不再像手写版那样默默当路径
+		console.error("失败：" + e.message);
+		usage();
+		process.exit(1);
 	}
-	return out;
+	return Object.assign(parsed.values, { _ : parsed.positionals });
 }
 
 /** 读私钥：PEM 或 DER 都行 */

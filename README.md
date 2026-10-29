@@ -45,6 +45,8 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 ### 准备工作
 
 1. 安装依赖：`npm install`
+   需要 Node `^22.18.0` 或 `>=24.11.0`。构建工具用了 Babel 8（纯 ESM），
+   靠 Node 22+ 的 `require(esm)` 直接在 CommonJS 里加载；Node 太老会报模块找不到。
 2. 配置（一般不用改）。`config/shell.json` 与 `config/import.json` 里只写和机器无关的默认值，
    构建时会自动探测本机路径：
 
@@ -134,6 +136,14 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 > 调试包也开启了 R8（`minifyEnabled true`）。Rhino 1.9 的 `SlotMapOwner$ThreadedAccess`
 > 用了 `MethodHandle.invoke`，D8 在 minSdk 21 下不会做兼容转换，不开 R8 会直接报
 > `Error while dexing`；release 一直是开着的，所以只有 debug 会撞上。
+
+### 跑构建工具的测试
+
+    npm test
+
+    # 等价于
+    node ./cabuildtools/tests/async-transform.test.js
+    node ./cabuildtools/tests/loader-ast.test.js
 
 ## 内置命令库
 

@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+
 module.exports = function(context, args) {
 	var operations = prepareUpload([], args[1].localPath, args[1].remotePath);
 	if (args[0].enableAsyncUpload) {
@@ -18,22 +19,19 @@ module.exports = function(context, args) {
 					return args[0];
 				}
 			})
-			
 	}
 }
 
+// readdirSync 的 recursive 选项（Node 20.1+）直接给出所有层级的条目，
+// 省掉手写递归；parentPath 是它所在目录的绝对路径。
 function prepareUpload(operations, localPath, remotePath) {
-	var files = fs.readdirSync(localPath), newPath;
-	files.forEach(e => {
-		newPath = path.resolve(localPath, e);
-		if (fs.statSync(newPath).isDirectory()) {
-			prepareUpload(operations, newPath, remotePath + "/" + e);
-		} else {
-			operations.push({
-				localPath : newPath,
-				remotePath : remotePath + "/" + e
-			});
-		}
+	fs.readdirSync(localPath, { recursive : true, withFileTypes : true }).forEach(function(entry) {
+		if (entry.isDirectory()) return;
+		var relative = path.relative(localPath, path.join(entry.parentPath, entry.name));
+		operations.push({
+			localPath : path.join(localPath, relative),
+			remotePath : remotePath + "/" + relative.split(path.sep).join("/")
+		});
 	});
 	return operations;
 }

@@ -8,6 +8,10 @@ const t = require("@babel/types");
 const _stripJsonCommentsModule = require("strip-json-comments");
 const stripJsonComments = _stripJsonCommentsModule.default || _stripJsonCommentsModule;
 const babel = require("@babel/core");
+// Babel 8 是纯 ESM，插件按名字解析会相对 cwd 找（CA 根目录没有这个包），
+// 这里直接 require 出来传对象，避免解析路径受 cwd 影响
+const _asyncTransformPluginModule = require("@babel/plugin-transform-async-to-generator");
+const asyncTransformPlugin = _asyncTransformPluginModule.default || _asyncTransformPluginModule;
 
 // 虚拟文件系统 - 编译时维护
 const vfs = {
@@ -569,7 +573,7 @@ module.exports = {
                 transformOutput = babel.transformFromAstSync(ast, source, {
                     babelrc: false,
                     configFile: false,
-                    plugins: ["@babel/plugin-transform-async-to-generator"],
+                    plugins: [asyncTransformPlugin],
                     // jsescOption 不是 transform 的顶层选项，要放在 generatorOpts 里
                     generatorOpts: { jsescOption: { minimal: true } },
                     sourceMaps: true

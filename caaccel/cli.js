@@ -60,15 +60,15 @@ function run(command, args, options) {
 
 /** 收集所有 .java 源文件 */
 function listJava(dir) {
-	const out = [];
-	(function walk(d) {
-		fs.readdirSync(d, { withFileTypes : true }).forEach(function(entry) {
-			const full = path.join(d, entry.name);
-			if (entry.isDirectory()) walk(full);
-			else if (entry.name.endsWith(".java")) out.push(full);
-		});
-	})(dir);
-	return out.sort();
+	if (!fs.existsSync(dir)) return [];
+	return fs.readdirSync(dir, { recursive : true, withFileTypes : true })
+		.filter(function(entry) {
+			return !entry.isDirectory() && entry.name.endsWith(".java");
+		})
+		.map(function(entry) {
+			return path.join(entry.parentPath, entry.name);
+		})
+		.sort();
 }
 
 /** 构建 caaccel.jar：纯 javac + jar，不依赖 Gradle/Android */
