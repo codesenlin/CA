@@ -1542,6 +1542,13 @@
 		return updateCount;
 	},
 	versionToString : function(v) {
-		return Array.isArray(v) ? v.join(".") : String(v);
+		if (!Array.isArray(v)) return String(v);
+		// 快照 / 安装器包的版本是 [年, 月, 日, 时, 分, 秒]，
+		// 时、分、秒补成两位，列表里不至于出现 21.5.8 这种参差的对齐
+		if (v.length === 6 && v[0] >= 2000) {
+			var pad2 = function(n) { return ("0" + n).slice(-2); };
+			return [v[0], v[1], v[2], pad2(v[3]), pad2(v[4]), pad2(v[5])].join(".");
+		}
+		return v.join(".");
 	}
 })

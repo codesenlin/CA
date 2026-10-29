@@ -19,6 +19,10 @@ module.exports = function(context, args) {
 			canary : "b7d1c394-2e6a-4c58-8f07-9d3b1e5a6c27"
 		}[channel] || "1d6b8f24-3a9c-4e57-b0d8-7f2c5a4e9b61"),
 		libName = channel,
+		// 不带渠道参数（release 的 standard / snapshot 的 snapshot）就是普通快照版；
+		// 带了 -beta / -dev / -canary 才在名字后面标渠道
+		plainName = channel == "standard" || channel == "snapshot",
+		displayName = plainName ? "命令助手快照版" : "命令助手快照版 - " + channel,
 		fileName = variants + ".lib",
 		scriptName = variants + ".js";
 
@@ -34,7 +38,7 @@ module.exports = function(context, args) {
 				'o.write(android.util.Base64.decode(b,2));',
 				'o.close();',
 			'}',
-			'o.name=' + JSON.stringify("命令助手" + libName + "包 - ") + '+id;',
+			'o.name=' + JSON.stringify(displayName) + ';',
 			'o.installer=true;', // 安装器包：进列表但不参与更新检查
 			// 快捷方式统一命名：不管哪个渠道，装上去的都是「快照版」入口
 			'o.shortcutName=' + JSON.stringify("命令助手快照版") + ';',

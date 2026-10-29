@@ -4497,7 +4497,7 @@ MapScript.loadModule("CA", {
 					self.postTask(function(cb) {Threads.run(function() {try {
 						CA.Library.requestUpdateInfo(tag.data, function(statusCode, arg1, arg2) {
 							if (statusCode == 1) {
-								Common.toast("检测到更新：\n" + arg2.version.join(".") + " -> " + arg1.version.join("."));
+								Common.toast("检测到更新：\n" + CA.Library.versionToString(arg2.version) + " -> " + CA.Library.versionToString(arg1.version));
 								CA.Library.clearCache(tag.data.src);
 								CA.Library.doUpdate(arg1, arg2, function(statusMessage, arg_1) {
 									if (statusMessage == "downloadFromUri") {
@@ -4520,7 +4520,7 @@ MapScript.loadModule("CA", {
 										cb(false);
 									} else if (statusMessage == "completeDownload") {
 										cb(true, function() {
-											Common.toast("更新完成：拓展包“" + tag.data.name + "”已是最新版本：" + arg1.version.join("."));
+											Common.toast("更新完成：拓展包“" + tag.data.name + "”已是最新版本：" + CA.Library.versionToString(arg1.version));
 										});
 									}
 								});
@@ -4528,7 +4528,7 @@ MapScript.loadModule("CA", {
 								if (statusCode == -2) {
 									Common.toast("检测更新失败\n" + arg1);
 								} else if (statusCode == 0) {
-									Common.toast("拓展包“" + tag.data.name + "”已是最新版本：" + arg1.version.join("."));
+									Common.toast("拓展包“" + tag.data.name + "”已是最新版本：" + CA.Library.versionToString(arg1.version));
 								} else {
 									Common.toast("拓展包“" + tag.data.name + "”没有更新数据");
 								}
@@ -4837,7 +4837,7 @@ MapScript.loadModule("CA", {
 						detail.push("目前该拓展包不适合在您的设备上使用");
 					}
 					if (detail.length) detail.push("");
-					detail.push("版本 : " + e.version.join("."), "作者 : " + e.author);
+					detail.push("版本 : " + CA.Library.versionToString(e.version), "作者 : " + e.author);
 				if (e.sourceName) detail.push("来源 : " + e.sourceName + (e.sourceNote ? "（" + e.sourceNote + "）" : ""));
 					if (e.description && e.description.length) {
 						detail.push("\n" + e.description);
@@ -5045,7 +5045,7 @@ MapScript.loadModule("CA", {
 				holder.text1.setText((e.installed ? "[已安装] " : "") + e.name);
 				Common.applyStyle(holder.text1, e.disabled ? "item_disabled" : "item_default", 3);
 				if (e.disabled) detail.push("目前您使用的版本不支持此命令库\n");
-				detail.push("版本 : " + e.version.join("."), "作者 : " + e.author);
+				detail.push("版本 : " + CA.Library.versionToString(e.version), "作者 : " + e.author);
 				if (e.description) detail.push("\n" + e.description);
 				holder.text2.setText(detail.join("\n"));
 			}

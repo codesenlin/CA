@@ -40,6 +40,16 @@ function usage() {
 	].join("\n"));
 }
 
+/** 版本数组转字符串；[年,月,日,时,分,秒] 这种把时、分、秒补成两位 */
+function formatVersion(v) {
+	if (!Array.isArray(v)) return String(v);
+	if (v.length === 6 && v[0] >= 2000) {
+		var pad2 = function(n) { return ("0" + n).slice(-2); };
+		return [v[0], v[1], v[2], pad2(v[3]), pad2(v[4]), pad2(v[5])].join(".");
+	}
+	return v.join(".");
+}
+
 function fail(msg) {
 	console.error("失败：" + msg);
 	process.exit(1);
@@ -322,7 +332,7 @@ function cmdInfo(args) {
 	if (content) console.log("  内容：" + content.length + " 字符  " + (meta.type || "?"));
 	if (meta.name) console.log("  库名：" + meta.name);
 	if (meta.uuid) console.log("  uuid：" + meta.uuid);
-	if (meta.version) console.log("  版本：" + (Array.isArray(meta.version) ? meta.version.join(".") : meta.version));
+	if (meta.version) console.log("  版本：" + formatVersion(meta.version));
 	if (meta.author) console.log("  作者：" + meta.author);
 }
 
