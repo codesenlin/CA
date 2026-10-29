@@ -1030,7 +1030,7 @@
 		return this.requestSourceInfoCached(this.getSourceUrl());
 	},
 	requestSourceInfoCached : function(url) {
-		var sourceInfo;
+		var sourceInfo, src;
 		if (url.slice(-1) != "/") url += "/";
 		sourceInfo = this.sourceInfoCache[url];
 		if (!sourceInfo || !(Date.now() < sourceInfo.accessExpired)) {
@@ -1038,6 +1038,15 @@
 			if (!sourceInfo) return;
 			sourceInfo.accessExpired = Date.now() + 60000;
 			this.sourceInfoCache[url] = sourceInfo;
+			// 源端声明了 name 时顺手同步已添加源的显示名：
+			// 早期只能取 maintainer，加过源的会显示成人名
+			if (sourceInfo.name) {
+				src = this.findSource(url);
+				if (src && !src.builtin && src.name != String(sourceInfo.name)) {
+					src.name = String(sourceInfo.name);
+					this.saveSources();
+				}
+			}
 		}
 		return sourceInfo;
 	},
@@ -1151,7 +1160,9 @@
 		if (!info.sourceId) throw "不是有效的拓展包源（缺少 sourceId）";
 		src = {
 			url : url,
-			name : info.maintainer && info.maintainer != url ? String(info.maintainer) : (info.details ? String(info.details) : url),
+			// 名称优先用 info.json 的 name，没有就退回维护者 / 描述 / 地址
+			name : info.name ? String(info.name) :
+				(info.maintainer && info.maintainer != url ? String(info.maintainer) : (info.details ? String(info.details) : url)),
 			enabled : true,
 			builtin : false
 		};

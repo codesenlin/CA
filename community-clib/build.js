@@ -297,6 +297,8 @@ function build() {
 		map : base + "map.json",
 		pubkey : base + "verify.key",
 		lastUpdate : packs.reduce(function(max, p) { return Math.max(max, p.mtime || 0); }, 0) || Date.now(),
+		// name 是给 App 显示的源名称（可选；没有就由 App 回退到 maintainer）
+		name : cfg.name || undefined,
 		maintainer : cfg.maintainer || "codesenlin",
 		details : cfg.details || ("共 " + packs.length + " 个拓展包")
 	}, null, "\t"));
