@@ -205,6 +205,54 @@ npm run info -- 我的库.lib
 
 内容会先做合法性检查：JSON 必须能解析，JS 必须能作为表达式求值。
 
+`pack` 输入本身就是 `.lib` 时会先解出内容再按目标格式重打（可用来补签名）；
+不带 `-o` 时输出与输入同名，会覆盖原文件（会有提示）。
+
+`info` 会打印容器格式、时间戳、库名/uuid/版本/作者；`unpack --key` 对签名容器
+验签，失败退出码 2；对没有签名的 `LIBRARY` 容器会提示"跳过验签"。
+
+### 打包 / 解包 .lib（pack / unpack / info）
+
+`pack`/`unpack` 一个命令同时支持单文件、纯文件名和工作区批量：
+
+| 目标写法 | 行为 |
+|---|---|
+| 不给目标 | 批量：工作区 `src/` → `build/libwork/pack/`，`lib/` → `build/libwork/unpack/`（批量模式不参与密钥） |
+| 纯文件名（无路径） | 只在工作区对应目录找（pack→`src/`，unpack/info→`lib/`）；可省略后缀，会自动匹配并提示选中的文件 |
+| 带路径的文件 | 对指定文件操作；可省略后缀（提示后处理） |
+| 带路径的文件夹 | 只处理里面的 `.json`/`.js`（pack）或 `.lib`（unpack） |
+
+密钥规则：
+
+| 写法 | pack（`--sign`） | unpack / info（`--key`） |
+|---|---|---|
+| 不给 | 不加密（LIBRARY） | 遍历工作区 `keys/` 尝试匹配签名 |
+| 纯文件名 | 只在工作区 `keys/` 里找，**需要完整文件名（含后缀）** | 同左 |
+| 带路径文件 | 用指定密钥文件 | 用指定密钥文件（验签失败退出码 2） |
+| 带路径文件夹 | **不支持** | 先遍历工作区 `keys/`，再遍历该目录 |
+
+`info` 只接受单个文件：非签名包直接输出基础信息；签名包按上面的密钥规则验签。
+
+```bash
+# 工作区批量
+npm run pack                              # libwork/src → build/libwork/pack
+npm run pack -- /path/to/folder --sign testkey_private.pem
+npm run unpack                            # libwork/lib → build/libwork/unpack
+npm run unpack -- /path/to/folder --key /path/to/keys
+
+# 工作区文件名（可省略后缀）
+npm run pack -- foo
+npm run unpack -- foo.lib
+npm run info -- foo.lib
+
+# 指定文件 / 路径（可省略后缀）
+npm run pack -- libwork/src/foo.json --sign /abs/testkey_private.pem
+npm run unpack -- build/libwork/pack/foo.lib -o build/libwork/unpack
+```
+
+目录约定见 [`libwork/README.md`](libwork/README.md)。目录模式下批量失败会继续处理
+其他文件并汇总退出码：一般失败 `1`，验签失败 `2`。
+
 ## 命令库的签名格式
 
 命令库有三种容器，`01` 是格式版本号：
