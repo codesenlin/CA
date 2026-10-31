@@ -2,15 +2,20 @@
 /**
  * 依赖检查 / 更新。
  *
- *   node ./cabuildtools/deps.js check    [--json] [--no-error] [--cwd <dir>]
- *   node ./cabuildtools/deps.js update   [--latest] [--dry-run] [--no-test] [--verify] [--cwd <dir>]
+ *   node ./cabuildtools/deps.js check    [--json] [--no-error] [目录]
+ *   node ./cabuildtools/deps.js update   [--latest] [--dry-run] [--no-test] [--verify] [目录]
  *
  * 对应 npm 脚本：
- *   npm run deps                 检查有没有可更新的依赖（有就返回码 1，适合 CI）
- *   npm run deps:update          升「范围内」的版本（npm update），然后跑测试
- *   npm run deps:update -- --latest    连大版本一起升（直接依赖）
+ *   npm run update                    检查有没有可更新的依赖（有就返回码 1，适合 CI）
+ *   npm run upgrade                   升「范围内」的版本（npm update），然后跑测试
+ *   npm run upgrade -- --latest       连大版本一起升（直接依赖）
+ *   npm run upgrade -- --dry-run      只打印会做什么
+ *   npm run update -- ../other-repo   指定目录
  *
  * 说明：
+ *   - 标准写法是 `npm run <脚本> -- <参数>`（-- 后原样传给脚本，可移植）
+ *   - 不带 `--` 时 npm 会把 --dry-run 这类选项当自己的配置吞掉，脚本收不到；
+ *     脚本里仍会回读 npm_config_xxx 作防御性兼容，但文档只保证标准写法
  *   - 靠 `npm outdated --json` 判断新旧，仓库里有 workspace 也能识别
  *   - 大版本不会默认升：直接依赖按 workspace/依赖段分组，用
  *     `npm install <pkg>@latest` 更新对应的 package.json 声明
@@ -27,23 +32,29 @@ const ROOT = path.resolve(__dirname, "..");
 function usage() {
 	console.log([
 		"用法：",
-		"  node ./cabuildtools/deps.js check  [--json] [--no-error] [--cwd <dir>]",
-		"  node ./cabuildtools/deps.js update [--latest] [--dry-run] [--no-test] [--verify] [--cwd <dir>]",
+		"  node ./cabuildtools/deps.js check  [选项] [目录]",
+		"  node ./cabuildtools/deps.js update [选项] [目录]",
 		"",
-		"check",
+		"check（npm run update）",
 		"  --json       输出 JSON（给脚本用）",
 		"  --no-error   即使有可更新的依赖也返回 0",
 		"",
-		"update",
+		"update（npm run upgrade）",
 		"  --latest     大版本也升（只动直接依赖的声明）",
 		"  --dry-run    只打印会执行什么，不真的改",
 		"  --no-test    跳过 npm test",
 		"  --verify     更新后再跑一次 npm run build",
 		"",
-		"两个子命令都支持：",
-		"  --cwd <dir>  在别的目录跑（默认仓库根目录）",
+		"目录：",
+		"  默认仓库根目录；也可以指定，例如 npm run update -- ../other",
 		"",
-		"npm 脚本：npm run deps / npm run deps:update"
+		"说明：",
+		"  标准写法是 npm run <脚本> -- <参数>（-- 后原样传给脚本，可移植）",
+		"  不带 -- 时 npm 会把 --dry-run 这类选项当自己的配置吞掉，脚本收不到",
+		"  注意 --workspace/--prefix/--script-shell/--help/-h/--cwd 等会改变",
+		"  npm 自身行为，必须放在 -- 前面或不用",
+		"",
+		"npm 脚本：npm run update / npm run upgrade"
 	].join("\n"));
 }
 
@@ -227,7 +238,7 @@ function check(flags) {
 		data.problems.forEach(function(p) { console.log("  - " + p); });
 	}
 	console.log("");
-	console.log("升级：npm run deps:update" + (data.direct.some(function(r) { return r.outOfRange; }) ? " -- --latest（有跨大版本）" : ""));
+	console.log("升级：npm run upgrade" + (data.direct.some(function(r) { return r.outOfRange; }) ? " -- --latest（有跨大版本）" : ""));
 	console.log("");
 	if (flags.noError) return 0;
 	return total || data.problems.length ? 1 : 0;
@@ -323,7 +334,7 @@ function update(flags) {
 		console.log("  仍可更新：" + (after.direct.length + after.transitive.length) + " 个");
 		if (after.direct.length) printRows(after.direct);
 		if (after.direct.some(function(r) { return r.outOfRange; })) {
-			console.log("  跨大版本的用 npm run deps:update -- --latest");
+			console.log("  跨大版本的用 npm run upgrade -- --latest");
 		}
 	}
 	console.log("");
@@ -350,17 +361,35 @@ function parseFlags(argv) {
 		else if (a === "--dry-run") flags.dryRun = true;
 		else if (a === "--no-test") flags.noTest = true;
 		else if (a === "--verify") flags.verify = true;
-		else if (a === "-c" || a === "--cwd") {
+		else if (a === "-c" || a === "--cwd" || a === "-d" || a === "--dir") {
 			const dir = argv[++i];
 			if (!dir) fail(a + " 需要一个目录");
 			flags.cwd = path.resolve(dir);
 		} else if (a === "-h" || a === "--help") {
 			usage();
 			process.exit(0);
+		} else if (a.charAt(0) !== "-") {
+			// 位置参数：直接当目录（标准写法 npm run update -- ../other 也走这里）
+			flags.cwd = path.resolve(a);
 		} else {
 			fail("未知参数：" + a + "（--help 看用法）");
 		}
 	}
+
+	// 防御性兼容：不带 -- 时 npm 会把 --dry-run 这类选项当自己的配置吞掉，
+	// 但会以 npm_config_xxx 环境变量传给脚本；这里回读，保证旧写法不炸。
+	// 文档只保证标准写法 npm run <脚本> -- <参数>。
+	const env = process.env;
+	if (env.npm_config_dry_run === "true") flags.dryRun = true;
+	if (env.npm_config_json === "true") flags.json = true;
+	if (env.npm_config_latest === "true") flags.latest = true;
+	if (env.npm_config_verify === "true") flags.verify = true;
+	// --no-error 在 npm 里是「把 error 设为 false」，env 里出现的是 npm_config_error=""
+	if (env.npm_config_no_error === "true" ||
+		("npm_config_error" in env && env.npm_config_error !== "true")) flags.noError = true;
+	// --no-test 同理：npm_config_test=""（或 false）
+	if ("npm_config_test" in env && env.npm_config_test !== "true") flags.noTest = true;
+
 	if (!fs.existsSync(flags.cwd)) fail("目录不存在：" + flags.cwd);
 	return flags;
 }

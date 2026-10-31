@@ -147,14 +147,21 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 
 ### 检查 / 更新依赖
 
-    npm run deps                      # 检查：有可更新的依赖就返回码 1（适合 CI）
-    npm run deps -- --json            # 机器可读输出
-    npm run deps -- --no-error        # 只看报告，不靠返回码卡流程
+    npm run update                      # 检查：有可更新的依赖就返回码 1（适合 CI）
+    npm run update -- --json            # 机器可读输出
+    npm run update -- --no-error        # 只看报告，不靠返回码卡流程
 
-    npm run deps:update               # 升「范围内」的版本（npm update），然后跑 npm test
-    npm run deps:update -- --latest   # 连大版本一起升（只动直接依赖的声明）
-    npm run deps:update -- --verify   # 更新后再跑一次 npm run build
-    npm run deps:update -- --dry-run  # 只打印会做什么，不改文件
+    npm run upgrade                     # 升「范围内」的版本（npm update），然后跑 npm test
+    npm run upgrade -- --latest         # 连大版本一起升（只动直接依赖的声明）
+    npm run upgrade -- --verify         # 更新后再跑一次 npm run build
+    npm run upgrade -- --dry-run        # 只打印会做什么，不改文件
+    npm run update -- ../other-repo     # 目录（标准写法）
+
+**标准写法是 `npm run <脚本> -- <参数>`**：`--` 后的内容原样传给脚本，跨 npm 版本 /
+yarn / pnpm / CI 都可移植。本仓库的 deps.js 额外支持省略 `--`（读取 npm 导出的
+`npm_config_xxx` 环境变量），但那是便利支持，脚本/CI 请优先用标准写法。
+
+目录也走标准写法：`npm run update -- ../other-repo`。
 
 依赖检查靠 `npm outdated`，workspace 里的包也能识别；大版本默认不升，
 因为跨大版本可能有 ESM/API 变化（比如 Babel 7 → 8），需要自己确认后
