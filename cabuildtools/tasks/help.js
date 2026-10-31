@@ -25,8 +25,7 @@ const TASK_DESC = {
 	generateImport : "生成 import 用的 android.jar 索引",
 	clean : "清理 build 目录",
 	delay : "延时若干毫秒（调试流水线用）",
-	shellPrepareDebug : "准备调试版壳子资源",
-	shellPrepareHotfix : "准备热更新壳子资源"
+	shellPrepareDebug : "准备调试版壳子资源"
 };
 
 const CHANNEL_DESC = [

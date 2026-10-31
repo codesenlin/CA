@@ -3,7 +3,7 @@
 const process = require("process");
 const fs = require("fs");
 const pathUtils = require("path");
-var Tasks = require("./tasks");
+var Tasks = {};  // 任务由 initTasks() 从 ./tasks/ 目录加载（旧的 tasks.js 已删除）
 var Build = {
 	execute : function(task, args) {
 	// help 只是打印用法，不需要 Process/Success 这类流水线日志
@@ -57,6 +57,8 @@ function procArgs() {
 			});
 	} catch(e) {
 		console.log(String(e));
+		// 未知任务 / 非 CLI 任务也返回非 0，方便脚本/CI 判断失败
+		process.exitCode = 1;
 	}
 }
 function initTasks(path) {
