@@ -107,10 +107,25 @@ MapScript.loadModule("L", (function self(defaultContext) {
 			}
 		}
 	}
-	function findDeclaredMethod(cls, params, parent) {
+	var declaredMethodCache = {};
+	function classKeyOf(cls) {
 		try {
-			var method = cls.getDeclaredMethod.apply(cls, params);
-			return method;
+			if (cls && cls.__name) return cls.__name;
+		} catch(e) {/* Rhino 的 NativeJavaClass 没有 __name，访问会抛异常 */}
+		return String(cls);
+	}
+	function findDeclaredMethod(cls, params, parent) {
+		// 反射查找有异常开销（QuickJS 桥下每个 NoSuchMethodException 都走原生栈），
+		// 相同 (类, 方法签名) 的结果缓存起来（包括未命中）
+		var key = classKeyOf(cls) + "|" + params.join(",") + "|" + (parent ? classKeyOf(parent) : "");
+		if (key in declaredMethodCache) return declaredMethodCache[key];
+		var result = findDeclaredMethod0(cls, params, parent);
+		declaredMethodCache[key] = result;
+		return result;
+	}
+	function findDeclaredMethod0(cls, params, parent) {
+		try {
+			return cls.getDeclaredMethod.apply(cls, params);
 		} catch(e) {/*Class not found*/}
 		if (!parent) parent = java.lang.Object;
 		if (cls == java.lang.Object || cls == parent) return null;
@@ -223,20 +238,23 @@ MapScript.loadModule("L", (function self(defaultContext) {
 	function inflate(clazz, context, json, modelContext, rootView) {
 		return attach(constructView(clazz, context), json, modelContext, rootView);
 	}
+	var constantCache = {};
 	function findConstant(cls, name) {
-		var field;
+		var key = classKeyOf(cls) + "|" + name;
+		if (key in constantCache) return constantCache[key];
+		var field, value;
 		try {
 			field = cls.getField(name);
-			if (field) {
-				return field.get(null);
-			}
+			if (field) value = field.get(null);
 		} catch(e) {/* field not found or not static */}
-		return undefined;
+		constantCache[key] = value;
+		return value;
 	}
 	function calculateConstant(clazz, exp) {
 		var i, r;
 		exp = exp.split("|").map(function(e) {
-			return findConstant(clazz, e) || findConstant(clazz, e.toUpperCase());
+			// 常量基本都是大写形式，先试大写减少一次必然失败的反射
+			return findConstant(clazz, e.toUpperCase()) || findConstant(clazz, e);
 		});
 		r = exp[0];
 		for (i = 1; i < exp.length; i++) {
