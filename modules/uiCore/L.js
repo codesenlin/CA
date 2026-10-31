@@ -115,7 +115,7 @@ MapScript.loadModule("L", (function self(defaultContext) {
 		return String(cls);
 	}
 	function findDeclaredMethod(cls, params, parent) {
-		// 反射查找有异常开销（QuickJS 桥下每个 NoSuchMethodException 都走原生栈），
+		// 反射查找有异常开销（每个 NoSuchMethodException 都走原生栈），
 		// 相同 (类, 方法签名) 的结果缓存起来（包括未命中）
 		var key = classKeyOf(cls) + "|" + params.join(",") + "|" + (parent ? classKeyOf(parent) : "");
 		if (key in declaredMethodCache) return declaredMethodCache[key];

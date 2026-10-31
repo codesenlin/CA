@@ -89,11 +89,19 @@
 		} else {
 			//分类 - 未输入参数
 
-			//获得可选命令
+			//获得可选命令（QuickJS worker 加速：命令库同步一次，之后每次只传前缀）
 			t = this.library.command_snap;
-			ca = Object.keys(t).filter(function(e, i, a) {
-				return e.indexOf(c[2]) >= 0 || t[e].indexOf(c[2]) >= 0;
-			}).sort();
+			ca = null;
+			try {
+				if (typeof QuickAccel !== "undefined") ca = QuickAccel.matchCommandNames(t, c[2]);
+			} catch (e) {
+				ca = null;
+			}
+			if (!ca) {
+				ca = Object.keys(t).filter(function(e, i, a) {
+					return e.indexOf(c[2]) >= 0 || t[e].indexOf(c[2]) >= 0;
+				}).sort();
+			}
 
 			if (ca.length) {
 				//分类 - 可选命令长度大于0

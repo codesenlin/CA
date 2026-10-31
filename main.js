@@ -652,6 +652,9 @@ Loader.fromFile("modules/uiCore/PopupWindow.js")
 
 Loader.fromFile("modules/utils/Threads.js")
 
+// QuickJS 侧载加速 worker 的基准/桥接
+Loader.fromFile("modules/utils/QuickAccel.js")
+
 Loader.fromFile("modules/Common.js")
 
 Loader.fromFile("modules/core/Plugins.js")

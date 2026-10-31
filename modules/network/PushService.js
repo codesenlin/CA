@@ -217,24 +217,6 @@ MapScript.loadModule("PushService", {
 				return self.base.concat(self.offline);
 			};
 			self.getArray = function(callback) {
-				// QuickJS：JS 在主线程，同步网络（连接超时 5s）会卡死主线程 → 用异步 HTTP
-				if (Threads.isQuickJS) {
-					if (PushService.tags) {
-						callback(buildSettings(PushService.tags));
-						return;
-					}
-					ScriptInterface.httpGetAsync(PushService.apiHost + "/push/tags", function(err, body) {
-						if (!err) {
-							try {
-								PushService.tags = JSON.parse(body);
-							} catch(e) {
-								Log.e(e);
-							}
-						}
-						callback(buildSettings(PushService.tags));
-					});
-					return;
-				}
 				var progress = Common.showProgressDialog();
 				progress.setText("正在加载……");
 				progress.async(function() {

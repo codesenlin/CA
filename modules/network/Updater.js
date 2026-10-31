@@ -444,11 +444,6 @@ MapScript.loadModule("Updater", {
 		}
 	},
 	initialize : function() {
-		// QuickJS：JS 跑在主线程，而这里的网络检查是同步的（连接超时 5s 会卡主线程 → ANR）。
-		// 启动时的自动检查在 QuickJS 下跳过，用户手动点「检查更新」不受影响（那时 UI 已就绪）。
-		try {
-			if (String(ScriptInterface.getScriptEngine()).indexOf("QuickJS") >= 0) return;
-		} catch (e) {}
 		if (this.isConnected()) {
 			if (BuildConfig.variants == "release") {
 				if (!CA.settings.skipCheckUpdate && !(CA.settings.nextCheckUpdate > Date.now())) {

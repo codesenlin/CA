@@ -218,14 +218,20 @@ Java 侧没有任何静态引用。release 构建时 R8 会把它整个裁掉—
 
 已在 targetSdk 34 + Android 14 真机上验证编译模式可以正常工作。
 
-## 二、QuickJS 当侧车：评估过，暂不做
+## 二、QuickJS 当侧车：已落地（侧载 worker）
 
 思路：Rhino 跑所有碰 Java 的代码，另起一个 QuickJS 虚拟机只做纯计算。
+**这个方案已落地**（为什么要这么做、性能前后对比、给后来者的验证清单见
+cadroid 仓库 [docs/quickjs-sidecar.md](https://github.com/codesenlin/cadroid/blob/main/docs/quickjs-sidecar.md)），
+实现见 cadroid 的 `QuickJsWorker` + 本仓库 `modules/utils/QuickAccel.js`：
 
-- **优点**：以后遇到 JS 热点，不用写 Java 也能提速 28 倍
-- **代价**：多一个 native 库（4 个 ABI）；对象要 JSON 序列化来回
-- **致命限制**：`set`/`get` 只支持基本类型和 String，**没有 Java 桥**。
-  核心脚本里有 342 处 `java.*` / `android.*` 调用，QuickJS 一个都处理不了
+- worker 用 `io.github.dokar3:quickjs-kt-android:1.0.15`（`.so` 已 16KB page 对齐）
+- 协议：JSON 进 / JSON 出；大块数据（命令库）用 `quickWorkerSetVar` 只同步一次
+- 已迁移：IntelliSense 命令名匹配（3000 条命令）
+  - Rhino：162ms/次 → worker 稳态 **~25ms/次**（≈6-8x；首次库同步几十 ms，在后台线程）
+  - worker 不可用/失败时自动回退原 JS 实现，不影响功能
+- 仍然成立的限制：**没有 Java 桥**，只能传可序列化的数据；结果集很大时回程
+  JSON 解析会吃掉收益（成本模型见下）
 
 成本模型：设原耗时 `T`，QuickJS 是 `T/28`，穿越成本 `C`。只要 `C < 0.96T` 就划算。
 但**结果集不能大**——返回上千个匹配项时，回程 JSON 解析会吃掉收益。
@@ -236,9 +242,9 @@ Java 侧没有任何静态引用。release 构建时 R8 会把它整个裁掉—
 | 查找最佳匹配（结果一个数） | ✅ 划算 |
 | 解析/校验/计算 | ✅ 划算 |
 
-**目前没有"结果小、计算重、又不想写 Java"的函数**，所以暂不上。
-
-真要上的时候：在 `modules/Accel.js` 的决策链里加第三档即可，不影响现有结构。
+（补记：命令名匹配虽然结果有几十条，但用"worker 里缓存数据 + 只传前缀"
+的方式，回程 JSON 很小，实测仍明显划算。真正要评估的是"每次都要把大对象
+传过去"的函数。）
 
 ## 三、desugaring 是不是 Rhino 慢的原因：不是
 

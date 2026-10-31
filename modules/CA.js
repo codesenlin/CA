@@ -38,20 +38,6 @@ MapScript.loadModule("CA", {
 		// 那会卡在主线程上等用户点同意，而设置页此时还没退场，弹窗出不来 → 死锁。
 		// 这种情况由调用方在初始化完成后异步弹协议。
 		if (!this.suppressAgreement && !(this.settings.readAgreement > Date.parse(BuildConfig.licenceUpdate))) {
-			// QuickJS 的 context 是单线程的：JS 线程阻塞等 UI 回调会死锁
-			// （Rhino 时代是多线程所以 showAgreementSync 能同步等）。
-			// QuickJS 下改成回调式续体：用户点完协议再继续走剩下的初始化。
-			if (Threads.isQuickJS) {
-				var self = this;
-				this.showAgreement(function() {
-					try {
-						self.initializeAfterAgreement();
-					} catch (e) {
-						erp(e);
-					}
-				});
-				return;
-			}
 			this.showAgreementSync();
 		}
 		this.initializeAfterAgreement();
@@ -3559,7 +3545,7 @@ MapScript.loadModule("CA", {
 			PWM.registerResetFlag(self, "prompt");
 		}
 		if (v) self.prompt.setText(FCString.parseFC(v));
-		// hideFCS 是 G.ui 异步的（QuickJS 下 JS 在主线程，post 出去后这里还在同步执行），
+		// hideFCS 是 G.ui 异步的（post 出去后这里还在同步执行），
 		// 直接 addView 会撞 "child already has a parent"，所以旧窗口要同步摘掉
 		if (CA.fcs) {
 			try {
