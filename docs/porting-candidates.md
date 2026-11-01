@@ -1,7 +1,8 @@
 # JS / Java / QuickJS 跨语言迁移候选
 
 > 状态：ID 列表 + 数组 enum + ID 列表/Assist 缓存 + 命令匹配 + matchString 缓存已实现；
-> ID 非空前缀结果构造已优化（返回 Java int[] + readOnly 适配器换引用）；其余为分析记录。目标是找真正值得跨边界的点，而不是把代码搬来搬去。
+> ID 非空前缀结果构造已优化；无 jar 时 QuickJS 回退已接入 classify/classifyArray/filterTexts；
+> 其余为分析记录。目标是找真正值得跨边界的点，而不是把代码搬来搬去。
 > 已有加速层与基准见 [data-and-accel.md](data-and-accel.md)。
 
 ## 结论速览
@@ -253,6 +254,10 @@ Java 替代方案：
 ### 2. QuickJS → JS
 
 worker 不可用时已有完整 JS 回退，不需要迁移。
+
+无 caaccel jar 时，`filterTexts` / 命令名匹配优先走 QuickAccel worker，最后回退
+Rhino JS；`classify` / `classifyArray` 经基准无稳定收益，仍走 Java/JS。详见
+[quickjs-plan.md](quickjs-plan.md)。
 
 ### 2. ID 列表过滤：Java 侧缓存文本数组 ✅（已实现）
 

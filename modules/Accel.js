@@ -15,6 +15,14 @@ MapScript.loadModule("Accel", (function() {
 	var filterTextsCache = null;
 	var commandKeys = null, commandDescs = null, commandSnapRef = null;
 	var matchSourceRef = null, matchCacheSupported = true;
+	/** 无 caaccel jar 时优先用 QuickJS worker；QuickAccel 在主脚本后加载，调用时再取 */
+	function quickAccel() {
+		try {
+			return (typeof QuickAccel != "undefined" && QuickAccel && QuickAccel.available) ? QuickAccel : null;
+		} catch (e) {
+			return null;
+		}
+	}
 	function jsMatchCommandNames(prefix) {
 		if (commandKeys == null) return null;
 		var p = String(prefix), out = [], i, d;
@@ -167,9 +175,14 @@ MapScript.loadModule("Accel", (function() {
 		},
 		/** 缓存版 filter：返回 boolean 掩码；没有 jar 时走 JS */
 		filterTexts : function(s) {
-			var p = String(s), keep = [], i;
+			var p = String(s), keep = [], i, qa;
 			if (impl != null) {
 				try { return impl.filterTexts(p); } catch(e) { }
+			}
+			qa = quickAccel();
+			if (qa && filterTextsCache != null) {
+				var qres = qa.filterTexts(filterTextsCache, p);
+				if (qres) return qres;
 			}
 			if (filterTextsCache != null) {
 				for (i = 0; i < filterTextsCache.length; i++) {
@@ -240,6 +253,11 @@ MapScript.loadModule("Accel", (function() {
 					for (i = 0; i < res.length; i++) out.push(String(res[i]));
 					return out;
 				} catch(e) { }
+			}
+			var qa = quickAccel();
+			if (qa) {
+				var qres = qa.matchCommandNames(snap, String(prefix));
+				if (qres) return qres;
 			}
 			return jsMatchCommandNames(prefix);
 		},

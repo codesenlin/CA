@@ -14,6 +14,8 @@
 	patterns : [],
 	mode : 0,
 	last : {},
+	// 枚举对象分类缓存：对象身份不变时复用 keys/descs，避免每次输入都 Object.keys
+	enumClassifyCache : null,
 	// jsonPro 参数的 JSON Language Service 实例缓存（按 schema 名）
 	jsonLanguageServices : {},
 	callDelay : function self(s) {
@@ -840,8 +842,16 @@
 				r.input = [];
 				// 分类放到 Accel.classify：Java 里一次算完，JS 侧只做位测试，
 				// 不再对每个候选做两次字符串查找（没有 jar 时走等价 JS 实现）
-				var __keys = Object.keys(t), __descs = [], __i, __e, __d, __flags, __f;
-				for (__i = 0; __i < __keys.length; __i++) __descs.push(t[__keys[__i]]);
+				var __cache = this.enumClassifyCache, __keys, __descs, __i, __e, __d, __flags, __f;
+				if (__cache && __cache.src === t) {
+					__keys = __cache.keys;
+					__descs = __cache.descs;
+				} else {
+					__keys = Object.keys(t);
+					__descs = [];
+					for (__i = 0; __i < __keys.length; __i++) __descs.push(t[__keys[__i]]);
+					this.enumClassifyCache = { src : t, keys : __keys, descs : __descs };
+				}
 				__flags = Accel.classify(__keys, __descs, ps);
 				for (__i = 0; __i < __keys.length; __i++) {
 					__f = __flags[__i];

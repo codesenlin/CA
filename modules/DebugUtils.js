@@ -621,6 +621,118 @@ MapScript.loadModule("DebugUtils", {
 			return "IDListCompare error: " + e;
 		}
 	},
+	/** 调试控制台用：验证无 jar 时 QuickAccel 回退（classify/classifyArray/filterTexts/命令匹配） */
+	benchQuickAccel : function() {
+		try {
+			var keys = ["stone", "stone_brick", "dirt"], descs = ["方块", "", "泥土"];
+			var enumArr = ["stone", "stone_brick", "dirt"];
+			var t = Date.now(), flags, ca, mask, cmds;
+			flags = Accel.classify(keys, descs, "stone");
+			ca = Accel.classifyArray(enumArr, "stone");
+			Accel.setFilterTexts(["stone", "dirt", "grass"]);
+			mask = Accel.filterTexts("st");
+			cmds = Accel.matchCommandNames({cmd : "命令说明", help : "帮助"}, "cmd");
+			var out = "QuickFallback avail=" + Accel.available() +
+				" classify=" + JSON.stringify(flags) +
+				" array=" + JSON.stringify(ca) +
+				" filter=" + JSON.stringify(mask) +
+				" cmd=" + JSON.stringify(cmds) +
+				" " + (Date.now() - t) + "ms";
+			try { android.util.Log.i("Script", out); } catch(e) {}
+			return out;
+		} catch(e) {
+			return "QuickFallback error: " + e;
+		}
+	},
+	/** 调试控制台用：大数据量对比 Rhino JS 与 QuickAccel worker（classify/classifyArray/filterTexts/命令匹配） */
+	benchQuickAccelLarge : function(rounds) {
+		rounds = rounds || 20;
+		try {
+			var i, keys = [], descs = [], arr = [], texts = [], snap = {};
+			for (i = 0; i < 1749; i++) {
+				keys.push("key_" + i);
+				descs.push("描述 " + i);
+				arr.push("key_" + i);
+			}
+			for (i = 0; i < 4434; i++) texts.push(i % 3 ? "item_" + i : "block_" + i);
+			for (i = 0; i < 3000; i++) snap["cmd_" + i] = "description " + i;
+			function jsClassify(k, d, ps) {
+				var out = [], i, key, desc, p = String(ps);
+				for (i = 0; i < k.length; i++) {
+					key = k[i];
+					if (p == key || p.indexOf(key + " ") == 0) { out.push(1); continue; }
+					desc = (i < d.length && d[i]) ? d[i] : "";
+					out.push((key.indexOf(p) >= 0 || desc.indexOf(p) >= 0) ? 2 : 0);
+				}
+				return out;
+			}
+			function jsClassifyArray(a, ps) {
+				var flags = [], length = -1, canFinish = false, i, e, p = String(ps);
+				for (i = 0; i < a.length; i++) {
+					e = a[i];
+					if (e == null) { flags.push(0); continue; }
+					if (p == e || p.indexOf(e + " ") == 0) {
+						flags.push(1); canFinish = true; length = Math.max(length, e.length);
+					} else if (e.indexOf(p) == 0) {
+						flags.push(2); length = Math.max(length, p.length);
+					} else flags.push(0);
+				}
+				return { flags : flags, length : length, canFinish : canFinish };
+			}
+			function jsFilterTexts(a, ps) {
+				var out = [], i, p = String(ps);
+				for (i = 0; i < a.length; i++) out.push(a[i] != null && String(a[i]).indexOf(p) >= 0);
+				return out;
+			}
+			function jsCommands(t, p) {
+				var out = [], k;
+				for (k in t) if (k.indexOf(p) >= 0 || String(t[k]).indexOf(p) >= 0) out.push(k);
+				out.sort();
+				return out;
+			}
+			function measure(fn) {
+				var t0 = Date.now(), n, r;
+				for (n = 0; n < rounds; n++) r = fn();
+				return { ms : Date.now() - t0, result : r };
+			}
+			var prefix = "key_1";
+			// 预热 worker 数据缓存，不计入计时
+			QuickAccel.classify(keys, descs, prefix);
+			QuickAccel.classifyArray(arr, prefix);
+			QuickAccel.filterTexts(texts, prefix);
+			QuickAccel.matchCommandNames(snap, prefix);
+
+			var cases = [
+				{ name : "classify", js : function() { return jsClassify(keys, descs, prefix); },
+				  quick : function() { return QuickAccel.classify(keys, descs, prefix); } },
+				{ name : "classifyArray", js : function() { return jsClassifyArray(arr, prefix); },
+				  quick : function() { return QuickAccel.classifyArray(arr, prefix); } },
+				{ name : "filterTexts", js : function() { return jsFilterTexts(texts, prefix); },
+				  quick : function() { return QuickAccel.filterTexts(texts, prefix); } },
+				{ name : "commands", js : function() { return jsCommands(snap, "cmd_1"); },
+				  quick : function() { return QuickAccel.matchCommandNames(snap, "cmd_1"); } }
+			];
+			var out = [], c, jsM, qM, same, jsS, qS, dbg = [];
+			for (i = 0; i < cases.length; i++) {
+				c = cases[i];
+				jsM = measure(c.js);
+				qM = measure(c.quick);
+				jsS = JSON.stringify(jsM.result);
+				qS = JSON.stringify(qM.result);
+				same = jsS === qS;
+				out.push(c.name + " rhino=" + (jsM.ms / rounds).toFixed(2) + "ms quick=" +
+					(qM.ms / rounds).toFixed(2) + "ms same=" + same);
+				if (!same) dbg.push(c.name + " js=" + (jsS || "null").slice(0, 80) + " q=" + (qS || "null").slice(0, 80));
+			}
+			var summary = out.join(" | ");
+			if (dbg.length) summary += " DEBUG " + dbg.join(" ; ");
+			out = "QuickLarge n=1749/4434/3000 " + summary;
+			try { android.util.Log.i("Script", out); } catch(e) {}
+			return out;
+		} catch(e) {
+			return "QuickLarge error: " + e;
+		}
+	},
 	/** 调试控制台用：测量 filter 结果写进 SimpleListAdapter 的成本 */
 	benchIDListAdapter : function() {
 		try {

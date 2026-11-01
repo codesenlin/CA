@@ -1,7 +1,7 @@
 # QuickJS worker 后续使用计划
 
-> 状态：计划文档，尚未实现。当前 QuickJS 侧只有命令名匹配在无 caaccel jar
-> 时作为回退；jsonPro 实验因 quickjs-kt eval API 限制已暂停
+> 状态：P1（无 caaccel jar 时的 QuickJS 回退）已实现并真机验证；jsonPro 实验因
+> quickjs-kt eval API 限制已暂停。
 > （见 [jsonpro-quickjs.md](jsonpro-quickjs.md)）。
 
 ## 一、QuickJS worker 现有能力与限制
@@ -29,7 +29,43 @@
 
 ## 二、候选与优先级
 
-### P1：无 caaccel jar 时的 QuickJS 加速回退（推荐先做）
+### P1：无 caaccel jar 时的 QuickJS 加速回退（已实现）
+
+已接入 `QuickAccel`：
+
+- `filterTextsCached`：建议列表文本缓存一次，回传 boolean 掩码
+- `matchCommands`：命令名匹配（原有）
+
+`QuickAccel` 里还保留了 `classifyCached` / `classifyArrayCached` 供基准使用，
+生产回退不接入。
+- `Accel.js` 的回退顺序：`filterTexts` / 命令名匹配为 **Java jar → QuickJS worker → Rhino JS**；
+  `classify` / `classifyArray` 经大数据基准后仍走 Java/JS，不接 worker
+- `CA.IntelliSense` 的枚举对象增加 `enumClassifyCache`，避免每次输入都重新
+  `Object.keys` 并同步 keys/descs
+
+真机验证（PERM10，无 caaccel jar）：
+
+```
+QuickFallback avail=false
+classify=[1,2,0]
+array={"flags":[1,2,0],"length":5,"canFinish":true}
+filter=[true,false,false]
+cmd=["cmd"]
+```
+
+与有 jar 时结果完全一致；调试控制台入口 `DebugUtils.benchQuickAccel()`。
+
+大数据基准（PERM10，`DebugUtils.benchQuickAccelLarge(20)`，热态，3 次）：
+
+| 场景 | n | Rhino JS | QuickJS worker | 结论 |
+|---|---|---|---|---|
+| classify | 1749 | 36.7~40.7ms | 33.2~69.4ms | 波动大，无明显收益 |
+| classifyArray | 1749 | 31.4~35.3ms | 33.9~36.6ms | 略慢 |
+| filterTexts | 4434 | 34.7~36.0ms | 16.8~26.6ms | 约 1.3~2x |
+| 命令名匹配 | 3000 | 32.1~35.8ms | 19.9~21.6ms | 约 1.6x |
+
+因此只把 `filterTexts` 和命令名匹配接入无 jar 回退；`classify*` 保留基准代码，
+生产继续走 Rhino。`quickWorkerRegister` 的多行源码换行问题已在 cadroid 修复。
 
 背景：
 
@@ -38,18 +74,22 @@
 - 这些回退实现是纯 JS，却跑在慢的 Rhino 上；QuickJS worker 已经在包里，
   可以先用 worker，最后才回退 Rhino
 
-目标调用点：
+最终落地范围（以结果集大小/穿越成本为准）：
 
-| 方法 | 现有回退 | worker 方案 |
+| 方法 | worker 方案 | 状态 |
 |---|---|---|
-| `Accel.matchString(ps, a, r)` | `jsMatchString` | 缓存 keys/descs，只传 prefix，回传 `inputs/outputs` |
-| `Accel.filter(arr, s)` / `filterTexts` | JS 循环 | 缓存文本，回传 boolean 掩码或下标 |
-| `Accel.classify(keys, descs, ps)` | JS 循环 | 缓存 keys/descs，回传 flags |
+| `Accel.classify(keys, descs, ps)` | 缓存 keys/descs，回传 flags | ⚠️ 仅基准，不接入（无稳定收益） |
+| `Accel.classifyArray(arr, ps)` | 缓存 arr，回传 flags/length/canFinish | ⚠️ 仅基准，不接入（略慢） |
+| `Accel.filterTexts(s)` | 缓存文本，回传 boolean 掩码 | ✅ |
+| `Accel.matchCommandNames` | 缓存命令快照，回传匹配名 | ✅（原有） |
+| `Accel.matchString(ps, a, r)` | 缓存候选源，回传 inputs/outputs | ❌ 结果集大，继续 Java/JS |
+| `Accel.filter(arr, s)` | 每次传整个输入数组 | ❌ 穿越成本高，继续 Java/JS |
 
 建议实现顺序：
 
-1. 在 `QuickAccel.js` 增加 worker 版 `matchString` / `filter` / `classify`
-2. 在 `Accel.js` 的回退路径里按 `jar → worker → Rhino JS` 顺序分发
+1. ✅ 在 `QuickAccel.js` 增加 worker 版 `classify` / `classifyArray` / `filterTexts`
+   基准；最终只把 `filterTexts` 和命令匹配接入回退（`matchString` / `filter` 不接入）
+2. ✅ 在 `Accel.js` 的回退路径里按 `jar → worker → Rhino JS` 顺序分发
 3. 缓存按 JS 对象身份检测（与 `Accel.setMatchSource` 同思路），
    候选源变化时才 `quickWorkerSetVar`
 4. 结果统一走 JSON；结果特别大时优先回传下标/掩码减小体积
@@ -57,9 +97,9 @@
 
 验收：
 
-- 行为与 Rhino/Java 路径逐项一致（随机数据对比）
-- 真机（PERM10）对比：无 jar 时 Rhino vs worker 的耗时
-- 有 jar 时仍然走 Java，不能让性能回退
+- ✅ 行为与 Java 路径逐项一致（benchQuickAccel；有/无 jar 结果相同）
+- ✅ 大数据量 Rhino vs worker 基准（见上表；classify/classifyArray 不接入）
+- ✅ 有 jar 时仍走 Java，QuickJS 只在 `impl == null` 时介入
 
 风险：
 
@@ -114,10 +154,9 @@
 
 ## 四、实施顺序与验收
 
-1. **P1**：无 jar 回退（matchString/filter/classify）
-   - 先实现 + 随机等价测试
-   - 真机对比 worker vs Rhino（`DebugUtils` 加基准入口）
-   - 结果记录到本文档
+1. ✅ **P1**：无 jar 回退（filterTexts/命令匹配）
+   - 已实现 `benchQuickAccel` 等价验证（有/无 jar 结果一致）
+   - 大数据量基准已补；classify/classifyArray 不接入
 2. **P2**：ID 构建 A/B，只写基准，不接生产，除非明显更快
 3. **P3/P4**：按真实性能反馈再排期
 4. 清理 jsonPro 实验代码后再推送当前 30+ 个加速/去重提交

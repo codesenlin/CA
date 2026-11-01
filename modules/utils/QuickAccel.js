@@ -62,15 +62,123 @@ MapScript.loadModule("QuickAccel", (function () {
 			"return out;" +
 		"}";
 
+	// 其余无 jar 回退用的纯计算函数。数据由 quickWorkerSetVar 缓存一次，
+	// 每次只传前缀，回传 flags / 掩码。
+	r.accelSource = r.matchSource + "\n" + [
+		"function classifyCached(ps) {",
+		"  var g = globalThis, keys = g.__classifyKeys, descs = g.__classifyDescs;",
+		"  var p = String(ps), out = [], i, k, d;",
+		"  if (!keys) return out;",
+		"  for (i = 0; i < keys.length; i++) {",
+		"    k = keys[i];",
+		"    if (p == k || p.indexOf(k + ' ') == 0) { out.push(1); continue; }",
+		"    d = (descs && i < descs.length && descs[i]) ? descs[i] : '';",
+		"    out.push((k.indexOf(p) >= 0 || d.indexOf(p) >= 0) ? 2 : 0);",
+		"  }",
+		"  return out;",
+		"}",
+		"function classifyArrayCached(ps) {",
+		"  var g = globalThis, arr = g.__classifyArray, p = String(ps);",
+		"  var flags = [], length = -1, canFinish = false, i, e;",
+		"  if (!arr) return { flags: flags, length: length, canFinish: canFinish };",
+		"  for (i = 0; i < arr.length; i++) {",
+		"    e = arr[i];",
+		"    if (e == null) { flags.push(0); continue; }",
+		"    if (p == e || p.indexOf(e + ' ') == 0) {",
+		"      flags.push(1); canFinish = true; length = Math.max(length, e.length);",
+		"    } else if (e.indexOf(p) == 0) {",
+		"      flags.push(2); length = Math.max(length, p.length);",
+		"    } else {",
+		"      flags.push(0);",
+		"    }",
+		"  }",
+		"  return { flags: flags, length: length, canFinish: canFinish };",
+		"}",
+		"function filterTextsCached(ps) {",
+		"  var g = globalThis, a = g.__filterTexts, p = String(ps), out = [], i;",
+		"  if (!a) return out;",
+		"  for (i = 0; i < a.length; i++) out.push(a[i] != null && String(a[i]).indexOf(p) >= 0);",
+		"  return out;",
+		"}"
+	].join("\n");
+
 	r.registered = false;
 	r.snapSent = false;
+	r.classifyKeysRef = r.classifyDescsRef = null;
+	r.classifyArrayRef = null;
+	r.filterTextsRef = null;
+
+	r.ensureWorker = function () {
+		if (!r.available) return false;
+		if (!r.registered) {
+			r.registered = ScriptInterface.quickWorkerRegister(r.accelSource);
+			if (!r.registered) android.util.Log.w("Script", "QuickAccel worker 注册失败");
+		}
+		return !!r.registered;
+	};
+
+	r.syncVar = function (name, value, refKey) {
+		try {
+			var json = JSON.stringify(value);
+			var ok = ScriptInterface.quickWorkerSetVar(name, json);
+			if (ok) r[refKey] = value;
+			else android.util.Log.w("Script", "QuickAccel syncVar 失败: " + name + " len=" + json.length);
+			return ok;
+		} catch (e) {
+			android.util.Log.w("Script", "QuickAccel syncVar 异常: " + name + " => " + e);
+			return false;
+		}
+	};
+
+	r.classify = function (keys, descs, ps) {
+		if (!r.available || !keys || !r.ensureWorker()) return null;
+		try {
+			if (keys !== r.classifyKeysRef || descs !== r.classifyDescsRef) {
+				if (!r.syncVar("__classifyKeys", keys, "classifyKeysRef")) return null;
+				if (!r.syncVar("__classifyDescs", descs || [], "classifyDescsRef")) return null;
+			}
+			var res = ScriptInterface.quickWorkerCall("classifyCached", JSON.stringify([ps]));
+			if (!res) android.util.Log.w("Script", "QuickAccel classifyCached 返回 null");
+			return res ? JSON.parse(res) : null;
+		} catch (e) {
+			android.util.Log.w("Script", "QuickAccel classifyCached 异常: " + e);
+			return null;
+		}
+	};
+
+	r.classifyArray = function (arr, ps) {
+		if (!r.available || !arr || !r.ensureWorker()) return null;
+		try {
+			if (arr !== r.classifyArrayRef) {
+				if (!r.syncVar("__classifyArray", arr, "classifyArrayRef")) return null;
+			}
+			var res = ScriptInterface.quickWorkerCall("classifyArrayCached", JSON.stringify([ps]));
+			if (!res) android.util.Log.w("Script", "QuickAccel classifyArrayCached 返回 null");
+			return res ? JSON.parse(res) : null;
+		} catch (e) {
+			android.util.Log.w("Script", "QuickAccel classifyArrayCached 异常: " + e);
+			return null;
+		}
+	};
+
+	r.filterTexts = function (texts, ps) {
+		if (!r.available || !texts || !r.ensureWorker()) return null;
+		try {
+			if (texts !== r.filterTextsRef) {
+				if (!r.syncVar("__filterTexts", texts, "filterTextsRef")) return null;
+			}
+			var res = ScriptInterface.quickWorkerCall("filterTextsCached", JSON.stringify([ps]));
+			if (!res) android.util.Log.w("Script", "QuickAccel filterTextsCached 返回 null");
+			return res ? JSON.parse(res) : null;
+		} catch (e) {
+			android.util.Log.w("Script", "QuickAccel filterTextsCached 异常: " + e);
+			return null;
+		}
+	};
 
 	r.ensureLibrary = function (snap) {
 		if (!r.available || !snap) return false;
-		if (!r.registered) {
-			r.registered = ScriptInterface.quickWorkerRegister(r.matchSource);
-			if (!r.registered) return false;
-		}
+		if (!r.ensureWorker()) return false;
 		if (!r.snapSent) {
 			var t0 = Date.now();
 			var ok = ScriptInterface.quickWorkerSetVar("__commandSnap", JSON.stringify(snap));
