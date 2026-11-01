@@ -13,7 +13,8 @@
 		"webviewUnavailable": "您的设备无法加载Android System WebView%n%n%s",
 		"theme": {
 			"default": "默认风格",
-			"dark": "夜间风格"
+			"dark": "夜间风格",
+			"pink": "晨星粉"
 		},
 		"ChangeTheme": {
 			"title": "主题选择",

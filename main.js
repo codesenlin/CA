@@ -421,7 +421,8 @@ MapScript.loadModule("Loader", {
 		this.enableCache();
 		if (MapScript.host != "Android") {
 			gHandler.post(function() {try {
-				lto = android.widget.Toast.makeText(ctx, "命令助手 by ProjectXero\n基于Rhino (" + MapScript.host + ")\n加载中……", 1);
+				var startupText = (BuildConfig.flavorData && BuildConfig.flavorData.startupText) || "命令助手 by ProjectXero";
+					lto = android.widget.Toast.makeText(ctx, startupText + "\n基于Rhino (" + MapScript.host + ")\n加载中……", 1);
 				lto.setGravity(android.view.Gravity.CENTER, 0, 0);
 				lto.show();
 			} catch(e) {erp(e)}});

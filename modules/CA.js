@@ -24,7 +24,7 @@ MapScript.loadModule("CA", {
 	/** 关于面板/版本信息里显示的版本号：默认只有版本名，带渠道构建时追加「-渠道」 */
 	getVersionLabel : function() {
 		var channel = BuildConfig.channel;
-		return BuildConfig.version + (channel && channel != "standard" ? "-" + channel : "");
+		return BuildConfig.version + (channel && channel != "stable" ? "-" + channel : "");
 	},
 	publishDate : BuildConfig.date,
 	// 供拓展包/插件读取当前渠道（BuildConfig 是模块内的局部变量，eval 出来的作用域看不到）
@@ -164,9 +164,12 @@ MapScript.loadModule("CA", {
 			if (pf.exists()) {
 				erp("Profile cannot resolved:\n" + SafeFileUtils.readText(pf, "Content cannot read"), true);
 			}
-			this.his = [
-				"/say 你好，我是命令助手！左边是历史，右边是收藏，可以拖来拖去，也可以长按编辑哦"
-			];
+			// 风味构建可以换初始历史/欢迎语（例如 community 风味的社区版文案）
+			this.his = (BuildConfig.flavorData && Array.isArray(BuildConfig.flavorData.welcome) && BuildConfig.flavorData.welcome.length)
+				? BuildConfig.flavorData.welcome.slice()
+				: [
+					"/say 你好，我是命令助手！左边是历史，右边是收藏，可以拖来拖去，也可以长按编辑哦"
+				];
 			this.fav = [{
 				key : "获得命令方块",
 				value : "/give @p command_block"
@@ -2593,7 +2596,8 @@ MapScript.loadModule("CA", {
 					linear.addView(title);
 					desp = new G.TextView(ctx);
 					desp.setGravity(G.Gravity.CENTER);
-					desp.setText("Developed by ProjectXero");
+					// 风味可以覆盖关于页副标题（例如社区版归属说明），默认保持作者署名
+					desp.setText((BuildConfig.flavorData && BuildConfig.flavorData.aboutText) || "Developed by ProjectXero");
 					desp.setTypeface(G.Typeface.SERIF || G.Typeface.DEFAULT);
 					desp.setLayoutParams(new G.LinearLayout.LayoutParams(-1, -2));
 					Common.applyStyle(desp, "textview_prompt", 2);

@@ -1,0 +1,9 @@
+{
+	"name": "默认版",
+	"theme": "light",
+	"startupText": "命令助手 by ProjectXero",
+	"aboutText": "Developed by ProjectXero",
+	"welcome": [
+		"/say 你好，我是命令助手！左边是历史，右边是收藏，可以拖来拖去，也可以长按编辑哦"
+	]
+}

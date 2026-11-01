@@ -1,5 +1,5 @@
 MapScript.loadModule("Common", {
-	// 真正的主题数据在 data/theme.json，这里只留占位，由 builtinData.js 加载后覆盖
+	// 真正的主题数据在 flavors/<名字>/data/theme.json（构建时注入 BuildConfig），这里只留占位
 	themelist : {},
 	theme : null,
 	
@@ -52,7 +52,11 @@ MapScript.loadModule("Common", {
 			if (isNaN(n)) n = Number("0x" + d.slice(1));
 			return Common.argbInt(0xff, (n >>> 16) & 0xff, (n >>> 8) & 0xff, n & 0xff);
 		}
-		var r = {id : (id in this.themelist ? String(id) : "light")}, k, i, t;
+		// 风味构建可以指定默认主题（例如 community 风味默认粉色主题）；
+		// 没有指定或主题不存在时仍回退 light
+		var flavorTheme = BuildConfig.flavorData && BuildConfig.flavorData.theme;
+		var defaultTheme = (flavorTheme && flavorTheme in this.themelist) ? String(flavorTheme) : "light";
+		var r = {id : (id in this.themelist ? String(id) : defaultTheme)}, k, i, t;
 		k = r.id in this.themelist ? this.themelist[r.id] : light;
 		for (i in light) {
 			r[i] = convert(k[i], light[i]);

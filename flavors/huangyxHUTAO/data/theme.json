@@ -1,0 +1,16 @@
+{
+	"pink": {
+		"nameKey": "common.theme.pink",
+		"bgcolor": "#FFF5F7",
+		"float_bgcolor": "#FFECF0",
+		"message_bgcolor": "#FFF9FA",
+		"textcolor": "#8A4B7C",
+		"promptcolor": "#E89CB8",
+		"highlightcolor": "#FF6B9C",
+		"criticalcolor": "#FF3366",
+		"go_bgcolor": "#FFB6C1",
+		"go_textcolor": "#FFFFFF",
+		"go_touchbgcolor": "#FF85A2",
+		"go_touchtextcolor": "#FFFFFF"
+	}
+}

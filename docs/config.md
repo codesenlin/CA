@@ -44,6 +44,8 @@
 
 `description` 支持换行（JSON 里写 `\n`），内容是给用户看的中文说明。
 
+风味（可选构建）不在 `build.json` 里，而是放在 `flavors/<名字>/`（default / huangyxHUTAO），见 [flavor-build.md](flavor-build.md)。
+
 ---
 
 ## update-sources.json

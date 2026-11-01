@@ -1,3 +1,5 @@
+const flavorOf = require("../flavor");
+
 /** 渠道参数：-beta / -dev / -canary（不带则是默认渠道） */
 function channelOf(args) {
 	var list = args || [], i;
@@ -12,8 +14,8 @@ function channelOf(args) {
 module.exports = function(context, args) {
 	// 带 -beta 时 variants = "beta"：产物名带 -beta 后缀，且不写 update.json（避免覆盖正式更新）
 	var channel = channelOf(args);
-	// 不带渠道参数就是 standard（正式版）；带参数时渠道名同时作为 variants
-	return context.execute("getBuildConfig", [channel || "release", channel || "standard"])
+	// 不带渠道参数就是 stable（正式版）；带参数时渠道名同时作为 variants
+	return context.execute("getBuildConfig", [channel || "release", channel || "stable", flavorOf(args)])
 		.then(context.task("getUpdateConfig"))
 		.then(context.task("initDirectory", {
 			"./build/": {

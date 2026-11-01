@@ -3,6 +3,8 @@
 */
 var BuildConfig = {
 	variants: "debug",
+	flavor: "default",
+	flavorData: {},
 	version: "Unknown",
 	versionCode: [9],
 	date: "2099-01-01",

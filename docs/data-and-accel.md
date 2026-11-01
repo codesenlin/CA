@@ -54,7 +54,6 @@ CA/
 │  │  ├─ default.json
 │  │  ├─ addition.json
 │  │  └─ ...
-│  ├─ theme.json                ← 从 builtinData.js 的 Common.themelist 提取
 │  └─ notes/                    ← 与 json 一一对应的注释文件（目录结构镜像）
 │     ├─ idlibs/
 │     │  ├─ default.js          ← 说明 default.json 每个字段什么意思
@@ -93,6 +92,9 @@ CA/
 
 约定：**`docs/data-notes/` 的目录结构镜像 `data/`，每个 JSON 对应一篇同名 `.md`**。
 例如 `data/idlibs/default.json` ↔ `docs/data-notes/idlibs/default.md`。
+
+> 后续新增的风味主题数据不在 `data/`，而是 `flavors/<名字>/data/theme.json`，
+> 文档见 [flavor-build.md](flavor-build.md)。
 
 ## 四、加速库的调用约定
 

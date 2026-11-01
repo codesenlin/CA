@@ -34,6 +34,11 @@ const CHANNEL_DESC = [
 	["-canary", "前沿渠道（可选）"]
 ];
 
+const FLAVOR_DESC = [
+	["-huangyxHUTAO", "南鸢晨星社区版风味（可选）：粉色主题 + 社区欢迎语"],
+	["-flavor <名字>", "自定义风味（需在 flavors/<名字>/ 下定义）"]
+];
+
 const OUTPUT_DESC = [
 	["build/outputs/", "脚本中间产物（release / snapshot / snapshotLib 等）"],
 	["build/dist/", "成品：APK、安装器 .lib、update.json"],
@@ -105,13 +110,22 @@ module.exports = function() {
 	}
 	lines.push("");
 	lines.push("渠道参数（可选，加在任务后面）");
-	lines.push("  不写渠道参数就是默认渠道 standard；写了就按该渠道出包");
+	lines.push("  不写渠道参数就是默认渠道 stable；写了就按该渠道出包");
 	lines.push("");
 	CHANNEL_DESC.forEach(function(row) {
 		lines.push("  " + pad(row[0], 12) + row[1]);
 	});
 	lines.push("  例：node ./cabuildtools/main.js buildRelease -beta");
 	lines.push("      npm run build -- -beta");
+	lines.push("");
+	lines.push("风味参数（可选，加在任务后面；不影响渠道）");
+	lines.push("  不写就是 default 风味；风味只改变脚本内容（默认主题/欢迎语/启动文字）和产物名");
+	lines.push("");
+	FLAVOR_DESC.forEach(function(row) {
+		lines.push("  " + pad(row[0], 16) + row[1]);
+	});
+	lines.push("  例：node ./cabuildtools/main.js buildRelease -huangyxHUTAO");
+	lines.push("      npm run build -- -huangyxHUTAO");
 	lines.push("");
 	lines.push("npm 脚本");
 	Object.keys(scripts).forEach(function(name) {

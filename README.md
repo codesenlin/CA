@@ -26,7 +26,7 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 ## 目录结构
 
 - `modules/` — CA 的核心 JS 模块（`main.js` 里用 `Loader.fromFile` 按顺序拼装）
-- `data/` — 从代码里剥出来的纯数据：内置命令库（`idlibs/`）、主题、提示语等
+- `data/` — 从代码里剥出来的公共数据：内置命令库（`idlibs/`）、提示语等（主题在 `flavors/`）
   （每个数据文件都有对应说明，见 `docs/data-notes/`）
 - `intl/` — 界面文案（`zh_CN` / `en_US`）
 - `cabuildtools/` — 构建工具（git subtree），AST 加载器、签名打包、壳子任务都在这里
@@ -97,11 +97,11 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 
 产物导出至 `build/outputs/release/main.js` 与 `build/outputs/snapshot/main.js`。
 
-### 生成渠道版 JS（standard / beta / dev / canary）
+### 生成渠道版 JS（stable / beta / dev / canary）
 
 构建命令可以附加渠道参数，产物名会带上渠道名，一眼能看出是什么构建物：
 
-    node ./cabuildtools/main.js buildRelease            # 命令助手(2026-10-15) standard.js + 命令助手standard<日期>.lib
+    node ./cabuildtools/main.js buildRelease            # 命令助手(2026-10-15) stable.js + 命令助手stable<日期>.lib
     node ./cabuildtools/main.js buildRelease -beta      # 命令助手(2026-10-15) beta.js + 命令助手beta<日期>.lib
     node ./cabuildtools/main.js buildSnapshot           # build/outputs/snapshot/snapshot.js + 命令助手snapshot<日期>.lib
     node ./cabuildtools/main.js buildSnapshot -dev      # dev.js + 命令助手dev<日期>.lib
@@ -111,15 +111,27 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 
 - **形态**（`BuildConfig.variants`）决定核心行为：`buildRelease` -> `release`，`buildSnapshot` -> `snapshot`
   （快照形态：不写 `update.json`，核心按非正式版处理）
-- **渠道**（产物名 + `.lib` 的 uuid）默认都是 **standard**，加 `-beta` / `-dev` / `-canary` 才换成对应渠道
+- **渠道**（产物名 + `.lib` 的 uuid）默认都是 **stable**，加 `-beta` / `-dev` / `-canary` 才换成对应渠道
 
-`standard` 只是对外的名字，内部仍然是 `release`/`snapshot`，所以核心代码里 `variants == "release"`
+`stable` 只是对外的名字，内部仍然是 `release`/`snapshot`，所以核心代码里 `variants == "release"`
 这类判断不受影响。
 
 `.lib` 是安装器：装进 App 后把该渠道的脚本设为调试源并建快捷方式。每个渠道固定一个 uuid，
 版本号取构建时刻 `[年, 月, 日, 时, 分, 秒]`，同一天重新构建的包也会被识别为更新。**快照形态沿用作者原来的
 `f6cf1729-...` uuid**（唯一特例，保证老的快照包还能被覆盖更新）；**同版本号下渠道优先级
-`canary > dev > beta > standard`**，低优先级不会覆盖高优先级。
+`canary > dev > beta > stable`**，低优先级不会覆盖高优先级。
+
+### 风味构建（可选：-huangyxHUTAO / -flavor <名字>）
+
+在渠道参数之外还可以叠一个**风味**，只改脚本内容（默认主题、初始欢迎语、启动文字）和产物名，
+不改构建形态/渠道；不会写更新清单。风味参数**可选**，不写时使用 `flavors/default` 基线数据。
+
+    npm run build -- -huangyxHUTAO         # 南鸢晨星社区版风味：粉色主题 + 社区版欢迎语
+    node ./cabuildtools/main.js shellBuildDebug -huangyxHUTAO
+
+风味定义和数据在 `flavors/<名字>/` 下：`flavor.json`（`theme` / `startupText` / `welcome`）
++ `data/*.json`（该风味专属数据，如主题）；`flavors/default` 是基线，其它风味在它上面合并。
+完整说明见 [`docs/flavor-build.md`](docs/flavor-build.md)。
 
 ### 生成 APP
 
@@ -171,6 +183,10 @@ yarn / pnpm / CI 都可移植。本仓库的 deps.js 额外支持省略 `--`（�
 
 内置命令库只有一套来源：`data/idlibs/*.json`。由 `modules/builtinData.js` 用
 `Loader.fromFile` 直接内联成 `CA.Library.inner["default"]` 等对象，用户无需手动导入。
+
+默认启用/禁用的清单在 `data/builtinLibs.json`（`default` 字段：`enabled` 默认启用、
+`disabled` 默认禁用但可在设置里开启）；新增内置包的步骤见
+[`docs/data-notes/builtinLibs.md`](docs/data-notes/builtinLibs.md)。
 
 `caclib/` 不参与 App 构建——它是作者 **在线拓展包源**（clib）的工程仓库，通过
 `git subtree` 同步进来，由 `cabuildtools/clibspawn.js` 打包成 SIGNLIB01 发布到源站

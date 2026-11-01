@@ -13,18 +13,21 @@ module.exports = function(context, args) {
 		// 快照形态（作者原有的 snapshot 构建）沿用历史 uuid，是唯一特例；
 		// 其余渠道各用固定 uuid，保证同渠道的新构建能被识别为更新
 		uuid = variants == "snapshot" ? "f6cf1729-3861-481b-a9ac-e3f48cbc4a94" : ({
-			standard : "1d6b8f24-3a9c-4e57-b0d8-7f2c5a4e9b61",
+			stable : "1d6b8f24-3a9c-4e57-b0d8-7f2c5a4e9b61",
 			beta : "3c1f0b52-8f4d-4a86-9f4e-6b2d7c9a1e05",
 			dev : "8e4a2d61-5b7c-4f39-9a1d-2c6e7f8b0a43",
 			canary : "b7d1c394-2e6a-4c58-8f07-9d3b1e5a6c27"
 		}[channel] || "1d6b8f24-3a9c-4e57-b0d8-7f2c5a4e9b61"),
-		libName = channel,
-		// 不带渠道参数（release 的 standard / snapshot 的 snapshot）就是普通快照版；
+		// 不带渠道参数（release 的 stable / snapshot 的 snapshot）就是普通快照版；
 		// 带了 -beta / -dev / -canary 才在名字后面标渠道
-		plainName = channel == "standard" || channel == "snapshot",
-		displayName = plainName ? "命令助手快照版" : "命令助手快照版 - " + channel,
-		fileName = variants + ".lib",
-		scriptName = variants + ".js";
+		flavor = context.buildConfig.flavor,
+		flavorSuffix = flavor && flavor != "default" ? "-" + flavor : "",
+		plainName = channel == "stable" || channel == "snapshot",
+		libName = channel + flavorSuffix,
+		displayName = (plainName ? "命令助手快照版" : "命令助手快照版 - " + channel) +
+			(flavorSuffix ? "（" + ((context.buildConfig.flavorData || {}).name || flavor) + "）" : ""),
+		fileName = variants + flavorSuffix + ".lib",
+		scriptName = variants + flavorSuffix + ".js";
 
 	fs.writeFileSync("./build/outputs/snapshotLib/" + fileName, asLibrary(Buffer.from([
 		'Plugins.inject(function(o){',
@@ -50,7 +53,7 @@ module.exports = function(context, args) {
 			// 版本号相同的话，只有渠道优先级更高时才允许覆盖
 			'if(id<CA.publishDate){return void(o.description+="您正在使用本' + libName + '或更高版本\\n\\n")}',
 			'if(id==CA.publishDate&&rank(' + JSON.stringify(channel) + ')<rank(CA.variants)){',
-				'return void(o.description+="当前已装同版本的更高渠道构建（"+(CA.variants||"standard")+"），无需安装本' + libName + '\\n\\n")',
+				'return void(o.description+="当前已装同版本的更高渠道构建（"+(CA.variants||"stable")+"），无需安装本' + libName + '\\n\\n")',
 			'}',
 			'if(MapScript.host!="Android")return void(o.description+="本' + libName + '仅适用于App版");',
 			'u(MapScript.baseDir+' + JSON.stringify(scriptName) + ',' + JSON.stringify(Buffer.from(args[0]).toString("base64")) + ');',
@@ -74,6 +77,6 @@ module.exports = function(context, args) {
 			// 不再自删：安装器以 [安装器] 身份留在列表里，执行过一次后只显示不再执行
 		'})'
 	].join("\n"))));
-	fs.copyFileSync("./build/outputs/snapshotLib/" + fileName, "./build/dist/命令助手" + channel + context.buildConfig.date + ".lib");
+	fs.copyFileSync("./build/outputs/snapshotLib/" + fileName, "./build/dist/命令助手" + libName + context.buildConfig.date + ".lib");
 	return args[0];
 }

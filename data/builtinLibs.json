@@ -1,0 +1,47 @@
+{
+	"description": "内置拓展包清单：libraries[].default 为 enabled 表示默认启用，disabled 表示默认禁用（仍可在设置中手动开启）。新增内置包时同时更新本文件和 data/idlibs/README.md。",
+	"libraries": [
+		{
+			"id": "default",
+			"file": "default.json",
+			"default": "enabled",
+			"name": "默认命令库"
+		},
+		{
+			"id": "addition",
+			"file": "addition.json",
+			"default": "enabled",
+			"name": "补充命令库"
+		},
+		{
+			"id": "basicedu",
+			"file": "basicedu.json",
+			"default": "enabled",
+			"name": "基本命令教程"
+		},
+		{
+			"id": "education",
+			"file": "education.json",
+			"default": "disabled",
+			"name": "教育版命令库"
+		},
+		{
+			"id": "experiment",
+			"file": "experiment.json",
+			"default": "disabled",
+			"name": "实验性玩法命令库"
+		},
+		{
+			"id": "JSONSchema",
+			"file": "JSONSchema.json",
+			"default": "disabled",
+			"name": "JSON Schema 包"
+		},
+		{
+			"id": "states",
+			"file": "states.json",
+			"default": "disabled",
+			"name": "方块状态包"
+		}
+	]
+}

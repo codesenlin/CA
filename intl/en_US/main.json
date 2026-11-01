@@ -13,7 +13,8 @@
 		"webviewUnavailable": "Your device cannot load Android System WebView%n%n%s",
 		"theme": {
 			"default": "Default",
-			"dark": "Night"
+			"dark": "Night",
+			"pink": "Pink"
 		},
 		"ChangeTheme": {
 			"title": "Choose Theme",
