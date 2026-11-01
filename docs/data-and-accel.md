@@ -93,7 +93,7 @@ CA/
 约定：**`docs/data-notes/` 的目录结构镜像 `data/`，每个 JSON 对应一篇同名 `.md`**。
 例如 `data/idlibs/default.json` ↔ `docs/data-notes/idlibs/default.md`。
 
-> 后续新增的风味主题数据不在 `data/`，而是 `flavors/<名字>/data/theme.json`，
+> 主题配色现已归入公共数据 `data/theme.json`；风味只决定默认主题与显示顺序，
 > 文档见 [flavor-build.md](flavor-build.md)。
 
 ## 四、加速库的调用约定

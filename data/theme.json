@@ -1,0 +1,61 @@
+{
+	"pink": {
+		"nameKey": "common.theme.pink",
+		"bgcolor": "#FFF5F7",
+		"float_bgcolor": "#FFECF0",
+		"message_bgcolor": "#FFF9FA",
+		"textcolor": "#8A4B7C",
+		"promptcolor": "#E89CB8",
+		"highlightcolor": "#FF6B9C",
+		"criticalcolor": "#FF3366",
+		"go_bgcolor": "#FFB6C1",
+		"go_textcolor": "#FFFFFF",
+		"go_touchbgcolor": "#FF85A2",
+		"go_touchtextcolor": "#FFFFFF"
+	},
+	"blue": {
+		"nameKey": "common.theme.blue",
+		"bgcolor": "#F0F9FF",
+		"float_bgcolor": "#C6DDFF",
+		"message_bgcolor": "#E6F4FF",
+		"textcolor": "#3A5A78",
+		"promptcolor": "#8BA7C1",
+		"highlightcolor": "#4A7CB5",
+		"criticalcolor": "#D95353",
+		"go_bgcolor": "#B4CFEA",
+		"go_textcolor": "#FFFFFF",
+		"go_touchbgcolor": "#8FB0D5",
+		"go_touchtextcolor": "#FFFFFF"
+	},
+	"purple": {
+		"nameKey": "common.theme.purple",
+		"bgcolor": "#F7EFFF",
+		"float_bgcolor": "#DBCFE3",
+		"message_bgcolor": "#FCF5FF",
+		"textcolor": "#5D4B7B",
+		"promptcolor": "#9C9FC0",
+		"highlightcolor": "#BB89DA",
+		"criticalcolor": "#FF6B6B",
+		"go_bgcolor": "#BB89DA",
+		"go_textcolor": "#FFFFFF",
+		"go_touchbgcolor": "#9C6ABA",
+		"go_touchtextcolor": "#FFFFFF"
+	},
+	"light": {
+		"nameKey": "common.theme.default"
+	},
+	"dark": {
+		"nameKey": "common.theme.dark",
+		"bgcolor": "#202020",
+		"float_bgcolor": "#404040",
+		"message_bgcolor": "#202020",
+		"textcolor": "#FFFFFF",
+		"promptcolor": "#C0C0C0",
+		"highlightcolor": "#FFFF00",
+		"criticalcolor": "#FFB040",
+		"go_bgcolor": "#616161",
+		"go_textcolor": "#FAFAFA",
+		"go_touchbgcolor": "#EEEEEE",
+		"go_touchtextcolor": "#000000"
+	}
+}

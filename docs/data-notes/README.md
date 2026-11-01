@@ -3,12 +3,10 @@
 `data/` 里放的是构建时直接内联进脚本的公共数据（JSON），JSON 本身写不了注释，
 每个文件对应的字段含义、修改方式都记在这一组文档里。
 
-主题配色属于风味数据，已移到 `flavors/<名字>/data/theme.json`，见
-[flavor-build.md](../flavor-build.md)。
-
 | 文档 | 对应数据文件 | 用途 |
 | --- | --- | --- |
 | [tips.md](tips.md) | `data/tips.json` | 启动时随机展示的小知识 |
+| [theme.md](theme.md) | `data/theme.json` | 主题配色（所有风味共享） |
 | [keepermenu.md](keepermenu.md) | `data/keepermenu.json` | 通知栏快捷菜单默认动作 |
 | [packnames.md](packnames.md) | `data/packnames.json` | Minecraft 各渠道包名 |
 | [builtinLibs.md](builtinLibs.md) | `data/builtinLibs.json` | 内置拓展包清单（默认启用/禁用） |

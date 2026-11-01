@@ -14,7 +14,9 @@
 		"theme": {
 			"default": "默认风格",
 			"dark": "夜间风格",
-			"pink": "晨星粉"
+			"pink": "晨星粉",
+			"blue": "晨雾蓝",
+			"purple": "略略紫"
 		},
 		"ChangeTheme": {
 			"title": "主题选择",

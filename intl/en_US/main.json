@@ -14,7 +14,9 @@
 		"theme": {
 			"default": "Default",
 			"dark": "Night",
-			"pink": "Pink"
+			"pink": "Pink",
+			"blue": "Blue",
+			"purple": "Purple"
 		},
 		"ChangeTheme": {
 			"title": "Choose Theme",

@@ -1,5 +1,5 @@
 MapScript.loadModule("Common", {
-	// 真正的主题数据在 flavors/<名字>/data/theme.json（构建时注入 BuildConfig），这里只留占位
+	// 真正的主题数据在 data/theme.json（构建时内联），这里只留占位
 	themelist : {},
 	theme : null,
 	

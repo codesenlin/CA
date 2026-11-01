@@ -36,8 +36,7 @@ CA.Library.inner["states"] = Loader.fromFile("../data/idlibs/states.json");
 	CA.Library.defaultDisabled = defaultDisabled;
 })();
 
-// 主题数据来自风味：flavors/default/data/theme.json 是基线，其它风味的数据在
-// 构建时合并进来（getBuildConfig），最终注入 BuildConfig.flavorData.data.theme
+// 主题配色是公共数据 data/theme.json；风味只决定默认主题和显示顺序
 Common.themelist = (function(list) {
 	Object.keys(list).forEach(function(k) {
 		if (list[k].nameKey) {
@@ -45,7 +44,19 @@ Common.themelist = (function(list) {
 			delete list[k].nameKey;
 		}
 	});
+	// 风味可以指定主题显示顺序（例如社区版 Pink/Blue/Purple/Light/Night）
+	var order = BuildConfig.flavorData && BuildConfig.flavorData.themeOrder;
+	if (Array.isArray(order)) {
+		var ordered = {};
+		order.forEach(function(id) {
+			if (list[id]) ordered[id] = list[id];
+		});
+		Object.keys(list).forEach(function(id) {
+			if (!(id in ordered)) ordered[id] = list[id];
+		});
+		list = ordered;
+	}
 	return list;
-})((BuildConfig.flavorData && BuildConfig.flavorData.data && BuildConfig.flavorData.data.theme) || {});
+})(Loader.fromFile("../data/theme.json"));
 
 CA.tips = CA.defalutTips = Loader.fromFile("../data/tips.json");

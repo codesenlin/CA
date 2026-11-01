@@ -3,7 +3,7 @@
 在**渠道**（stable / beta / dev / canary）之外，构建还可以叠一个**风味**。
 风味只改脚本内容和产物名，不改构建形态（release / snapshot）与渠道：
 
-- 默认主题（`flavors/<名字>/data/theme.json` 里的主题 id）
+- 默认主题（`data/theme.json` 里的主题 id）
 - 新用户的初始欢迎语（历史列表）
 - 启动加载文字
 - 产物名后缀；并且**不写** update.json 等更新清单，避免和正式版更新源混在一起
@@ -36,21 +36,19 @@ build/outputs/debugApk/app-debug-huangyxHUTAO.apk
 风味定义和数据都放在 `flavors/` 下，一个风味一个文件夹：
 
 ```
+data/
+└── theme.json             # 公共主题配色：light / dark / pink / blue / purple
 flavors/
 ├── default/               # 基线风味（默认）：先加载，其它风味在它上面覆盖
-│   ├── flavor.json        # 默认参数（name/theme/startupText/aboutText/welcome）
-│   └── data/
-│       └── theme.json     # 基线主题：light / dark
+│   └── flavor.json        # 默认参数（name/theme/startupText/aboutText/welcome）
 └── huangyxHUTAO/          # 南鸢晨星社区版
-    ├── flavor.json        # 风味元数据
-    └── data/
-        └── theme.json     # 社区版覆盖：追加 pink 主题
+    └── flavor.json        # 风味元数据（默认主题 pink、themeOrder 等）
 ```
 
 - `flavors/<名字>/flavor.json`：风味元数据（必填，没有这个文件就不算一个风味）；
   `default` 也带一套默认参数，其它风味按字段覆盖它
-- `flavors/<名字>/data/*.json`：风味专属数据；构建时按文件名注入
-  `BuildConfig.flavorData.data.<文件名>`
+- 主题配色是公共数据 `data/theme.json`；风味只通过 `theme` / `themeOrder`
+  决定默认主题和选择页顺序
 - **`flavors/default` 是基线**：构建时先取 default 的数据，再用所选风味的数据
   按文件名深度合并（对象逐键合并、数组/标量直接覆盖）
 - 公共数据仍在 `data/`（例如 `data/tips.json`），不参与风味合并
@@ -89,14 +87,15 @@ flavors/
 | 字段 | 作用 |
 | --- | --- |
 | `name` | 显示用的风味名（产物名/安装器显示名里用） |
-| `theme` | 默认主题 id；主题定义在各风味的 `data/theme.json` |
+| `theme` | 默认主题 id；主题定义在公共 `data/theme.json` |
+| `themeOrder` | 可选：覆盖主题选择列表顺序；不写时按 `data/theme.json` 的键顺序 |
 | `startupText` | 启动加载文字（替换默认的 `命令助手 by ProjectXero`） |
 | `aboutText` | 关于页副标题（默认 `Developed by ProjectXero`） |
 | `welcome` | 新用户的初始历史/欢迎语数组 |
 
 ### data/theme.json
 
-主题定义放在各风味自己的 `data/theme.json`，格式：
+主题配色是所有风味共享的公共数据，放在 `data/theme.json`，格式：
 
 ```json
 {
@@ -136,29 +135,41 @@ flavors/
 
 - `light` 主题只给 `nameKey`，其余颜色由 `Common.loadTheme` 的默认值兜底
 - 颜色必须是 `#RRGGBB` 形式，`loadTheme` 会解析成 ARGB int
-- 新增主题时在对应风味的 `data/theme.json` 加一项，并在
+- 新增主题时在 `data/theme.json` 加一项，并在
   `intl/<lang>/main.json` 的 `common.theme` 下补名称
+- 主题列表顺序默认按 `data/theme.json` 的键顺序；风味仍可在 `flavor.json`
+  里用 `themeOrder` 覆盖（可选，不是必填）
 
-构建时 `getBuildConfig` 合并这些数据，`modules/builtinData.js` 用
-`BuildConfig.flavorData.data.theme` 生成 `Common.themelist`。
+构建时 `modules/builtinData.js` 用 `Loader.fromFile("../data/theme.json")`
+生成 `Common.themelist`；风味再用 `theme` / `themeOrder` 覆盖默认值和顺序。
 
 ## 新增风味
 
 1. 新建 `flavors/<名字>/flavor.json`（至少写 `name`）
-2. 需要专属主题就加 `flavors/<名字>/data/theme.json`（会与 default 合并）
+2. 用 `theme` 选择默认主题；需要特殊顺序可加可选的 `themeOrder`
 3. 构建时加 `-flavor <名字>`；`-huangyxHUTAO` 是社区版的快捷写法
 
 ## 现有主题
 
-- `light` / `dark`：`flavors/default/data/theme.json`（基线）
-- `pink`：`flavors/huangyxHUTAO/data/theme.json`（晨星粉；社区版默认主题）
+所有主题都在 `data/theme.json`：
 
-社区版构建时 `Common.themelist` = light/dark/pink；默认构建只有 light/dark。
+- `light`：默认风格（白色；默认版默认主题）
+- `dark`：夜间风格
+- `pink`：晨星粉（社区版默认主题）
+- `blue`：晨雾蓝
+- `purple`：略略紫
+
+`data/theme.json` 的键顺序 = pink/blue/purple/light/dark，两个版本的主题选择页都按
+这个顺序显示；默认版选中白色 `light`，社区版选中粉色 `pink`。
 
 ## 参考
 
-社区版（命令助手 Reforged）的效果参考图在本地下载里（历史页/设置页各一张），
-对应源码在 `Git/CA_reforged`（她的实现里粉色主题叫 `pink_theme`）。
+社区版（命令助手 Reforged）的效果参考图在本地下载里（历史页、设置页、主题选择页），
+对应源码在 `Git/CA_reforged`。主题 id 的对应关系：
+
+- `pink` ← `pink_theme`（颜色定义在 `modules/Common.js`）
+- `blue` ← `blue_theme`
+- `purple` ← `purple_theme`
 
 ## 验证
 
@@ -180,5 +191,5 @@ node ./cabuildtools/main.js shellBuildDebug -huangyxHUTAO
 adb install -r build/outputs/debugApk/app-debug-huangyxHUTAO.apk
 ```
 
-验证过（PERM10）：huangyxHUTAO 风味启动后初始历史为社区版欢迎语、界面为粉色主题；
-default 风味行为不变。
+验证过（PERM10 早前）：huangyxHUTAO 风味启动后初始历史为社区版欢迎语、界面为粉色主题；
+现在主题数据已归入 `data/theme.json`，两种风味只改变默认主题和主题选择页顺序。

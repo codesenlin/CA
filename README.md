@@ -26,7 +26,7 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 ## 目录结构
 
 - `modules/` — CA 的核心 JS 模块（`main.js` 里用 `Loader.fromFile` 按顺序拼装）
-- `data/` — 从代码里剥出来的公共数据：内置命令库（`idlibs/`）、提示语等（主题在 `flavors/`）
+- `data/` — 从代码里剥出来的公共数据：内置命令库（`idlibs/`）、提示语、主题配色（`theme.json`）等
   （每个数据文件都有对应说明，见 `docs/data-notes/`）
 - `intl/` — 界面文案（`zh_CN` / `en_US`）
 - `cabuildtools/` — 构建工具（git subtree），AST 加载器、签名打包、壳子任务都在这里
@@ -130,9 +130,11 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
     npm run build -- -huangyxHUTAO         # 南鸢晨星社区版风味：粉色主题 + 社区版欢迎语
     node ./cabuildtools/main.js shellBuildDebug -huangyxHUTAO
 
-风味定义和数据在 `flavors/<名字>/` 下：`flavor.json`（`theme` / `startupText` / `welcome`）
-+ `data/*.json`（该风味专属数据，如主题）；`flavors/default` 是基线，其它风味在它上面合并。
-完整说明见 [`docs/flavor-build.md`](docs/flavor-build.md)。
+风味定义在 `flavors/<名字>/flavor.json`：`theme`（默认主题）/ `startupText` /
+`welcome` 等；主题配色本身是公共数据 `data/theme.json`，选择页顺序默认也按
+`data/theme.json` 的键顺序。
+`flavors/default` 是基线，其它风味在它上面合并，完整说明见
+[`docs/flavor-build.md`](docs/flavor-build.md)。
 
 ### 生成 APP
 

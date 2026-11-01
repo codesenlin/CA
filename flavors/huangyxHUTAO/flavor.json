@@ -2,9 +2,9 @@
 	"name": "南鸢晨星社区版",
 	"theme": "pink",
 	"startupText": "命令助手 by ProjectXero&南鸢晨星",
+	"aboutText": "非官方社区版 由 南鸢晨星 维护，原作者 ProjectXero",
 	"welcome": [
 		"/say 你好呀喵~ 我是命令助手呀~ 这里是历史喵~ 右滑是收藏哦 可以拖来拖去，还可以长按编辑呢喵~",
 		"/say 命令助手 - 南鸢晨星社区版 喵喵喵~"
-	],
-	"aboutText": "非官方社区版 由 南鸢晨星 维护，原作者 ProjectXero"
+	]
 }
