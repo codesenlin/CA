@@ -240,18 +240,6 @@ MapScript.loadModule("NeteaseAdapter", {
 	},
 	compareVersion : function(a, b) {
 		return Accel.compareVersionArray(a, b);   // 有 jar 走 Java，没有走等价 JS
-		// 以下为原始实现，保留在 Accel.js 的回退里
-		var n, i, p1, p2;
-		n = Math.max(a.length, b.length);
-		for (i = 0; i < n; i++) {
-			p1 = isNaN(a[i]) ? -1 : parseInt(a[i]); p2 = isNaN(b[i]) ? -1 : parseInt(b[i]);
-			if (p1 < p2) {
-				return -1;
-			} else if (p1 > p2) {
-				return 1;
-			}
-		}
-		return 0;
 	},
 	packNames : Loader.fromFile("../data/packnames.json"),
 	packages : {

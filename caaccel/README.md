@@ -39,15 +39,13 @@ caaccel/Accel.java         加速层：可选。下载代码的人想快就在�
 | `setFilterTexts` | `void setFilterTexts(String[] texts)` | 缓存建议列表文本（打开 Assist 时同步一次） | `Accel.js` 内缓存 | `CA.Assist` |
 | `filterTexts` | `boolean[] filterTexts(String s)` | 在缓存建议文本里标出包含 `s` 的元素 | `Accel.js` 内循环 | `CA.Assist` |
 | `filterIDTexts` | `int[] filterIDTexts(String s)` | 在缓存的 ID 文本里找包含 `s` 的下标 | `Accel.js` 内循环 | `CA.filterIDList` |
+| `rangeIndices` | `int[] rangeIndices(int n)` | 生成 `[0, n)` 下标数组 | `Accel.js` 内循环 | `CA.buildIDList` 空前缀下标 |
 | `setCommandSnapshot` | `void setCommandSnapshot(String[] keys, String[] descs)` | 缓存命令名/描述，命令库重建时同步一次 | `Accel.js` 内缓存 | `CA.IntelliSense` |
 | `matchCommandNames` | `String[] matchCommandNames(String prefix)` | 匹配命令名/描述中包含 prefix 的命令，按名称排序 | `Accel.js` 内循环 | `CA.IntelliSense`（无 jar 时 QuickJS/JS 回退） |
 | `compareVersionArray` | `int compareVersionArray(int[] a, int[] b)` | 版本号数组比较，缺位按 -1 | `Accel.js` 内循环 | `NeteaseAdapter.compareVersion` |
 | `classify` | `int[] classify(String[] keys, String[] descs, String ps)` | 枚举候选分类：1=精确命中 2=模糊命中 0=不命中 | `Accel.js` 内循环 | `CA.IntelliSense` enum 分支 |
 | `classifyArray` | `ArrayClassifyResult classifyArray(String[] arr, String ps)` | 数组 enum 匹配：flags（1=完整/2=前缀/0=不命中）+ length + canFinish | `Accel.js` 内循环 | `CA.IntelliSense` enum 数组分支 |
-| `parseColor` | `int parseColor(String)` | `#RRGGBB` → ARGB int | 未接调用点 | — |
-| `compareVersion` | `int compareVersion(String, String)` | 版本号比较 | 未接调用点 | — |
 
-后两个是备用的，目前 JS 没调用。要接就按同一套路：`Accel.js` 加包装 + JS 回退。
 
 ## 构建
 

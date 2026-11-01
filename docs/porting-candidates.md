@@ -14,7 +14,7 @@
 | JS → Java | 数组 enum 匹配 ✅ | `CA.IntelliSense.js` `matchParam` 的 `case "enum"` 数组分支 | P1 | 最多 1749 项、每次输入；新增 Java `classifyArray`（精确/前缀标志） |
 | JS → QuickJS | jsonPro 补全 | `CA.IntelliSense.js:311-520` | P1/P2 | 每次输入 parse + doComplete，且对每个 object/array 候选再模拟一次 doComplete；纯 JS，适合 worker |
 | QuickJS → Java | 命令名匹配 ✅ | `QuickAccel.matchCommandNames` → `Accel.matchCommandNames` | P1 | 已改为 Java 优先，worker/JS 回退；内置 74 条命令实测 Java 0~4ms |
-| Java → JS | `Accel.parseColor` / `compareVersion` | `Accel.java:147-180` | P2 | Java 侧未接调用点；删掉或接 JS，无加速收益 |
+| Java → JS | `Accel.parseColor` / `compareVersion` | `Accel.java` | ✅ 已清理 | 未接调用点，已连同 `parseLong` 删除 |
 | Java → QuickJS | — | — | — | 不建议：worker 无 Java 桥，纯 Java 算法搬过去只能 JSON 进出，且 QuickJS ≈ Java |
 | QuickJS → JS | — | — | — | worker 不可用时已有等价 JS 回退，无需迁移 |
 
@@ -195,8 +195,8 @@ worker 缓存 `texts` 后返回匹配下标看似可行，但「全部」列表�
 
 | 候选 | 情况 | 建议 |
 |---|---|---|
-| `Accel.parseColor` | 未接调用点 | 删除，或接 JS 颜色解析；无收益 |
-| `Accel.compareVersion` | 未接调用点 | 删除，或接 JS 版本比较；无收益 |
+| `Accel.parseColor` | 未接调用点 | ✅ 已删除 |
+| `Accel.compareVersion` | 未接调用点 | ✅ 已删除（连同私有 `parseLong`） |
 | `Accel.compareVersionArray` | `NeteaseAdapter.compareVersion` 在用；数组只有 3~4 个元素 | 迁移到 JS 可能反而更稳（省一次反射/桥），但收益微小，先不动 |
 | cadroid 的 Java/Kotlin | `ScriptFileStream` 验签、`Secret`、引擎/服务/权限都是 Android/安全职责 | 不适合下放脚本 |
 
@@ -337,11 +337,11 @@ IDList init 297ms, 4434 项 (resolve=1 build=148 sort=105 sync=42 all=1)
 构建结果缓存也从「只缓存最近一个列表」改成「最近 4 个列表」，在
 「全部 / 方块 / 物品」等列表之间来回切换时不再重建。
 
-## 六、附带清理项
+## 六、附带清理项（已完成）
 
-- `modules/utils/JSONHelper.js`（293 行）目前**没有被 `main.js` 加载**，
-  是死代码；确认无引用后可删除，或接入 JSON 编辑高亮
-- `caaccel` 的 `parseColor` / `compareVersion` 未接调用点，可删
+- ✅ `modules/utils/JSONHelper.js`（293 行，未加载）已删除
+- ✅ `caaccel` 的 `parseColor` / `compareVersion` / `parseLong` 已删除
+- ✅ `NeteaseAdapter.compareVersion` 里 return 之后的不可达原始实现已删除
 - QuickAccel 里的 `runBench` / `runMatchBench` 是调试入口，保留但不要进 UI
 
 ## 七、建议实施顺序
@@ -356,7 +356,7 @@ IDList init 297ms, 4434 项 (resolve=1 build=148 sort=105 sync=42 all=1)
 4. 下一步：jsonPro 的 QuickJS 原型（工作量大）；ID 列表非空前缀仍有
    8~40ms 的 Java→JS 结果构造成本，可选优化
 3. **P1/P2**：jsonPro 的 QuickJS 原型（lazy 注册、真机计时、失败回退）
-4. **P2**：清理未使用 Java / JSONHelper 死代码
+4. ✅ **P2 清理已完成**：未使用 Java 方法与 JSONHelper 死代码已删除
 5. 每次改动后按 [data-and-accel.md](data-and-accel.md) 的流程验证：
    Rhino/Java 行为对比、`npm test`、`buildRelease`、真机计时
 

@@ -180,10 +180,6 @@ public final class Accel {
         idTexts = texts;
     }
 
-    /**
-     * 在缓存的 ID 文本里查找包含 s 的下标；没有缓存/无匹配返回空数组。
-     * 相比 filter(String[] arr, String s) 省掉每次调用都从 Rhino 转 4000+ 字符串的开销。
-     */
     /** 生成 [0, n) 的下标数组；ID 列表空前缀直接复用，避免在 Rhino 里循环构建 */
     public static int[] rangeIndices(int n) {
         if (n <= 0) return new int[0];
@@ -192,6 +188,10 @@ public final class Accel {
         return out;
     }
 
+    /**
+     * 在缓存的 ID 文本里查找包含 s 的下标；没有缓存/无匹配返回空数组。
+     * 相比 filter(String[] arr, String s) 省掉每次调用都从 Rhino 转 4000+ 字符串的开销。
+     */
     public static int[] filterIDTexts(String s) {
         String[] texts = idTexts;
         if (texts == null) return new int[0];
@@ -324,56 +324,6 @@ public final class Accel {
 
         public String[] outputValues() {
             return outputs.values().toArray(new String[0]);
-        }
-    }
-
-    /**
-     * 把 #RRGGBB 解析成 ARGB int。
-     * 对应 JS: Common.argbInt / 颜色串解析。
-     *
-     * @param hex 形如 "#A1B2C3" 或 "A1B2C3"
-     * @return ARGB 整数；解析失败返回 0
-     */
-    public static int parseColor(String hex) {
-        if (hex == null) return 0;
-        String s = hex.trim();
-        if (s.startsWith("#")) s = s.substring(1);
-        if (s.length() != 6) return 0;
-        int rgb = 0;
-        for (int i = 0; i < 6; i++) {
-            int d = Character.digit(s.charAt(i), 16);
-            if (d < 0) return 0;
-            rgb = (rgb << 4) | d;
-        }
-        return 0xFF000000 | rgb;
-    }
-
-    /**
-     * 版本号比较（按点分段，逐段数值比较）。
-     * 对应 JS: NeteaseAdapter 里的版本判断。
-     *
-     * @return 负数表示 a &lt; b，0 相等，正数表示 a &gt; b
-     */
-    public static int compareVersion(String a, String b) {
-        if (a == null && b == null) return 0;
-        if (a == null) return -1;
-        if (b == null) return 1;
-        String[] pa = a.split("\\.");
-        String[] pb = b.split("\\.");
-        int n = Math.max(pa.length, pb.length);
-        for (int i = 0; i < n; i++) {
-            long x = i < pa.length ? parseLong(pa[i]) : 0;
-            long y = i < pb.length ? parseLong(pb[i]) : 0;
-            if (x != y) return x < y ? -1 : 1;
-        }
-        return 0;
-    }
-
-    private static long parseLong(String s) {
-        try {
-            return Long.parseLong(s.trim());
-        } catch (Exception e) {
-            return 0;
         }
     }
 }
