@@ -146,7 +146,14 @@ r.input = t.filter(function(e) {
 
 ## 二、JS → QuickJS
 
-### 1. jsonPro 补全（P1/P2，收益最大但工作量也大）
+### 1. jsonPro 补全（P1/P2，实验受阻，暂停）
+
+> QuickJS 后续整体规划（无 jar 回退、ID 构建 A/B 等）见
+> [quickjs-plan.md](quickjs-plan.md)。
+
+> 实验记录、根因和清理清单见 [jsonpro-quickjs.md](jsonpro-quickjs.md)。
+> 结论：quickjs-kt worker 当前 eval API 要求 Promise，加载 493KB 模块失败；
+> 要跑通需 patch native 同步 eval。暂不接入生产路径。
 
 `CA.IntelliSense.js:311-520` 的 `case "jsonPro"` 每次输入会：
 
