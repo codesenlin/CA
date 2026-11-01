@@ -1,5 +1,5 @@
 MapScript.loadModule("JavaReflect", {
-	constructor : function(clazz, argTypes) {
+	constructor: function (clazz, argTypes) {
 		var i, invokeArgs = new Array(argTypes.length), constructor;
 		clazz = this.parseClass(clazz);
 		for (i = 0; i < argTypes.length; i++) {
@@ -8,7 +8,7 @@ MapScript.loadModule("JavaReflect", {
 		constructor = clazz.getConstructor(invokeArgs);
 		return this.toPrimitiveAcceptable(invokeArgs, constructor.newInstance.bind(constructor));
 	},
-	declaredConstructor : function(clazz, argTypes) {
+	declaredConstructor: function (clazz, argTypes) {
 		var i, invokeArgs = new Array(argTypes.length), constructor;
 		clazz = this.parseClass(clazz);
 		for (i = 0; i < argTypes.length; i++) {
@@ -18,7 +18,7 @@ MapScript.loadModule("JavaReflect", {
 		constructor.setAccessible(true);
 		return this.toPrimitiveAcceptable(invokeArgs, constructor.newInstance.bind(constructor));
 	},
-	method : function(clazz, methodName, argTypes) {
+	method: function (clazz, methodName, argTypes) {
 		var i, invokeArgs = new Array(argTypes.length), method;
 		clazz = this.parseClass(clazz);
 		for (i = 0; i < argTypes.length; i++) {
@@ -27,7 +27,7 @@ MapScript.loadModule("JavaReflect", {
 		method = clazz.getMethod(methodName, invokeArgs);
 		return this.toPrimitiveAcceptable([clazz].concat(invokeArgs), method.invoke.bind(method));
 	},
-	declaredMethod : function(clazz, methodName, argTypes) {
+	declaredMethod: function (clazz, methodName, argTypes) {
 		var i, invokeArgs = new Array(argTypes.length), method;
 		clazz = this.parseClass(clazz);
 		for (i = 0; i < argTypes.length; i++) {
@@ -37,7 +37,7 @@ MapScript.loadModule("JavaReflect", {
 		method.setAccessible(true);
 		return this.toPrimitiveAcceptable([clazz].concat(invokeArgs), method.invoke.bind(method));
 	},
-	staticMethod : function(clazz, methodName, argTypes) {
+	staticMethod: function (clazz, methodName, argTypes) {
 		var i, invokeArgs = new Array(argTypes.length), method;
 		clazz = this.parseClass(clazz);
 		for (i = 0; i < argTypes.length; i++) {
@@ -49,7 +49,7 @@ MapScript.loadModule("JavaReflect", {
 		}
 		return this.toPrimitiveAcceptable(invokeArgs, method.invoke.bind(method, null));
 	},
-	declaredStaticMethod : function(clazz, methodName, argTypes) {
+	declaredStaticMethod: function (clazz, methodName, argTypes) {
 		var i, invokeArgs = new Array(argTypes.length), method;
 		clazz = this.parseClass(clazz);
 		for (i = 0; i < argTypes.length; i++) {
@@ -62,30 +62,30 @@ MapScript.loadModule("JavaReflect", {
 		}
 		return this.toPrimitiveAcceptable(invokeArgs, method.invoke.bind(method, null));
 	},
-	field : function(clazz, fieldName) {
+	field: function (clazz, fieldName) {
 		var field;
 		clazz = this.parseClass(clazz);
 		field = clazz.getField(fieldName);
 		return {
-			get : field.get.bind(field),
-			set : this.toPrimitiveAcceptable([field.getType()], field.set.bind(field))
+			get: field.get.bind(field),
+			set: this.toPrimitiveAcceptable([field.getType()], field.set.bind(field))
 		};
 	},
-	declaredField : function(clazz, fieldName) {
+	declaredField: function (clazz, fieldName) {
 		var field;
 		clazz = this.parseClass(clazz);
 		field = clazz.getField(fieldName);
 		field.setAccessible(true);
 		return {
-			get : field.get.bind(field),
-			set : this.toPrimitiveAcceptable([field.getType()], field.set.bind(field))
+			get: field.get.bind(field),
+			set: this.toPrimitiveAcceptable([field.getType()], field.set.bind(field))
 		};
 	},
-	parseClass : function(type) {
+	parseClass: function (type) {
 		if (typeof type == "string") {
 			try {
 				return java.lang.Class.forName(type, true, ctx.getClassLoader());
-			} catch(e) {/* Class not found */}
+			} catch (e) {/* Class not found */ }
 			if (type == "string") return java.lang.Class.forName("java.lang.String");
 			if (type == "boolean") return java.lang.Boolean.TYPE;
 			if (type == "byte") return java.lang.Byte.TYPE;
@@ -111,7 +111,7 @@ MapScript.loadModule("JavaReflect", {
 			return type.getClass();
 		}
 	},
-	parseArrayDefinition : function(str) {
+	parseArrayDefinition: function (str) {
 		var start, current, dimensions = 0;
 		start = current = str.indexOf("[]");
 		while (current < str.length) {
@@ -123,16 +123,16 @@ MapScript.loadModule("JavaReflect", {
 		}
 		return this.arrayClass(str.slice(0, start), dimensions);
 	},
-	guessSubclass : function(className) {
+	guessSubclass: function (className) {
 		var parts = className.split("."), i;
 		for (i = parts.length - 1; i > 0; i--) {
 			try {
 				return java.lang.Class.forName(parts.slice(0, i).join(".") + "$" + parts.slice(i).join("$"), true, ctx.getClassLoader());
-			} catch(e) {/* Class not found */}
+			} catch (e) {/* Class not found */ }
 		}
 		throw new Error("Unable to parse \"" + className + "\" to class");
 	},
-	arrayClass : function(arrayOf, dimensions) {
+	arrayClass: function (arrayOf, dimensions) {
 		var i, str = "[";
 		arrayOf = this.parseClass(arrayOf);
 		dimensions = parseInt(dimensions);
@@ -165,7 +165,7 @@ MapScript.loadModule("JavaReflect", {
 		}
 		return java.lang.Class.forName(str, true, ctx.getClassLoader());
 	},
-	array : function(arrayOf) {
+	array: function (arrayOf) {
 		var i, args = new Array(arguments.length);
 		args[0] = this.parseClass(arrayOf);
 		for (i = 1; i < arguments.length; i++) {
@@ -173,7 +173,7 @@ MapScript.loadModule("JavaReflect", {
 		}
 		return java.lang.reflect.Array.newInstance.apply(null, args);
 	},
-	getPrimitiveWrapper : function(clazz) {
+	getPrimitiveWrapper: function (clazz) {
 		if (clazz.isPrimitive()) {
 			if (clazz == java.lang.Boolean.TYPE) {
 				return java.lang.Boolean.valueOf;
@@ -198,17 +198,17 @@ MapScript.loadModule("JavaReflect", {
 			return null;
 		}
 	},
-	toPrimitiveAcceptable : function(hints, f) {
+	toPrimitiveAcceptable: function (hints, f) {
 		var wrappers, self = this;
-		if (hints.some(function(e) {
+		if (hints.some(function (e) {
 			return e.isPrimitive();
 		})) {
-			wrappers = hints.map(function(e) {
+			wrappers = hints.map(function (e) {
 				return self.getPrimitiveWrapper(e);
 			});
-			return function() {
+			return function () {
 				var args = arguments;
-				return f.apply(this, wrappers.map(function(wrapper, i) {
+				return f.apply(this, wrappers.map(function (wrapper, i) {
 					return wrapper != null ? wrapper(args[i]) : args[i];
 				}));
 			};

@@ -6,7 +6,7 @@ MapScript.loadModule("DBSettings", {
 		const file = new java.io.File(ExternalStorage.getAppSpecificDirectory("settings"), this.dbFile);
 		try {
 			this.db = android.database.sqlite.SQLiteDatabase.openOrCreateDatabase(file, null);
-		} catch(err) {
+		} catch (err) {
 			erp(err);
 			this.db = android.database.sqlite.SQLiteDatabase.create(null);
 		}
@@ -380,14 +380,14 @@ MapScript.loadModule("DBSettings", {
 	},
 
 	getUndefinedInstance(cx, scope) {
-    try {
-        var u = com.xero.ca.script.WrappedUndefined.get(cx, scope);
-        if (u) return u;
-    } catch(e) {
-        // 类不存在，用 Rhino 内置的兜底
-    }
-    return org.mozilla.javascript.Undefined.instance;
-},
+		try {
+			var u = com.xero.ca.script.WrappedUndefined.get(cx, scope);
+			if (u) return u;
+		} catch (e) {
+			// 类不存在，用 Rhino 内置的兜底
+		}
+		return org.mozilla.javascript.Undefined.instance;
+	},
 	createProxy(target, handler) {
 		// Rhino 1.9 起内置了 ES6 Proxy（全局 Proxy，实现是 NativeProxy），
 		// 1.7 没有，所以当年只能用 Scriptable 手写一套 trap 模拟。
@@ -396,31 +396,31 @@ MapScript.loadModule("DBSettings", {
 		if (typeof Proxy == "function") {
 			var traps = {};
 			if (handler.get) {
-				traps.get = function(t, k, r) {
+				traps.get = function (t, k, r) {
 					return handler.get(t, k, r);
 				};
 			}
-			traps.set = function(t, k, v, r) {
+			traps.set = function (t, k, v, r) {
 				if (handler.set) return handler.set(t, k, v, r) !== false;
 				t[k] = v;
 				return true;
 			};
-			traps.deleteProperty = function(t, k) {
+			traps.deleteProperty = function (t, k) {
 				if (handler.deleteProperty) handler.deleteProperty(t, k);
 				return true; // 原生 Proxy 要求返回布尔值，返回 undefined 会被当成删除失败
 			};
 			if (handler.has) {
-				traps.has = function(t, k) {
+				traps.has = function (t, k) {
 					return handler.has(t, k);
 				};
 			}
 			if (handler.ownKeys) {
-				traps.ownKeys = function(t) {
+				traps.ownKeys = function (t) {
 					return handler.ownKeys(t);
 				};
 			}
 			if (handler.getPrototypeOf) {
-				traps.getPrototypeOf = function(t) {
+				traps.getPrototypeOf = function (t) {
 					return handler.getPrototypeOf(t);
 				};
 			}
@@ -511,17 +511,17 @@ MapScript.loadModule("DBSettings", {
 		return new java.lang.Long(ret.max == null ? 1 : ret.max + 1);
 	},
 	convertToJSValue(storeName, dbTypeId, dbValue) {
-		switch(Number(dbTypeId)) {
+		switch (Number(dbTypeId)) {
 			case 0: // primitive: number / string / byte[] / null
-			return dbValue;
+				return dbValue;
 			case 1: // boolean
-			return dbValue != 0;
+				return dbValue != 0;
 			case 2: // Date
-			return new Date(dbValue);
+				return new Date(dbValue);
 			case 3: // object
-			return this.getNamespaceProxy(storeName, dbValue, "object");
+				return this.getNamespaceProxy(storeName, dbValue, "object");
 			case 4: // array
-			return this.getNamespaceProxy(storeName, dbValue, "array");
+				return this.getNamespaceProxy(storeName, dbValue, "array");
 		}
 	},
 	convertToDBValue(storeName, jsValue) {

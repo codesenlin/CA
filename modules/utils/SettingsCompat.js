@@ -6,8 +6,8 @@ MapScript.loadModule("SettingsCompat", {
 	// 现代码类型：JavaScript/Rhino/Android
 	// 由 ProjectXero (@XeroAlpha) 翻译，有改动
 
-	SYSVER : android.os.Build.VERSION.SDK_INT,
-	ensureCanFloat : function(silent) {
+	SYSVER: android.os.Build.VERSION.SDK_INT,
+	ensureCanFloat: function (silent) {
 		if (this.canDrawOverlays()) {
 			return true;
 		}
@@ -15,14 +15,16 @@ MapScript.loadModule("SettingsCompat", {
 			return true;
 		}
 		if (!silent) {
-			G.ui(function() {try {
-				G.Toast.makeText(ctx, "系统不允许命令助手显示悬浮窗，请在设置中启用", 1).show();
-			} catch(e) {erp(e)}});
+			G.ui(function () {
+				try {
+					G.Toast.makeText(ctx, "系统不允许命令助手显示悬浮窗，请在设置中启用", 1).show();
+				} catch (e) { erp(e) }
+			});
 			this.manageDrawOverlays();
 		}
 		return false;
 	},
-	showAppSettings : function() {
+	showAppSettings: function () {
 		var localIntent = new android.content.Intent();
 		localIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
 		if (this.SYSVER >= 9) {
@@ -35,7 +37,7 @@ MapScript.loadModule("SettingsCompat", {
 		}
 		this.startSafely(localIntent);
 	},
-	canDrawOverlays : function() {
+	canDrawOverlays: function () {
 		if (this.SYSVER >= 23) { //Android M (6.0)
 			return android.provider.Settings.canDrawOverlays(ctx);
 		} else if (this.SYSVER >= 18) { //Android Jelly Bean (4.3.x)
@@ -44,26 +46,26 @@ MapScript.loadModule("SettingsCompat", {
 			return true;
 		}
 	},
-	setDrawOverlays : function(allowed) {
+	setDrawOverlays: function (allowed) {
 		return this.setMode(ctx, 24, allowed);
 	},
-	checkOp : function(ctx, op) {
+	checkOp: function (ctx, op) {
 		try {
 			return ctx.getSystemService("appops").checkOp(op, android.os.Binder.getCallingUid(), ctx.getPackageName()) == 0; //MODE_ALLOWED
-		} catch(e) {Log.e(e)}
+		} catch (e) { Log.e(e) }
 		return false;
 	},
-	setMode : function(ctx, op, allowed) {
+	setMode: function (ctx, op, allowed) {
 		if (this.SYSVER < 18 || this.SYSVER >= 21) { // Android L (5.0)
 			return false;
 		}
 		try {
 			ctx.getSystemService("appops").setMode(op, android.os.Binder.getCallingUid(), ctx.getPackageName(), allowed);
 			return true;
-		} catch(e) {Log.e(e)}
+		} catch (e) { Log.e(e) }
 		return false;
 	},
-	manageDrawOverlays : function() {
+	manageDrawOverlays: function () {
 		if (this.SYSVER >= 18) {
 			if (this.manageDrawOverlaysForRom()) {
 				return;
@@ -79,24 +81,24 @@ MapScript.loadModule("SettingsCompat", {
 		}
 		this.showAppSettings();
 	},
-	manageDrawOverlaysForRom : function() {
+	manageDrawOverlaysForRom: function () {
 		if (this.rom in this.ShowManager) {
 			return this.ShowManager[this.rom].call(this);
 		}
 		return false;
 	},
-	startSafely : function(intent) {
+	startSafely: function (intent) {
 		try {
 			if (ctx.getPackageManager().queryIntentActivities(intent, android.content.pm.PackageManager.MATCH_DEFAULT_ONLY).size() > 0) {
 				intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
 				ctx.startActivity(intent);
 				return true;
 			}
-		} catch(e) {Log.e(e)}
+		} catch (e) { Log.e(e) }
 		return false;
 	},
-	ShowManager : {
-		"MIUI" : function() {
+	ShowManager: {
+		"MIUI": function () {
 			var intent = new android.content.Intent("miui.intent.action.APP_PERM_EDITOR");
 			intent.putExtra("extra_pkgname", ctx.getPackageName());
 			intent.setClassName("com.miui.securitycenter", "com.miui.permcenter.permissions.AppPermissionsEditorActivity");
@@ -114,7 +116,7 @@ MapScript.loadModule("SettingsCompat", {
 			}
 			return false;
 		},
-		"EMUI" : function() {
+		"EMUI": function () {
 			const HUAWEI_PACKAGE = "com.huawei.systemmanager";
 			var intent = new android.content.Intent();
 			if (this.SYSVER >= 21) {
@@ -134,7 +136,7 @@ MapScript.loadModule("SettingsCompat", {
 			}
 			return false;
 		},
-		"OPPO" : function() {
+		"OPPO": function () {
 			var intent = new android.content.Intent();
 			intent.putExtra("packageName", ctx.getPackageName());
 			intent.setAction("com.oppo.safe");
@@ -151,13 +153,13 @@ MapScript.loadModule("SettingsCompat", {
 			intent.setClassName("com.coloros.safecenter", "com.coloros.safecenter.sysfloatwindow.FloatWindowListActivity");
 			return this.startSafely(intent);
 		},
-		"VIVO" : function() {
+		"VIVO": function () {
 			// 不支持直接到达悬浮窗设置页，只能到 i管家 首页
 			var intent = new android.content.Intent("com.iqoo.secure");
 			intent.setClassName("com.iqoo.secure", "com.iqoo.secure.MainActivity");
 			return this.startSafely(intent);
 		},
-		"SMARTISAN" : function() {
+		"SMARTISAN": function () {
 			if (this.SYSVER >= 23) {
 				return false;
 			}
@@ -177,16 +179,16 @@ MapScript.loadModule("SettingsCompat", {
 				return this.startSafely(intent);
 			}
 		},
-		"FLYME" : function() {
+		"FLYME": function () {
 			var intent = new android.content.Intent("com.meizu.safe.security.SHOW_APPSEC");
 			intent.setClassName("com.meizu.safe", "com.meizu.safe.security.AppSecActivity");
 			intent.putExtra("packageName", ctx.getPackageName());
 			return this.startSafely(intent);
 		},
-		"QIKU" : function() {
+		"QIKU": function () {
 			return this.ShowManager["360"].call(this);
 		},
-		"360" : function() {
+		"360": function () {
 			var intent = new android.content.Intent();
 			intent.setClassName("com.android.settings", "com.android.settings.Settings$OverlaySettingsActivity");
 			if (this.startSafely(intent)) {
@@ -196,58 +198,60 @@ MapScript.loadModule("SettingsCompat", {
 			return this.startSafely(intent);
 		}
 	},
-	RomCheck : {
-		"MIUI" : function() {
+	RomCheck: {
+		"MIUI": function () {
 			return this.getProp("ro.miui.ui.version.name");
 		},
-		"EMUI" : function() {
+		"EMUI": function () {
 			return this.getProp("ro.build.version.emui");
 		},
-		"OPPO" : function() {
+		"OPPO": function () {
 			return this.getProp("ro.build.version.opporom");
 		},
-		"VIVO" : function() {
+		"VIVO": function () {
 			return this.getProp("ro.vivo.os.version");
 		},
-		"SMARTISAN" : function() {
+		"SMARTISAN": function () {
 			return this.getProp("ro.smartisan.version");
 		},
-		"FLYME" : function() {
+		"FLYME": function () {
 			var r = android.os.Build.DISPLAY;
 			return r.contains("FLYME") ? r : null;
 		}
 	},
-	onCreate : function() {
+	onCreate: function () {
 		var self = this;
 		this.rom = android.os.Build.MANUFACTURER.toUpperCase();
 		this.version = "unknown";
-		var result = Threads.awaitDefault(function() {try {
-			var i, t;
-			for (i in self.RomCheck) {
-				if (t = self.RomCheck[i].call(self)) {
-					return {
-						rom : i,
-						version : t
-					};
+		var result = Threads.awaitDefault(function () {
+			try {
+				var i, t;
+				for (i in self.RomCheck) {
+					if (t = self.RomCheck[i].call(self)) {
+						return {
+							rom: i,
+							version: t
+						};
+					}
 				}
-			}
-		} catch(e) {Log.e(e)}}, 150, null);
+			} catch (e) { Log.e(e) }
+		}, 150, null);
 		if (result) {
 			this.rom = result.rom;
 			this.version = result.version;
 		}
 	},
-	getProp : function(key) {
+	getProp: function (key) {
 		var ln = null, is = null;
 		try {
 			var p = java.lang.Runtime.getRuntime().exec("getprop " + key);
 			is = new java.io.BufferedReader(new java.io.InputStreamReader(p.getInputStream()), 1024);
 			ln = is.readLine();
-		} catch(e) {Log.e(e)}
+		} catch (e) { Log.e(e) }
 		if (is != null) {
 			try {
 				is.close();
-			} catch(e) {Log.e(e)}
+			} catch (e) { Log.e(e) }
 		}
 		return ln ? String(ln) : null;
 	}

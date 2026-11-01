@@ -4,7 +4,7 @@ MapScript.loadModule("NetworkUI", {
 	 * self 需提供 adpt(SimpleListAdapter controller)、contextMenu、contextMenu 所需的
 	 * appendPage / popup 等字段；opts 可覆盖 popupKey、headerView、dividerHeight。
 	 */
-	createListPage : function(self, title, onItemClick, opts) {
+	createListPage: function (self, title, onItemClick, opts) {
 		opts = opts || {};
 		self.linear = new G.LinearLayout(ctx);
 		self.linear.setOrientation(G.LinearLayout.VERTICAL);
@@ -14,10 +14,14 @@ MapScript.loadModule("NetworkUI", {
 		self.header = new G.LinearLayout(ctx);
 		self.header.setOrientation(G.LinearLayout.HORIZONTAL);
 		self.header.setPadding(0, 0, 0, 10 * G.dp);
-		self.header.setOnClickListener(new G.View.OnClickListener({onClick : function(v) {try {
-			Common.showOperateDialog(self.contextMenu);
-			return true;
-		} catch(e) {erp(e)}}}));
+		self.header.setOnClickListener(new G.View.OnClickListener({
+			onClick: function (v) {
+				try {
+					Common.showOperateDialog(self.contextMenu);
+					return true;
+				} catch (e) { erp(e) }
+			}
+		}));
 
 		self.title = new G.TextView(ctx);
 		self.title.setText(title || "");
@@ -44,13 +48,17 @@ MapScript.loadModule("NetworkUI", {
 		self.list.setAdapter(self.adpt.self);
 		if (opts.headerView) self.list.addHeaderView(opts.headerView);
 		if (opts.dividerHeight !== undefined) self.list.setDividerHeight(opts.dividerHeight);
-		self.list.setOnItemClickListener(new G.AdapterView.OnItemClickListener({onItemClick : function(parent, view, pos, id) {try {
-			if (view == self.more) {
-				self.appendPage();
-				return;
+		self.list.setOnItemClickListener(new G.AdapterView.OnItemClickListener({
+			onItemClick: function (parent, view, pos, id) {
+				try {
+					if (view == self.more) {
+						self.appendPage();
+						return;
+					}
+					onItemClick(parent, parent.getAdapter().getItem(pos), view);
+				} catch (e) { erp(e) }
 			}
-			onItemClick(parent, parent.getAdapter().getItem(pos), view);
-		} catch(e) {erp(e)}}}));
+		}));
 		self.linear.addView(self.list, new G.LinearLayout.LayoutParams(-1, 0, 1.0));
 
 		self.exit = new G.TextView(ctx);
@@ -58,55 +66,61 @@ MapScript.loadModule("NetworkUI", {
 		self.exit.setGravity(G.Gravity.CENTER);
 		self.exit.setPadding(10 * G.dp, 20 * G.dp, 10 * G.dp, 20 * G.dp);
 		Common.applyStyle(self.exit, "button_critical", 3);
-		self.exit.setOnClickListener(new G.View.OnClickListener({onClick : function(v) {try {
-			self.popup.exit();
-		} catch(e) {erp(e)}}}));
+		self.exit.setOnClickListener(new G.View.OnClickListener({
+			onClick: function (v) {
+				try {
+					self.popup.exit();
+				} catch (e) { erp(e) }
+			}
+		}));
 		self.linear.addView(self.exit, new G.LinearLayout.LayoutParams(-1, -2));
 
 		self.popup = new PopupPage(self.linear, opts.popupKey || "feedback.Issues");
-		self.popup.on("exit", function() {
+		self.popup.on("exit", function () {
 			if (self.callback) self.callback();
 		});
 		PWM.registerResetFlag(self, opts.resetFlag || "linear");
 	},
 	/** 反馈列表的「仅显示未处理 / 显示所有」两个菜单项 */
-	issueStateMenu : function(self) {
+	issueStateMenu: function (self) {
 		return [
 			NetworkUI.issueStateMenuEntry(self, "open"),
 			NetworkUI.issueStateMenuEntry(self, "all")
 		];
 	},
 	/** 反馈列表的「仅显示未处理 / 显示所有」菜单项 */
-	issueStateMenuEntry : function(self, state) {
+	issueStateMenuEntry: function (self, state) {
 		return {
-			text : state == "open" ? "仅显示未处理" : "显示所有",
-			hidden : function() {
+			text: state == "open" ? "仅显示未处理" : "显示所有",
+			hidden: function () {
 				return self.issueState == state;
 			},
-			onclick : function(v, tag) {
+			onclick: function (v, tag) {
 				self.issueState = state;
 				self.reload();
 			}
 		};
 	},
 	/** 通用「关闭」按钮（弹窗底部，点击退出对应 popup） */
-	closeButton : function(popup) {
+	closeButton: function (popup) {
 		return L.TextView({
-			text : "关闭",
-			padding : [10 * G.dp, 20 * G.dp, 10 * G.dp, 20 * G.dp],
-			gravity : L.Gravity("center"),
-			layout : { width : -1, height : -2 },
-			style : "button_critical",
-			fontSize : 3,
-			onClick : function() {try {
-				popup.exit();
-			} catch(e) {erp(e)}}
+			text: "关闭",
+			padding: [10 * G.dp, 20 * G.dp, 10 * G.dp, 20 * G.dp],
+			gravity: L.Gravity("center"),
+			layout: { width: -1, height: -2 },
+			style: "button_critical",
+			fontSize: 3,
+			onClick: function () {
+				try {
+					popup.exit();
+				} catch (e) { erp(e) }
+			}
 		});
 	},
 	/** 分页加载通用外壳：进度/loading 守卫/fetch/null 处理/G.ui 应用 */
-	appendPage : function(self, sync, opts) {
+	appendPage: function (self, sync, opts) {
 		if (!sync) {
-			return NetworkUI.progress(opts.loadingText || "正在加载……", function() {
+			return NetworkUI.progress(opts.loadingText || "正在加载……", function () {
 				self.appendPage(true);
 			});
 		}
@@ -116,21 +130,23 @@ MapScript.loadModule("NetworkUI", {
 		var page;
 		try {
 			page = opts.fetch();
-		} catch(e) {
+		} catch (e) {
 			Log.e(e);
 		}
 		if (!page) {
 			self.loading = false;
 			return Common.toast(opts.failText || "加载失败");
 		}
-		G.ui(function() {try {
-			opts.apply(page);
-			self.loading = false;
-			if (opts.afterApply) opts.afterApply(page);
-		} catch(e) {erp(e)}});
+		G.ui(function () {
+			try {
+				opts.apply(page);
+				self.loading = false;
+				if (opts.afterApply) opts.afterApply(page);
+			} catch (e) { erp(e) }
+		});
 	},
 	/** 列表「加载更多」footer/header 的显示与文字更新 */
-	updateMore : function(self, hasNext, text, useHeader) {
+	updateMore: function (self, hasNext, text, useHeader) {
 		if (text) self.more.setText(text);
 		if (hasNext && !self.moreVisible) {
 			self.moreVisible = true;
@@ -143,7 +159,7 @@ MapScript.loadModule("NetworkUI", {
 		}
 	},
 	/** 通用异步进度对话框：showProgressDialog + setText + async(task) */
-	progress : function(text, task) {
+	progress: function (text, task) {
 		var dialog = Common.showProgressDialog();
 		if (text) dialog.setText(text);
 		dialog.async(task);
@@ -153,17 +169,17 @@ MapScript.loadModule("NetworkUI", {
 	 * 反馈话题详情页外壳：标题栏/列表等 children + popup + 可选关闭按钮。
 	 * opts: { popupKey?, closeButton? }
 	 */
-	issueDetailPage : function(self, children, opts) {
+	issueDetailPage: function (self, children, opts) {
 		opts = opts || {};
 		var linear = L.LinearLayout({
-			orientation : L.LinearLayout("vertical"),
-			padding : [0, 15 * G.dp, 0, 0],
-			style : "message_bg",
-			children : children
+			orientation: L.LinearLayout("vertical"),
+			padding: [0, 15 * G.dp, 0, 0],
+			style: "message_bg",
+			children: children
 		});
 		self.popup = new PopupPage(linear, opts.popupKey || "feedback.IssueDetail");
 		if (opts.closeButton) linear.addView(NetworkUI.closeButton(self.popup));
-		self.popup.on("exit", function() {
+		self.popup.on("exit", function () {
 			if (self.callback) self.callback();
 		});
 		PWM.registerResetFlag(self, "popup");
@@ -173,59 +189,63 @@ MapScript.loadModule("NetworkUI", {
 	 * 反馈话题详情页的标题栏：可选返回按钮 + 标题 + 操作菜单。
 	 * self 需提供 title/contextMenu，返回头部 LinearLayout。
 	 */
-	issueDetailHeader : function(self, hasBack) {
+	issueDetailHeader: function (self, hasBack) {
 		var children = [];
 		if (hasBack) {
 			children.push(L.TextView({
-				text : "< 返回",
-				padding : [10 * G.dp, 10 * G.dp, 10 * G.dp, 10 * G.dp],
-				layout : { width : -2, height : -2 },
-				style : "button_critical",
-				fontSize : 2,
-				onClick : function() {try {
-					self.popup.exit();
-				} catch(e) {erp(e)}}
+				text: "< 返回",
+				padding: [10 * G.dp, 10 * G.dp, 10 * G.dp, 10 * G.dp],
+				layout: { width: -2, height: -2 },
+				style: "button_critical",
+				fontSize: 2,
+				onClick: function () {
+					try {
+						self.popup.exit();
+					} catch (e) { erp(e) }
+				}
 			}));
 		}
 		children.push(self.title = L.TextView({
-			singleLine : true,
-			ellipsize : G.TextUtils.TruncateAt.END,
-			gravity : L.Gravity("left|center"),
-			padding : [10 * G.dp, 0, 10 * G.dp, 0],
-			style : "textview_default",
-			fontSize : 4,
-			layout : { width : 0, height : -2, weight : 1.0 }
+			singleLine: true,
+			ellipsize: G.TextUtils.TruncateAt.END,
+			gravity: L.Gravity("left|center"),
+			padding: [10 * G.dp, 0, 10 * G.dp, 0],
+			style: "textview_default",
+			fontSize: 4,
+			layout: { width: 0, height: -2, weight: 1.0 }
 		}));
 		children.push(L.TextView({
-			text : "▼",
-			padding : [10 * G.dp, 0, 10 * G.dp, 0],
-			gravity : L.Gravity("center"),
-			style : "button_highlight",
-			fontSize : 3,
-			layout : { width : -2, height : -2 }
+			text: "▼",
+			padding: [10 * G.dp, 0, 10 * G.dp, 0],
+			gravity: L.Gravity("center"),
+			style: "button_highlight",
+			fontSize: 3,
+			layout: { width: -2, height: -2 }
 		}));
 		return L.LinearLayout({
-			orientation : L.LinearLayout("horizontal"),
-			padding : [15 * G.dp, 0, 15 * G.dp, 10 * G.dp],
-			gravity : L.Gravity("center"),
-			onClick : function() {try {
-				Common.showOperateDialog(self.contextMenu);
-			} catch(e) {erp(e)}},
-			children : children
+			orientation: L.LinearLayout("horizontal"),
+			padding: [15 * G.dp, 0, 15 * G.dp, 10 * G.dp],
+			gravity: L.Gravity("center"),
+			onClick: function () {
+				try {
+					Common.showOperateDialog(self.contextMenu);
+				} catch (e) { erp(e) }
+			},
+			children: children
 		});
 	},
 	/**
 	 * 评论输入条：输入框 + 发送按钮。
 	 * opts: { hint?, onSend(text, input) }，返回 { view, input }。
 	 */
-	commentBar : function(opts) {
+	commentBar: function (opts) {
 		opts = opts || {};
 		var inputOpts = {
-			layout : { width : 0, height : -2, weight : 1.0 },
-			padding : [10 * G.dp, 10 * G.dp, 0, 10 * G.dp],
-			imeOptions : L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
-			style : "edittext_default",
-			fontSize : 3
+			layout: { width: 0, height: -2, weight: 1.0 },
+			padding: [10 * G.dp, 10 * G.dp, 0, 10 * G.dp],
+			imeOptions: L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
+			style: "edittext_default",
+			fontSize: 3
 		};
 		if (opts.hint) {
 			inputOpts.hint = opts.hint;
@@ -233,89 +253,97 @@ MapScript.loadModule("NetworkUI", {
 		}
 		var input = L.EditText(inputOpts);
 		var view = L.LinearLayout({
-			layout : { width : -1, height : -2 },
-			orientation : L.LinearLayout("horizontal"),
-			style : "bar_float",
-			children : [
+			layout: { width: -1, height: -2 },
+			orientation: L.LinearLayout("horizontal"),
+			style: "bar_float",
+			children: [
 				input,
 				L.TextView({
-					layout : { width : -2, height : -1 },
-					gravity : L.Gravity("center"),
-					text : "发送",
-					padding : [10 * G.dp, 10 * G.dp, 10 * G.dp, 10 * G.dp],
-					style : "button_reactive_auto",
-					fontSize : 3,
-					onClick : function() {try {
-						var s = String(input.text);
-						if (!s) return Common.toast("内容不可为空！");
-						opts.onSend(s, input);
-					} catch(e) {erp(e)}}
+					layout: { width: -2, height: -1 },
+					gravity: L.Gravity("center"),
+					text: "发送",
+					padding: [10 * G.dp, 10 * G.dp, 10 * G.dp, 10 * G.dp],
+					style: "button_reactive_auto",
+					fontSize: 3,
+					onClick: function () {
+						try {
+							var s = String(input.text);
+							if (!s) return Common.toast("内容不可为空！");
+							opts.onSend(s, input);
+						} catch (e) { erp(e) }
+					}
 				})
 			]
 		});
-		return { view : view, input : input };
+		return { view: view, input: input };
 	},
 	/**
 	 * 编辑/新建话题对话框：标题 + 正文 + 确定。
 	 * opts: { popupName, dialogTitle, titleHint, contentText?, contentHint,
 	 *         contentField, data, onSubmit, onDismiss }
 	 */
-	editIssueDialog : function(opts) {G.ui(function() {try {
-		var title, content, popup, data = opts.data || {}, field = opts.contentField || "content";
-		popup = PopupPage.showDialog(opts.popupName, L.ScrollView({
-			style : "message_bg",
-			child : L.LinearLayout({
-				orientation : L.LinearLayout("vertical"),
-				padding : [15 * G.dp, 15 * G.dp, 15 * G.dp, 0],
-				children : [
-					L.TextView({
-						text : opts.dialogTitle,
-						padding : [0, 0, 0, 10 * G.dp],
-						layout : { width : -1, height : -2 },
-						style : "textview_default",
-						fontSize : 4
-					}),
-					title = L.EditText({
-						text : data.title,
-						hint : opts.titleHint,
-						singleLine : true,
-						padding : [0, 0, 0, 0],
-						imeOptions : L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
-						style : "edittext_default",
-						fontSize : 3,
-						layout : { width : -1, height : -2 }
-					}),
-					content = L.EditText({
-						text : opts.contentText,
-						hint : opts.contentHint,
-						padding : [0, 20 * G.dp, 0, 0],
-						imeOptions : L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
-						style : "edittext_default",
-						fontSize : 2,
-						layout : { width : -1, height : -2 }
-					}),
-					L.TextView({
-						text : "确定",
-						padding : [10 * G.dp, 20 * G.dp, 10 * G.dp, 20 * G.dp],
-						gravity : L.Gravity("center"),
-						layout : { width : -1, height : -2 },
-						style : "button_critical",
-						fontSize : 3,
-						onClick : function() {try {
-							data.title = String(title.text);
-							data[field] = String(content.text);
-							if (!data.title) return Common.toast("标题不能为空！");
-							if (opts.onSubmit) opts.onSubmit(data);
-							popup.exit();
-						} catch(e) {erp(e)}}
+	editIssueDialog: function (opts) {
+		G.ui(function () {
+			try {
+				var title, content, popup, data = opts.data || {}, field = opts.contentField || "content";
+				popup = PopupPage.showDialog(opts.popupName, L.ScrollView({
+					style: "message_bg",
+					child: L.LinearLayout({
+						orientation: L.LinearLayout("vertical"),
+						padding: [15 * G.dp, 15 * G.dp, 15 * G.dp, 0],
+						children: [
+							L.TextView({
+								text: opts.dialogTitle,
+								padding: [0, 0, 0, 10 * G.dp],
+								layout: { width: -1, height: -2 },
+								style: "textview_default",
+								fontSize: 4
+							}),
+							title = L.EditText({
+								text: data.title,
+								hint: opts.titleHint,
+								singleLine: true,
+								padding: [0, 0, 0, 0],
+								imeOptions: L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
+								style: "edittext_default",
+								fontSize: 3,
+								layout: { width: -1, height: -2 }
+							}),
+							content = L.EditText({
+								text: opts.contentText,
+								hint: opts.contentHint,
+								padding: [0, 20 * G.dp, 0, 0],
+								imeOptions: L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
+								style: "edittext_default",
+								fontSize: 2,
+								layout: { width: -1, height: -2 }
+							}),
+							L.TextView({
+								text: "确定",
+								padding: [10 * G.dp, 20 * G.dp, 10 * G.dp, 20 * G.dp],
+								gravity: L.Gravity("center"),
+								layout: { width: -1, height: -2 },
+								style: "button_critical",
+								fontSize: 3,
+								onClick: function () {
+									try {
+										data.title = String(title.text);
+										data[field] = String(content.text);
+										if (!data.title) return Common.toast("标题不能为空！");
+										if (opts.onSubmit) opts.onSubmit(data);
+										popup.exit();
+									} catch (e) { erp(e) }
+								}
+							})
+						]
 					})
-				]
-			})
-		}), -1, -2);
-		if (opts.onDismiss) popup.on("exit", opts.onDismiss);
-	} catch(e) {erp(e)}})},
+				}), -1, -2);
+				if (opts.onDismiss) popup.on("exit", opts.onDismiss);
+			} catch (e) { erp(e) }
+		})
+	},
 	/** 网络列表项通用 vmaker：标题 + 描述两行 */
-	listItem : function(holder) {
+	listItem: function (holder) {
 		var layout = new G.LinearLayout(ctx),
 			text1 = holder.text1 = new G.TextView(ctx),
 			text2 = holder.text2 = new G.TextView(ctx);

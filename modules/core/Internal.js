@@ -1,5 +1,5 @@
-MapScript.loadModule("Internal", (function() {
-	const KEY = (function() {
+MapScript.loadModule("Internal", (function () {
+	const KEY = (function () {
 		var obj = Object.create(null);
 		Object.freeze(obj);
 		return obj;
@@ -7,20 +7,20 @@ MapScript.loadModule("Internal", (function() {
 	var internalLoading = false;
 	var namespaces = {};
 	return {
-		onCreate : function() {
+		onCreate: function () {
 			internalLoading = true;
 		},
-		initialize : function() {
+		initialize: function () {
 			Object.freeze(namespaces);
 			internalLoading = false;
 		},
-		getKey : function() {
+		getKey: function () {
 			if (internalLoading) return KEY;
 		},
-		get : function(id, providedKey) {
+		get: function (id, providedKey) {
 			if (internalLoading || providedKey === KEY) return namespaces[id];
 		},
-		add : function(id, namespace) {
+		add: function (id, namespace) {
 			if (!internalLoading) {
 				throw new Error("Internal is freezed");
 			}
@@ -29,18 +29,18 @@ MapScript.loadModule("Internal", (function() {
 			}
 			namespace["internal"] = namespaces;
 			Object.defineProperty(namespaces, id, {
-				enumerable : false,
-				writable : false,
-				configurable : true,
-				value : namespace
+				enumerable: false,
+				writable: false,
+				configurable: true,
+				value: namespace
 			});
 			return namespace;
 		},
-		once : function(key, value) {
-			return function(providedKey) {
+		once: function (key, value) {
+			return function (providedKey) {
 				var val = value;
 				value = null;
-				if (key !== providedKey) return null; 
+				if (key !== providedKey) return null;
 				return val;
 			}
 		}

@@ -1,5 +1,5 @@
 const fs = require("fs");
-module.exports = function(context, args) {
+module.exports = function (context, args) {
 	fs.writeFileSync("./build/outputs/release/main.js", args[0]);
 	var channel = context.buildConfig.channel,
 		flavor = context.buildConfig.flavor,

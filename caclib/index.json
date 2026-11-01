@@ -1,11 +1,17 @@
-[{
-	"path": "./src/idmapeditor"
-}, {
-	"path": "./src/mcicon"
-}, {
-	"path": "./src/wsagent"
-}, {
-	"path": "./src/educommands"
-}, {
-	"path": "./src/daily_question"
-}]
+[
+	{
+		"path": "./src/idmapeditor"
+	},
+	{
+		"path": "./src/mcicon"
+	},
+	{
+		"path": "./src/wsagent"
+	},
+	{
+		"path": "./src/educommands"
+	},
+	{
+		"path": "./src/daily_question"
+	}
+]

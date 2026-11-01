@@ -30,8 +30,8 @@ function main() {
 	var lockFile;
 	try {
 		lockFile = JSON.parse(fs.readFileSync("./index.lock.json", "utf-8"));
-	} catch(e) {
-		lockFile = { clib : {} };
+	} catch (e) {
+		lockFile = { clib: {} };
 	}
 	var map = {};
 	var index = indexFile.map(e => {
@@ -105,7 +105,7 @@ function compileLibIfNeeded(info, config, lockfile) {
 			js2lib(source, info.outputPath);
 		}
 		lockfile[info.id] = {
-			version : info.version
+			version: info.version
 		};
 	}
 	info.sha1 = digestSHA1(fs.readFileSync(info.outputPath));
@@ -119,8 +119,8 @@ function toIndex(o, config) {
 		"uuid": o.uuid,
 		"version": o.versionCode,
 		"requirement": o.requirement,
-		"downloadurl" : o.outputUrl,
-		"updateurl" : o.updateUrl,
+		"downloadurl": o.outputUrl,
+		"updateurl": o.updateUrl,
 		"sha1": o.sha1
 	};
 	return r;
@@ -144,9 +144,9 @@ function writeIndex(index, config) {
 	for (i = 0, pageNo = 0; i < index.length; i += perPage, pageNo++) {
 		indexFile = path.resolve(config.outputPath, "index" + (pageNo > 0 ? "-" + pageNo : "") + ".json");
 		r = {
-			sourceId : config.sourceId,
-			pageNo : pageNo,
-			content : index.slice(i, i + perPage)
+			sourceId: config.sourceId,
+			pageNo: pageNo,
+			content: index.slice(i, i + perPage)
 		};
 		if (i + perPage < index.length) {
 			r.nextPage = config.outputUrl + "index-" + (pageNo + 1) + ".json";
@@ -162,8 +162,8 @@ function writeMap(map, config) {
 	var mapFile = path.resolve(config.outputPath, "map.json");
 	config.outputMapUrl = config.outputUrl + "map.json";
 	fs.writeFileSync(mapFile, JSON.stringify({
-		sourceId : config.sourceId,
-		content : map
+		sourceId: config.sourceId,
+		content: map
 	}));
 }
 
@@ -198,16 +198,16 @@ function writeInfo(config) {
 	var infoPath = path.resolve(config.outputPath, "info.json");
 	console.log("Writing Info");
 	fs.writeFileSync(infoPath, JSON.stringify({
-		sourceId : config.sourceId,
-		map : config.outputMapUrl,
-		index : config.outputIndexUrl,
-		indexPages : config.outputIndexPageCount,
-		indexLibs : config.outputIndexLibCount,
-		pubkey : config.outputVerifyKeyUrl,
-		authorities : config.outputAuthoritiesUrl,
-		lastUpdate : Date.now(),
-		maintainer : config.maintainer || config.outputUrl,
-		details : config.details
+		sourceId: config.sourceId,
+		map: config.outputMapUrl,
+		index: config.outputIndexUrl,
+		indexPages: config.outputIndexPageCount,
+		indexLibs: config.outputIndexLibCount,
+		pubkey: config.outputVerifyKeyUrl,
+		authorities: config.outputAuthoritiesUrl,
+		lastUpdate: Date.now(),
+		maintainer: config.maintainer || config.outputUrl,
+		details: config.details
 	}));
 }
 

@@ -44,7 +44,7 @@ var crcTable = makeTable();
 
 function crc32(crc, buf, len, pos) {
   var t = crcTable,
-      end = pos + len;
+    end = pos + len;
 
   crc ^= -1;
 

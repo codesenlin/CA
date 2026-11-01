@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-module.exports = function(context, args) {
+module.exports = function (context, args) {
 	var gradle = path.resolve(context.shellConfig.shellPath, "./app/build.gradle"),
 		gradleConfig = context.gradleConfig = {};
 	var s = fs.readFileSync(gradle, "utf-8");

@@ -7,7 +7,7 @@ if (variables.buildConfig.variants == "release") {
 }
 */
 MapScript.loadModule("G", {
-	onCreate : function() {
+	onCreate: function () {
 		var t;
 		t = ctx.getResources().getDisplayMetrics();
 		this.screenHeight = t.heightPixels;
@@ -21,7 +21,7 @@ MapScript.loadModule("G", {
 			this.ui = ScriptInterface.runOnUiThread.bind(ScriptInterface);
 		} else {
 			var uiThread = gHandler.getLooper().getThread();
-			this.ui = function(f) {
+			this.ui = function (f) {
 				if (uiThread != java.lang.Thread.currentThread()) {
 					gHandler.post(f);
 				} else {
@@ -30,7 +30,7 @@ MapScript.loadModule("G", {
 			}
 		}
 	},
-	initialize : function() {
+	initialize: function () {
 		G.supportFloat = G.shouldFloat = MapScript.host == "AutoJs" || MapScript.host == "Android";
 		if (G.supportFloat) {
 			if (!SettingsCompat.ensureCanFloat(true)) {
@@ -57,7 +57,7 @@ MapScript.loadModule("G", {
 			ctx.setTheme(android.R.style.Theme_Light);
 		}
 	},
-//IMPORTS_BEGIN
+	//IMPORTS_BEGIN
 	AbsListView: android.widget.AbsListView,
 	AbsoluteSizeSpan: android.text.style.AbsoluteSizeSpan,
 	AccelerateInterpolator: android.view.animation.AccelerateInterpolator,
@@ -144,5 +144,5 @@ MapScript.loadModule("G", {
 	ViewGroup: android.view.ViewGroup,
 	WebView: android.webkit.WebView,
 	WindowManager: android.view.WindowManager
-//IMPORTS_END
+	//IMPORTS_END
 });

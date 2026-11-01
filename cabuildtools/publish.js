@@ -9,10 +9,10 @@ function log(remotePath) {
 /** preparePublish → 依次 publishFile → endPublish */
 function files(context, list) {
 	var chain = context.execute("preparePublish");
-	list.forEach(function(e) {
+	list.forEach(function (e) {
 		chain = chain.then(context.pipe("publishFile", {
-			localPath : e.localPath,
-			remotePath : e.remotePath
+			localPath: e.localPath,
+			remotePath: e.remotePath
 		}));
 	});
 	return chain.then(context.pipe("endPublish"));
@@ -25,21 +25,21 @@ function uploadOperations(context, owner, operations) {
 		return owner.upload(context, e);
 	}
 	if (owner.enableAsyncUpload) {
-		return Promise.all(operations.map(upload)).then(function() {
+		return Promise.all(operations.map(upload)).then(function () {
 			return owner;
 		});
 	}
-	return operations.reduce(function(chain, e) {
-		return chain.then(function() {
+	return operations.reduce(function (chain, e) {
+		return chain.then(function () {
 			return upload(e);
 		});
-	}, Promise.resolve()).then(function() {
+	}, Promise.resolve()).then(function () {
 		return owner;
 	});
 }
 
 module.exports = {
-	log : log,
-	files : files,
-	uploadOperations : uploadOperations
+	log: log,
+	files: files,
+	uploadOperations: uploadOperations
 };

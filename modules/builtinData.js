@@ -18,16 +18,16 @@ CA.Library.inner["basicedu"] = Loader.fromFile("../data/idlibs/basicedu.json");
 CA.Library.inner["JSONSchema"] = Loader.fromFile("../data/idlibs/JSONSchema.json");
 CA.Library.inner["states"] = Loader.fromFile("../data/idlibs/states.json");
 
-(function() {
+(function () {
 	// 清单在 data/builtinLibs.json；未登记的库为避免意外启用，按默认禁用处理
 	var manifest = Loader.fromFile("../data/builtinLibs.json");
 	var recommended = [], defaultDisabled = [];
-	manifest.libraries.forEach(function(lib) {
+	manifest.libraries.forEach(function (lib) {
 		if (!CA.Library.inner[lib.id]) return;
 		if (lib["default"] == "disabled") defaultDisabled.push(lib.id);
 		else recommended.push(lib.id);
 	});
-	Object.keys(CA.Library.inner).forEach(function(id) {
+	Object.keys(CA.Library.inner).forEach(function (id) {
 		if (recommended.indexOf(id) < 0 && defaultDisabled.indexOf(id) < 0) {
 			defaultDisabled.push(id);
 		}
@@ -37,8 +37,8 @@ CA.Library.inner["states"] = Loader.fromFile("../data/idlibs/states.json");
 })();
 
 // 主题配色是公共数据 data/theme.json；风味只决定默认主题和显示顺序
-Common.themelist = (function(list) {
-	Object.keys(list).forEach(function(k) {
+Common.themelist = (function (list) {
+	Object.keys(list).forEach(function (k) {
 		if (list[k].nameKey) {
 			list[k].name = Intl.get(list[k].nameKey);
 			delete list[k].nameKey;
@@ -48,10 +48,10 @@ Common.themelist = (function(list) {
 	var order = BuildConfig.flavorData && BuildConfig.flavorData.themeOrder;
 	if (Array.isArray(order)) {
 		var ordered = {};
-		order.forEach(function(id) {
+		order.forEach(function (id) {
 			if (list[id]) ordered[id] = list[id];
 		});
-		Object.keys(list).forEach(function(id) {
+		Object.keys(list).forEach(function (id) {
 			if (!(id in ordered)) ordered[id] = list[id];
 		});
 		list = ordered;

@@ -1,15 +1,15 @@
-MapScript.loadModule("SimpleListAdapter", (function() {
-	var r = function(arr, maker, binder, params, readOnly) {
+MapScript.loadModule("SimpleListAdapter", (function () {
+	var r = function (arr, maker, binder, params, readOnly) {
 		//arr是列表数组，maker(holder, params)生成基础view，binder(holder, element, index, array, params)修改view使其实现指定的界面，readOnly表示是否会从外部修改这个数组
 		var src = readOnly ? arr : arr.slice(), holders = [], dso = [], controller;
 		controller = new SimpleListAdapter.Controller(src, holders, dso, maker, binder, params, readOnly ? null : arr, readOnly);
 		var adapter = ListAdapterBase.create({
-			array : src,
-			controller : controller,
-			dso : dso
+			array: src,
+			controller: controller,
+			dso: dso
 		});
 		controller.adapter = adapter;
-		adapter.getView = function(pos, convert, parent) {
+		adapter.getView = function (pos, convert, parent) {
 			var holder;
 			try {
 				if (!convert || !(convert.getTag() in holders)) {
@@ -23,13 +23,13 @@ MapScript.loadModule("SimpleListAdapter", (function() {
 				holder.pos = parseInt(pos);
 				binder(holder, controller.array[pos], parseInt(pos), controller.array, params);
 				return convert;
-			} catch(e) {
+			} catch (e) {
 				return ListAdapterBase.errorView(e);
 			}
 		};
 		return new G.ListAdapter(adapter);
 	}
-	r.Controller = function(array, holders, dso, maker, binder, params, sync, readOnly) {
+	r.Controller = function (array, holders, dso, maker, binder, params, sync, readOnly) {
 		this.array = array;
 		this.holders = holders;
 		this.dso = dso;
@@ -40,7 +40,7 @@ MapScript.loadModule("SimpleListAdapter", (function() {
 		this.readOnly = !!readOnly;
 	}
 	r.Controller.prototype = {
-		clearHolder : function() {
+		clearHolder: function () {
 			var i;
 			for (i in this.holders) {
 				this.holders[i].self.setTag("");
@@ -48,23 +48,23 @@ MapScript.loadModule("SimpleListAdapter", (function() {
 			this.holders.length = 0;
 			this.notifyChange();
 		},
-		getHolder : function(view) {
+		getHolder: function (view) {
 			return this.holders[view.getTag()];
 		},
-		notifyChange : function(hasSync) {
+		notifyChange: function (hasSync) {
 			if (!hasSync && this.sync) {
 				this.setArray(this.sync);
 			}
-			this.dso.forEach(function(e) {
+			this.dso.forEach(function (e) {
 				if (e) e.onChanged();
 			});
 		},
-		notifyInvalidate : function() {
-			this.dso.forEach(function(e) {
+		notifyInvalidate: function () {
+			this.dso.forEach(function (e) {
 				if (e) e.onInvalidated();
 			});
 		},
-		rebind : function(pos) {
+		rebind: function (pos) {
 			var i;
 			for (i in this.holders) {
 				if (this.holders[i].pos == pos) {
@@ -72,7 +72,7 @@ MapScript.loadModule("SimpleListAdapter", (function() {
 				}
 			}
 		},
-		setArray : function(a) {
+		setArray: function (a) {
 			var i;
 			if (this.array != a) {
 				if (this.readOnly) {
@@ -87,12 +87,12 @@ MapScript.loadModule("SimpleListAdapter", (function() {
 			}
 			this.notifyChange(true);
 		},
-		setSync : function(a) {
+		setSync: function (a) {
 			this.sync = a;
 			this.notifyChange(false);
 		}
 	}
-	r.getController = function(adapter) {
+	r.getController = function (adapter) {
 		var r = adapter.getItem(-1);
 		r.self = adapter;
 		return r;

@@ -25,7 +25,7 @@ function flattenDir(o) {
 	var target = [];
 	flatten("", o, []).map(e => path.resolve(e)).forEach(e => {
 		var nodes = [e], parent;
-		while(1) {
+		while (1) {
 			parent = path.resolve(nodes[0], "../");
 			if (parent && parent != nodes[0]) {
 				nodes.unshift(parent);
@@ -39,7 +39,7 @@ function flattenDir(o) {
 	});
 	return target;
 }
-module.exports = function(context, args) {
+module.exports = function (context, args) {
 	flattenDir(args).forEach(e => {
 		if (fs.existsSync(e)) {
 			if (!fs.statSync(e).isDirectory()) {

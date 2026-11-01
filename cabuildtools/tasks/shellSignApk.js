@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const child_process = require("child_process");
 const javaenv = require("../javaenv");
-module.exports = function(context, args) {
+module.exports = function (context, args) {
 	var jarsignerPath = path.resolve(context.shellConfig.shellPath, context.shellConfig.buildToolPath, "apksigner");
 	var keystonePath = path.resolve(context.shellConfig.shellPath, context.shellConfig.keystorePath);
 	var unsignedPath = path.resolve(context.shellConfig.shellPath, "./app/build/outputs/apk/release/app-release.apk");
@@ -28,12 +28,12 @@ module.exports = function(context, args) {
 	// 保证存在 v1(JAR) 签名：API 21~27 只能从 v1 读到证书，脚本异或密钥靠它
 	signArgs.push("--v1-signing-enabled", "true", unsignedPath);
 	return context.execute("execProcess", {
-		command : jarsignerPath,
-		args : signArgs,
-		cwd : context.shellConfig.shellPath,
-		env : javaenv(context.shellConfig),
-		stdio : hasLineage ? "inherit" : ["pipe", "inherit", "inherit"],
-		input : hasLineage ? undefined : fs.readFileSync(keyPassPath),
-		shell : true
+		command: jarsignerPath,
+		args: signArgs,
+		cwd: context.shellConfig.shellPath,
+		env: javaenv(context.shellConfig),
+		stdio: hasLineage ? "inherit" : ["pipe", "inherit", "inherit"],
+		input: hasLineage ? undefined : fs.readFileSync(keyPassPath),
+		shell: true
 	});
 }

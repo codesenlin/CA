@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
-module.exports = function(context, args) {
+module.exports = function (context, args) {
 	var pkPath = path.resolve(context.shellConfig.shellPath, context.shellConfig.hotfixPrivateKey);
 	var signature = crypto.createSign("RSA-SHA256");
 	signature.update(args[0]);

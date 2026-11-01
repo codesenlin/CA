@@ -132,7 +132,7 @@ function findBuildTools(sdk, prefer) {
 	var dir = path.join(sdk, "build-tools");
 	if (!hasFile(dir)) return null;
 	var signer = process.platform === "win32" ? "apksigner.bat" : "apksigner";
-	var versions = fs.readdirSync(dir).filter(function(v) {
+	var versions = fs.readdirSync(dir).filter(function (v) {
 		return hasFile(path.join(dir, v, signer)) || hasFile(path.join(dir, v, "apksigner"));
 	}).sort(compareVersion);
 	if (!versions.length) return null;
@@ -148,8 +148,8 @@ function findJavaHome(configured) {
 	if (hasFile(jdks)) {
 		var dirs = fs.readdirSync(jdks).sort();
 		candidates = candidates.concat(
-			dirs.filter(function(d) { return /17/.test(d); }).map(function(d) { return path.join(jdks, d); }),
-			dirs.filter(function(d) { return !/17/.test(d); }).map(function(d) { return path.join(jdks, d); })
+			dirs.filter(function (d) { return /17/.test(d); }).map(function (d) { return path.join(jdks, d); }),
+			dirs.filter(function (d) { return !/17/.test(d); }).map(function (d) { return path.join(jdks, d); })
 		);
 	}
 
@@ -160,7 +160,7 @@ function findJavaHome(configured) {
 	if (process.platform !== "win32") {
 		var jvm = "/usr/lib/jvm";
 		if (hasFile(jvm)) {
-			candidates = candidates.concat(fs.readdirSync(jvm).sort().map(function(d) { return path.join(jvm, d); }));
+			candidates = candidates.concat(fs.readdirSync(jvm).sort().map(function (d) { return path.join(jvm, d); }));
 		}
 	}
 
@@ -175,9 +175,9 @@ function findAndroidJar(sdk, configured) {
 	if (!sdk) return null;
 	var dir = path.join(sdk, "platforms");
 	if (!hasFile(dir)) return null;
-	var platforms = fs.readdirSync(dir).filter(function(d) {
+	var platforms = fs.readdirSync(dir).filter(function (d) {
 		return hasFile(path.join(dir, d, "android.jar"));
-	}).sort(function(a, b) {
+	}).sort(function (a, b) {
 		return compareVersion(a.replace(/^android-/, ""), b.replace(/^android-/, ""));
 	});
 	if (!platforms.length) return null;
@@ -243,7 +243,7 @@ function writeGenerated(file, data) {
 }
 
 module.exports = {
-	shell : shell,
-	importConfig : importConfig,
-	writeGenerated : writeGenerated
+	shell: shell,
+	importConfig: importConfig,
+	writeGenerated: writeGenerated
 };

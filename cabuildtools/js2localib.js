@@ -52,7 +52,7 @@ if (require.main == module) {
 		var out = main(process.argv[2], process.argv[3], process.argv[4], process.argv[5]);
 		console.log("LIBSIGN01 已生成：" + process.argv[4] + "（" + out.length + " 字节）");
 		if (process.argv[5]) console.log("已写入 .hash：" + process.argv[4] + ".hash");
-	} catch(e) {
+	} catch (e) {
 		console.log("失败：" + e.message);
 		process.exit(1);
 	}

@@ -18,7 +18,7 @@ function logTaskFailure(task, reason) {
 	if (reason !== undefined) console.log(reason);
 }
 var Build = {
-	execute : function(task, args) {
+	execute: function (task, args) {
 		// help 只是打印用法，不需要 Process/Success 这类流水线日志
 		logTaskStart(task);
 		return executeTask(task, args)
@@ -30,17 +30,17 @@ var Build = {
 				throw reason;
 			});
 	},
-	task : function(task, args) {
+	task: function (task, args) {
 		return () => this.execute(task, args);
 	},
-	pipe : function(task, args) {
+	pipe: function (task, args) {
 		return result => this.execute(task, [result, args]);
 	},
-	loadTasks : function(path) {
+	loadTasks: function (path) {
 		initTasks(path);
 	},
-	Result : {
-		OK : "ok"
+	Result: {
+		OK: "ok"
 	}
 }
 var context = Build.context = Object.create(Build);
@@ -67,7 +67,7 @@ function procArgs() {
 				logTaskFailure(task, reason);
 				process.exit(1);
 			});
-	} catch(e) {
+	} catch (e) {
 		console.log(String(e));
 		// 未知任务 / 非 CLI 任务也返回非 0，方便脚本/CI 判断失败
 		process.exitCode = 1;
@@ -85,7 +85,7 @@ function initTasks(path) {
 			if (ext.toLowerCase() == ".js" && fn.length != 0) {
 				try {
 					Tasks[fn] = require(e);
-				} catch(e) {
+				} catch (e) {
 					console.log("Cannot load task: " + fn + "\n" + e);
 				}
 			}
@@ -97,7 +97,7 @@ function executeTask(task, args) {
 	var result;
 	try {
 		result = Tasks[task](context, args);
-	} catch(e) {
+	} catch (e) {
 		return Promise.reject(e);
 	}
 	return result instanceof Promise ? result : Promise.resolve(result);

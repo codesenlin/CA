@@ -38,13 +38,13 @@ function resolvePath(from, to) {
     if (!to) return from;
     // from 应该是绝对路径
     const baseDir = path.dirname(from);
-    
+
     if (to.startsWith("./") || to.startsWith("../")) {
         // 相对路径：基于 from 的目录
         const resolved = path.resolve(baseDir, to);
         return resolved.replace(/\\/g, "/");
     }
-    
+
     // 非相对路径：尝试直接解析，如果不存在则基于 from 的目录
     const directPath = path.resolve(baseDir, to);
     return directPath.replace(/\\/g, "/");
@@ -78,23 +78,23 @@ const loaderUsages = [];
 //   (0, Loader.fromFile)("path")
 function getLoaderPath(node) {
     if (!t.isCallExpression(node)) return null;
-    
+
     let callee = node.callee;
     let args = node.arguments;
-    
+
     // 处理 .call() 调用：Loader.fromFile.call(Loader, "path")
-    if (t.isMemberExpression(callee) && 
+    if (t.isMemberExpression(callee) &&
         t.isIdentifier(callee.property, { name: "call" })) {
         callee = callee.object;
         // 移除第一个参数（thisArg）
         args = args.slice(1);
     }
-    
+
     // 处理逗号表达式：(0, Loader.fromFile)("path")
     if (t.isSequenceExpression(callee)) {
         callee = callee.expressions[callee.expressions.length - 1];
     }
-    
+
     // 检查是否是 Loader.fromFile
     if (t.isMemberExpression(callee)) {
         // 检查属性名
@@ -104,7 +104,7 @@ function getLoaderPath(node) {
         } else if (t.isStringLiteral(callee.property) && callee.property.value === "fromFile") {
             methodName = "fromFile";
         }
-        
+
         if (methodName && args.length > 0) {
             const arg = args[0];
             if (t.isStringLiteral(arg)) {
@@ -116,7 +116,7 @@ function getLoaderPath(node) {
             }
         }
     }
-    
+
     return null;
 }
 
@@ -130,7 +130,7 @@ function isLoaderAssignment(node) {
         if (t.isIdentifier(init, { name: "Loader" })) {
             return { name: node.id.name, type: "Loader" };
         }
-        if (t.isMemberExpression(init) && 
+        if (t.isMemberExpression(init) &&
             t.isIdentifier(init.object, { name: "Loader" })) {
             return { name: node.id.name, type: "method", method: init.property.name };
         }
@@ -166,7 +166,7 @@ function lenientJsonParse(text, label) {
 function inlineJsonIncludes(source, filePath, depth) {
     depth = depth || 0;
     if (depth > 16) throw new Error("Loader.fromFile 嵌套过深: " + filePath);
-    return source.replace(/Loader\.fromFile\((".+?")\)/g, function(match, rawPath) {
+    return source.replace(/Loader\.fromFile\((".+?")\)/g, function (match, rawPath) {
         var target = JSON.parse(rawPath);
         var abs = path.resolve(path.dirname(filePath), target);
         var content = fs.readFileSync(abs, "utf-8");
@@ -186,25 +186,25 @@ function inlineJsonIncludes(source, filePath, depth) {
 function loadFileAsAST(filePath, parentDef) {
     const realPath = fs.realpathSync(filePath);
     const ext = path.extname(realPath).toLowerCase();
-    
+
     // 检查缓存（注意：缓存不考虑 parentDef，因为文件内容应该相同）
     if (vfs.cache.has(realPath)) {
         log(`[缓存] ${path.basename(realPath)}`);
         return vfs.cache.get(realPath);
     }
-    
+
     log(`[处理] ${realPath}`);
     enterFile(realPath);
-    
+
     // 保存并设置当前的 parentDef
     const prevParentDef = currentParentDef;
     currentParentDef = parentDef;
-    
+
     try {
         const source = fs.readFileSync(realPath, "utf-8");
-        
+
         let ast;
-        
+
         // 根据文件类型处理
         if (ext === '.json') {
             // JSON/JSONC 文件：支持注释和宽松语法
@@ -237,18 +237,18 @@ function loadFileAsAST(filePath, parentDef) {
                 sourceType: "script",
                 allowReturnOutsideFunction: true
             });
-            
+
             // 递归处理内部的 Loader.fromFile
             processAST(ast, realPath);
         }
-        
+
         // 记录文件信息用于报错
         vfs.contexts.get(realPath).ast = ast;
         vfs.contexts.get(realPath).source = source;
-        
+
         vfs.cache.set(realPath, ast);
         vfs.contexts.get(realPath).loading = false;
-        
+
         return ast;
     } catch (e) {
         // 增强错误信息
@@ -269,7 +269,7 @@ function loadFileAsAST(filePath, parentDef) {
 function processAST(ast, currentFile) {
     // 收集 Loader 别名
     const loaderAliases = new Set(["Loader"]);
-    
+
     const visitor = {
         // 处理变量声明，收集 Loader 别名
         VariableDeclarator(nodePath) {
@@ -284,24 +284,24 @@ function processAST(ast, currentFile) {
                 });
             }
         },
-        
+
         // 处理函数调用
         CallExpression(nodePath) {
             const node = nodePath.node;
             const loadInfo = getLoaderPath(node);
-            
+
             if (!loadInfo) return;
-            
+
             const { path: loadPath, method } = loadInfo;
-            
+
             // 调试：打印路径解析
             // console.log(`[DEBUG] 从 "${currentFile}" 加载 "${loadPath}"`);
-            
+
             // 计算完整路径
             const fullPath = resolvePath(currentFile, loadPath);
-            
+
             // console.log(`[DEBUG] 解析为: "${fullPath}"`);
-            
+
             loaderUsages.push({
                 type: "load",
                 path: loadPath,
@@ -310,15 +310,15 @@ function processAST(ast, currentFile) {
                 loc: node.loc,
                 file: currentFile
             });
-            
+
             try {
                 // 递归加载，传递当前的 parentDef
                 const childAST = loadFileAsAST(fullPath, currentParentDef);
                 const childProgram = childAST.program;
-                
+
                 // 替换策略
                 const replacement = createReplacement(childProgram, fullPath);
-                
+
                 // replacement 是语句数组，使用 replaceWithMultiple 在父级语句列表中展开
                 if (Array.isArray(replacement)) {
                     if (replacement.length === 0) {
@@ -330,14 +330,14 @@ function processAST(ast, currentFile) {
                 } else {
                     nodePath.replaceWith(replacement);
                 }
-                
+
             } catch (e) {
                 console.error(`[ERROR] Loading "${loadPath}" from "${currentFile}":`, e.message);
                 throw e;
             }
         }
     };
-    
+
     traverse(ast, visitor);
 }
 
@@ -346,26 +346,26 @@ function processAST(ast, currentFile) {
 // 因为我们需要支持 var 声明等语句直接内联
 function createReplacement(childProgram, filePath) {
     const body = childProgram.body;
-    
+
     // 空文件
     if (body.length === 0) {
         return [t.expressionStatement(t.objectExpression([]))];
     }
-    
+
     // 单个表达式语句，直接取值
     if (body.length === 1 && t.isExpressionStatement(body[0])) {
         return [body[0]];
     }
-    
+
     // 单个对象表达式（作为表达式语句）
     if (body.length === 1 && t.isObjectExpression(body[0])) {
         return [t.expressionStatement(body[0])];
     }
-    
+
     // 处理 CommonJS 风格：查找 exports.xxx = ...
     const exportsProps = [];
     const otherStmts = [];
-    
+
     for (const stmt of body) {
         // exports.foo = bar
         if (t.isExpressionStatement(stmt) &&
@@ -373,11 +373,11 @@ function createReplacement(childProgram, filePath) {
             stmt.expression.operator === "=" &&
             t.isMemberExpression(stmt.expression.left) &&
             t.isIdentifier(stmt.expression.left.object, { name: "exports" })) {
-            
-            const propName = t.isIdentifier(stmt.expression.left.property) 
-                ? stmt.expression.left.property.name 
+
+            const propName = t.isIdentifier(stmt.expression.left.property)
+                ? stmt.expression.left.property.name
                 : stmt.expression.left.property.value;
-            
+
             exportsProps.push(t.objectProperty(
                 t.identifier(propName),
                 stmt.expression.right
@@ -386,7 +386,7 @@ function createReplacement(childProgram, filePath) {
             otherStmts.push(stmt);
         }
     }
-    
+
     // 如果有 exports，创建对象字面量
     if (exportsProps.length > 0) {
         // 如果还有其他语句，需要 IIFE
@@ -405,7 +405,7 @@ function createReplacement(childProgram, filePath) {
             return [t.expressionStatement(t.objectExpression(exportsProps))];
         }
     }
-    
+
     // 默认：直接返回所有语句（不再包装为 IIFE，保持变量在正确作用域）
     return body;
 }
@@ -414,13 +414,13 @@ function createReplacement(childProgram, filePath) {
 function load(sourcePath, parentDef, charset = "utf-8") {
     const realPath = fs.realpathSync(sourcePath);
     const parent = path.dirname(realPath);
-    
+
     // 创建定义对象（保持与旧版兼容）
     const def = Object.create(parentDef || null);
-    
+
     try {
         const ast = loadFileAsAST(realPath);
-        
+
         // 生成代码
         const output = generate(ast, {
             sourceMaps: false,
@@ -429,7 +429,7 @@ function load(sourcePath, parentDef, charset = "utf-8") {
             // minimal 让中文原样输出（与旧加载器的文本拼接结果一致）
             jsescOption: { minimal: true }
         });
-        
+
         return output.code;
     } catch (e) {
         console.error(`Failed to load ${sourcePath}:`, e.message);
@@ -441,49 +441,49 @@ function load(sourcePath, parentDef, charset = "utf-8") {
 // parentDef 包含 buildConfig 等变量
 function processLoaderComments(source, filePath, parentDef) {
     const vm = require("vm");
-    
+
     // 构建变量对象，与旧版 loader 兼容
     const variables = parentDef || {};
-    
+
     // 用于在 replace 回调中传递修改后的 source
     let modifiedSource = source;
-    
+
     // 用于标记是否为测试专用文件
     let isTestOnly = false;
     const fileDir = path.dirname(filePath);
-    
+
     const sandbox = {
         source: source,
         replacement: "",
         postprocessor: null,
         variables: variables,  // 注入 variables，供 BuildConfig.js 等使用
-        define: function(key, value) {},
-        undefine: function(key) {},
-        isDefined: function(key) { return false; },
-        getDef: function(key) { return undefined; },
+        define: function (key, value) { },
+        undefine: function (key) { },
+        isDefined: function (key) { return false; },
+        getDef: function (key) { return undefined; },
         fs: fs,
         path: path,
         // LOADER 注释里的 load 与旧版一致：JS/JSON 走 loader，其他文件按原始文本读
-        load: function(p) {
+        load: function (p) {
             const abs = path.resolve(fileDir, p);
             const ext = path.extname(abs).toLowerCase();
             if (ext === ".js" || ext === ".json" || ext === ".jsonc") return load(abs, {});
             return fs.readFileSync(abs, "utf-8");
         },
         // 旧 loader 的 require 相对当前文件解析（verify.js 的 encrypt.js 依赖这个）
-        require: function(m) {
+        require: function (m) {
             if (typeof m === "string" && (m.indexOf("./") === 0 || m.indexOf("../") === 0)) {
                 return require(path.resolve(fileDir, m));
             }
             return require(m);
         },
-        TestOnly: function() {  // 标记文件为测试专用
+        TestOnly: function () {  // 标记文件为测试专用
             isTestOnly = true;
         }
     };
-    
+
     // 处理 LOADER 注释
-    source = source.replace(/\/\*LOADER\s([\s\S]+?)\*\//g, function(match, code, offset) {
+    source = source.replace(/\/\*LOADER\s([\s\S]+?)\*\//g, function (match, code, offset) {
         sandbox.replacement = "";
         sandbox.source = modifiedSource;  // 使用当前的 modifiedSource
         try {
@@ -497,19 +497,19 @@ function processLoaderComments(source, filePath, parentDef) {
         }
         return sandbox.replacement;
     });
-    
+
     // 使用可能被修改后的 source
     source = modifiedSource;
-    
+
     // 如果是测试专用文件，返回空内容（旧版 loader 行为）
     if (isTestOnly) {
         return "";
     }
-    
+
     if (sandbox.postprocessor) {
         source = sandbox.postprocessor(source);
     }
-    
+
     return source;
 }
 
@@ -544,29 +544,29 @@ function printDependencyGraph() {
 
 // 主入口（保持 API 兼容）
 module.exports = {
-    load: function(sourcePath, parentDef, charset, options) {
+    load: function (sourcePath, parentDef, charset, options) {
         // 重置 VFS 确保干净状态
         resetVFS();
-        
+
         // 解析选项（可以通过 options.verbose = false 关闭日志）
         if (options && options.verbose === false) {
             verbose = false;
         }
         log(`开始编译: ${sourcePath}`);
-        
+
         // 设置初始 parentDef
         currentParentDef = parentDef;
-        
+
         // 先处理 LOADER 注释（保持兼容）
         let source = fs.readFileSync(sourcePath, charset || "utf-8");
         source = processLoaderComments(source, sourcePath, parentDef);
-        
+
         // 解析处理后的 source
         const ast = parser.parse(source, {
             sourceType: "script",
             allowReturnOutsideFunction: true
         });
-        
+
         const realPath = fs.realpathSync(sourcePath);
         enterFile(realPath);
         try {
@@ -575,10 +575,10 @@ module.exports = {
             exitFile();
             currentParentDef = null;
         }
-        
+
         // 可选：打印依赖图（调试用）
         // printDependencyGraph();
-        
+
         // Babel transform: async/await -> generators (可选，默认关闭)
         const enableAsyncTransform = options && options.transformAsync === true;
         let finalAst = ast;
@@ -599,7 +599,7 @@ module.exports = {
                 // 转译失败时继续使用原始 AST
             }
         }
-        
+
         // 如果 transform 成功，使用 transform 后的代码；否则使用原始 AST
         let output;
         if (transformOutput) {
@@ -611,20 +611,20 @@ module.exports = {
                 jsescOption: { minimal: true }
             });
         }
-        
+
         if (verbose) {
             log(`编译完成: ${vfs.cache.size} 个文件, 输出 ${output.code.length} 字节`);
         }
-        
+
         return output.code;
     },
-    
+
     // 高级 API：获取统计信息
     getStats,
-    
+
     // 高级 API：重置状态
     reset: resetVFS,
-    
+
     // 内部使用（测试）
     _vfs: vfs,
     _resolvePath: resolvePath

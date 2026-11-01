@@ -1,5 +1,5 @@
-MapScript.loadModule("MoreListAdapter", (function() {
-	var r = function(baseAdapter, loader) {
+MapScript.loadModule("MoreListAdapter", (function () {
+	var r = function (baseAdapter, loader) {
 		//baseAdapter 原始ListAdapter
 		//loader Loader接口
 		// loadingView 加载指示器View
@@ -15,24 +15,24 @@ MapScript.loadModule("MoreListAdapter", (function() {
 			loader.loaderView = new G.View(ctx);
 		}
 		return new G.ListAdapter({
-			getCount : function() {
+			getCount: function () {
 				baseAdapterCount = baseAdapter.getCount();
 				return loader.finished ? baseAdapterCount : baseAdapterCount + 1;
 			},
-			getItem : function(pos) {
+			getItem: function (pos) {
 				if (pos == -1) return controller;
 				if (pos == baseAdapterCount) return loader;
 				return baseAdapter.getItem(pos);
 			},
-			getItemId : function(pos) {
+			getItemId: function (pos) {
 				if (pos == baseAdapterCount) return loader.loading ? 9999 : 9998;
 				return baseAdapter.getItemId(pos);
 			},
-			getItemViewType : function(pos) {
+			getItemViewType: function (pos) {
 				if (pos == baseAdapterCount) return loader.loading ? baseAdapterTypeCount + 1 : baseAdapterTypeCount;
 				return baseAdapter.getItemViewType(pos);
 			},
-			getView : function(pos, convert, parent) {
+			getView: function (pos, convert, parent) {
 				if (pos == baseAdapterCount) {
 					if (!loader.loading && autoload) {
 						controller.postLoad();
@@ -41,48 +41,48 @@ MapScript.loadModule("MoreListAdapter", (function() {
 				}
 				return baseAdapter.getView(pos, convert, parent);
 			},
-			getViewTypeCount : function() {
+			getViewTypeCount: function () {
 				baseAdapterTypeCount = baseAdapter.getViewTypeCount();
 				return baseAdapterTypeCount + 2;
 			},
-			hasStableIds : function() {
+			hasStableIds: function () {
 				return baseAdapter.hasStableIds();
 			},
-			isEmpty : function() {
+			isEmpty: function () {
 				return false;
 			},
-			areAllItemsEnabled : function() {
+			areAllItemsEnabled: function () {
 				return baseAdapter.areAllItemsEnabled();
 			},
-			isEnabled : function(pos) {
+			isEnabled: function (pos) {
 				if (pos == baseAdapterCount) {
 					return true;
 				}
 				return baseAdapter.isEnabled(pos);
 			},
-			registerDataSetObserver : function(p) {
+			registerDataSetObserver: function (p) {
 				baseAdapter.registerDataSetObserver(p);
 				ListAdapterBase.register(dso, p);
 			},
-			unregisterDataSetObserver : function(p) {
+			unregisterDataSetObserver: function (p) {
 				baseAdapter.unregisterDataSetObserver(p);
 				ListAdapterBase.unregister(dso, p);
 			}
 		});
 	}, latestSession = 0;
-	r.Controller = function(baseAdapter, dso, loader) {
+	r.Controller = function (baseAdapter, dso, loader) {
 		this.base = baseAdapter;
 		this.dso = dso;
 		this.loader = loader;
 	}
 	r.Controller.prototype = {
-		notifyChange : function() {
+		notifyChange: function () {
 			var i;
 			for (i in this.dso) {
 				this.dso[i].onChanged();
 			}
 		},
-		requestLoad : function() {
+		requestLoad: function () {
 			var session = ++latestSession;
 			this.loader.loading = true;
 			this.loader.latestSession = session;
@@ -91,32 +91,34 @@ MapScript.loadModule("MoreListAdapter", (function() {
 				this.notifyChange();
 			}
 		},
-		postLoad : function() {
+		postLoad: function () {
 			var self = this;
-			gHandler.post(function() {try {
-				self.requestLoad();
-			} catch(e) {erp(e)}});
+			gHandler.post(function () {
+				try {
+					self.requestLoad();
+				} catch (e) { erp(e) }
+			});
 		},
-		cancelLoading : function() {
+		cancelLoading: function () {
 			this.loader.latestSession = null;
 			this.loader.loading = false;
 		},
-		updateFinished : function(finished, alreadyNotify) {
+		updateFinished: function (finished, alreadyNotify) {
 			this.loader.finished = Boolean(finished);
 			if (!alreadyNotify) this.notifyChange();
 		},
-		reset : function(finished, alreadyNotify) {
+		reset: function (finished, alreadyNotify) {
 			this.cancelLoading();
 			this.updateFinished(finished, alreadyNotify);
 		},
-		asyncLoadComplete : function(session, finished, alreadyNotify) {
+		asyncLoadComplete: function (session, finished, alreadyNotify) {
 			if (this.loader.latestSession == session) {
 				this.loader.loading = false;
 				this.updateFinished(finished, alreadyNotify);
 			}
 		}
 	}
-	r.getController = function(adapter) {
+	r.getController = function (adapter) {
 		var r = adapter.getItem(-1);
 		r.self = adapter;
 		return r;

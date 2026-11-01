@@ -31,9 +31,9 @@ const PACKS_PER_PAGE = 20;
 
 /** 不收录的包（文件名 → 原因），构建时跳过 */
 const EXCLUDES = {
-	"[苦力怕论坛]命令拓展 by JG 1.3.0.lib" : "文件格式损坏（既不是 LIBRARY 也不是有效 JSON）",
-	"命令助手快照20190226130049.lib" : "这是 2019 年的快照安装器，不是拓展包",
-	"内测组插件.lib" : "作者内部测试插件，不对外分发"
+	"[苦力怕论坛]命令拓展 by JG 1.3.0.lib": "文件格式损坏（既不是 LIBRARY 也不是有效 JSON）",
+	"命令助手快照20190226130049.lib": "这是 2019 年的快照安装器，不是拓展包",
+	"内测组插件.lib": "作者内部测试插件，不对外分发"
 };
 
 function loadConfig() {
@@ -43,7 +43,7 @@ function loadConfig() {
 }
 
 function resolveBase(cfg) {
-	const arg = process.argv.find(function(a) { return a.indexOf("--base=") === 0; });
+	const arg = process.argv.find(function (a) { return a.indexOf("--base=") === 0; });
 	let base = arg ? arg.slice("--base=".length) : (process.env.SOURCE_BASE || cfg.baseUrl);
 	if (!base) throw new Error("没有配置线上地址：source-config.json 的 baseUrl 或 --base=");
 	if (base.slice(-1) !== "/") base += "/";
@@ -88,7 +88,7 @@ function readPack(file) {
 	const raw = fs.readFileSync(file);
 	if (file.endsWith(".json")) {
 		const data = JSON.parse(raw.toString("utf-8"));
-		return { content : JSON.stringify(data, null, "\t"), kind : "json", meta : data };
+		return { content: JSON.stringify(data, null, "\t"), kind: "json", meta: data };
 	}
 	if (raw.slice(0, 7).toString() === "LIBRARY") {
 		const body = zlib.gunzipSync(raw.slice(15)).toString("utf-8");
@@ -96,17 +96,17 @@ function readPack(file) {
 		let meta;
 		if (isPlugin) {
 			meta = {};
-			[["name", "name"], ["author", "author"], ["uuid", "uuid"], ["description", "description"]].forEach(function(pair) {
+			[["name", "name"], ["author", "author"], ["uuid", "uuid"], ["description", "description"]].forEach(function (pair) {
 				const m = body.match(new RegExp(pair[0] + '\\s*=\\s*"((?:[^"\\\\]|\\\\.)*)"'));
 				if (m) meta[pair[1]] = m[1];
 			});
 			const v = body.match(/version\s*=\s*\[([^\]]*)\]/);
-			meta.version = v ? v[1].split(",").map(function(x) { return parseInt(x, 10) || 0; }) : [0];
+			meta.version = v ? v[1].split(",").map(function (x) { return parseInt(x, 10) || 0; }) : [0];
 		} else {
 			meta = JSON.parse(body);
-			return { content : JSON.stringify(meta, null, "\t"), kind : "json", meta : meta };
+			return { content: JSON.stringify(meta, null, "\t"), kind: "json", meta: meta };
 		}
-		return { content : body, kind : "plugin", meta : meta };
+		return { content: body, kind: "plugin", meta: meta };
 	}
 	throw new Error("无法识别的包格式");
 }
@@ -139,14 +139,14 @@ function compareVersion(a, b) {
  */
 function applyCuration(items, curation) {
 	const rules = curation || {};
-	const exclude = (rules.excludeNameRegex || []).map(function(r) { return new RegExp(r); });
-	const lineages = (rules.lineages || []).map(function(l) {
-		return { id : l.id, re : new RegExp(l.match, l.flags || "i") };
+	const exclude = (rules.excludeNameRegex || []).map(function (r) { return new RegExp(r); });
+	const lineages = (rules.lineages || []).map(function (l) {
+		return { id: l.id, re: new RegExp(l.match, l.flags || "i") };
 	});
 
 	const dropped = [];
-	let list = items.filter(function(it) {
-		const hit = exclude.some(function(re) { return re.test(it.meta.name); });
+	let list = items.filter(function (it) {
+		const hit = exclude.some(function (re) { return re.test(it.meta.name); });
 		if (hit) {
 			it.dropReason = "名字命中排除规则（备份/副本）";
 			dropped.push(it);
@@ -154,22 +154,22 @@ function applyCuration(items, curation) {
 		return !hit;
 	});
 
-	lineages.forEach(function(line) {
-		const group = list.filter(function(it) { return line.re.test(it.meta.name); });
+	lineages.forEach(function (line) {
+		const group = list.filter(function (it) { return line.re.test(it.meta.name); });
 		if (group.length <= 1) return;
 		let best = group[0];
-		group.forEach(function(it) {
+		group.forEach(function (it) {
 			if (compareVersion(it.meta.version, best.meta.version) > 0) best = it;
 		});
-		group.forEach(function(it) {
+		group.forEach(function (it) {
 			if (it !== best) it.dropReason = "同系列（" + line.id + "）只保留最新的 " + best.meta.name;
 		});
 	});
 
 	const renames = rules.renames || {};
 	return {
-		keep : list.filter(function(it) { return !it.dropReason; }),
-		drop : dropped.concat(list.filter(function(it) { return it.dropReason; }))
+		keep: list.filter(function (it) { return !it.dropReason; }),
+		drop: dropped.concat(list.filter(function (it) { return it.dropReason; }))
 	};
 }
 
@@ -179,14 +179,14 @@ function applyCuration(items, curation) {
  */
 function clearOutput(out) {
 	if (path.resolve(out) !== path.resolve(ROOT)) {
-		if (fs.existsSync(out)) fs.rmSync(out, { recursive : true, force : true });
-		fs.mkdirSync(out, { recursive : true });
+		if (fs.existsSync(out)) fs.rmSync(out, { recursive: true, force: true });
+		fs.mkdirSync(out, { recursive: true });
 		return;
 	}
-	fs.rmSync(path.join(out, "packs"), { recursive : true, force : true });
-	fs.readdirSync(out).forEach(function(f) {
+	fs.rmSync(path.join(out, "packs"), { recursive: true, force: true });
+	fs.readdirSync(out).forEach(function (f) {
 		if (/^index-\d+\.json$/.test(f) || f === "info.json" || f === "verify.key" || f === "map.json") {
-			fs.rmSync(path.join(out, f), { force : true });
+			fs.rmSync(path.join(out, f), { force: true });
 		}
 	});
 }
@@ -196,24 +196,24 @@ function build() {
 	OUT = path.resolve(ROOT, cfg.outputDir || "dist");
 	const base = resolveBase(cfg);
 	const privateKey = readPrivateKey(cfg);
-	const publicKeyPem = crypto.createPublicKey(privateKey).export({ type : "spki", format : "pem" });
-	const publicKeyDer = crypto.createPublicKey(privateKey).export({ type : "spki", format : "der" });
+	const publicKeyPem = crypto.createPublicKey(privateKey).export({ type: "spki", format: "pem" });
+	const publicKeyDer = crypto.createPublicKey(privateKey).export({ type: "spki", format: "der" });
 
 	clearOutput(OUT);
-	fs.mkdirSync(path.join(OUT, "packs"), { recursive : true });
+	fs.mkdirSync(path.join(OUT, "packs"), { recursive: true });
 
 	const files = [];
-	["json", "lib"].forEach(function(dir) {
+	["json", "lib"].forEach(function (dir) {
 		const d = path.join(SRC, dir);
 		if (!fs.existsSync(d)) return;
-		fs.readdirSync(d).forEach(function(f) {
+		fs.readdirSync(d).forEach(function (f) {
 			if (f.charAt(0) === ".") return;
-			files.push({ dir : dir, name : f, path : path.join(d, f) });
+			files.push({ dir: dir, name: f, path: path.join(d, f) });
 		});
 	});
 
 	const packs = [], skipped = [], items = [];
-	files.forEach(function(item) {
+	files.forEach(function (item) {
 		if (EXCLUDES[item.name]) {
 			skipped.push(item.name + "（" + EXCLUDES[item.name] + "）");
 			return;
@@ -225,17 +225,17 @@ function build() {
 			skipped.push(item.name + "（解析失败：" + e.message + "）");
 			return;
 		}
-		items.push({ file : item, pack : pack, meta : normalizeMeta(pack.meta, item.name) });
+		items.push({ file: item, pack: pack, meta: normalizeMeta(pack.meta, item.name) });
 	});
 
 	const curated = applyCuration(items, cfg.curation);
-	curated.drop.forEach(function(it) { skipped.push(it.meta.name + "（" + it.dropReason + "）"); });
+	curated.drop.forEach(function (it) { skipped.push(it.meta.name + "（" + it.dropReason + "）"); });
 
-	curated.keep.forEach(function(entry) {
+	curated.keep.forEach(function (entry) {
 		const item = entry.file, pack = entry.pack;
 		let meta = entry.meta;
 		const rename = (cfg.curation && cfg.curation.renames) || {};
-		if (rename[meta.uuid]) meta = Object.assign({}, meta, { name : rename[meta.uuid] });
+		if (rename[meta.uuid]) meta = Object.assign({}, meta, { name: rename[meta.uuid] });
 		const mtime = Math.floor(fs.statSync(item.path).mtimeMs);
 		const lib = sign(pack.content, privateKey, mtime);
 		const libName = meta.uuid + ".lib";
@@ -246,79 +246,79 @@ function build() {
 		// doUpdate 需要 url/sha1/source(源根地址，用来取验签公钥)
 		fs.writeFileSync(path.join(OUT, "packs", meta.uuid + ".json"),
 			JSON.stringify({
-				uuid : meta.uuid,
-				version : meta.version,
-				url : libUrl,
-				source : base,
-				sha1 : sha1
+				uuid: meta.uuid,
+				version: meta.version,
+				url: libUrl,
+				source: base,
+				sha1: sha1
 			}, null, "\t"));
 		packs.push({
-			name : meta.name,
-			author : meta.author,
-			description : meta.description || "",
-			uuid : meta.uuid,
-			version : meta.version,
-			downloadurl : libUrl,
-			updateurl : base + "packs/" + meta.uuid + ".json",
-			sha1 : sha1,
-			mtime : mtime
+			name: meta.name,
+			author: meta.author,
+			description: meta.description || "",
+			uuid: meta.uuid,
+			version: meta.version,
+			downloadurl: libUrl,
+			updateurl: base + "packs/" + meta.uuid + ".json",
+			sha1: sha1,
+			mtime: mtime
 		});
 	});
 
-	packs.sort(function(a, b) { return a.name.localeCompare(b.name, "zh"); });
+	packs.sort(function (a, b) { return a.name.localeCompare(b.name, "zh"); });
 
 	const pages = [];
 	for (let i = 0; i < packs.length; i += PACKS_PER_PAGE) pages.push(packs.slice(i, i + PACKS_PER_PAGE));
 	if (!pages.length) pages.push([]);
 
-	pages.forEach(function(list, i) {
+	pages.forEach(function (list, i) {
 		fs.writeFileSync(path.join(OUT, "index-" + i + ".json"), JSON.stringify({
-			pageNo : i,
-			sourceId : cfg.sourceId,
-			nextPage : i + 1 < pages.length ? base + "index-" + (i + 1) + ".json" : null,
-			content : list
+			pageNo: i,
+			sourceId: cfg.sourceId,
+			nextPage: i + 1 < pages.length ? base + "index-" + (i + 1) + ".json" : null,
+			content: list
 		}, null, "\t"));
 	});
 
 	// map.json：uuid → 更新信息地址。App 的「检测更新」在没有 update 字段时靠它找
 	const map = {};
-	packs.forEach(function(p) { map[p.uuid] = p.updateurl; });
+	packs.forEach(function (p) { map[p.uuid] = p.updateurl; });
 	fs.writeFileSync(path.join(OUT, "map.json"), JSON.stringify({
-		sourceId : cfg.sourceId,
-		content : map
+		sourceId: cfg.sourceId,
+		content: map
 	}, null, "\t"));
 
 	fs.writeFileSync(path.join(OUT, "verify.key"), publicKeyDer);
 	fs.writeFileSync(path.join(OUT, "info.json"), JSON.stringify({
-		sourceId : cfg.sourceId,
-		index : base + "index-0.json",
-		indexPages : pages.length,
-		indexLibs : packs.length,
-		map : base + "map.json",
-		pubkey : base + "verify.key",
-		lastUpdate : packs.reduce(function(max, p) { return Math.max(max, p.mtime || 0); }, 0) || Date.now(),
+		sourceId: cfg.sourceId,
+		index: base + "index-0.json",
+		indexPages: pages.length,
+		indexLibs: packs.length,
+		map: base + "map.json",
+		pubkey: base + "verify.key",
+		lastUpdate: packs.reduce(function (max, p) { return Math.max(max, p.mtime || 0); }, 0) || Date.now(),
 		// name 是给 App 显示的源名称（可选；没有就由 App 回退到 maintainer）
-		name : cfg.name || undefined,
-		maintainer : cfg.maintainer || "codesenlin",
-		details : cfg.details || ("共 " + packs.length + " 个拓展包")
+		name: cfg.name || undefined,
+		maintainer: cfg.maintainer || "codesenlin",
+		details: cfg.details || ("共 " + packs.length + " 个拓展包")
 	}, null, "\t"));
 
 	console.log("源地址：" + base);
 	console.log("打包完成：" + packs.length + " 个包 / " + pages.length + " 页");
 	if (skipped.length) {
 		console.log("跳过 " + skipped.length + " 个：");
-		skipped.forEach(function(s) { console.log("  · " + s); });
+		skipped.forEach(function (s) { console.log("  · " + s); });
 	}
 	console.log("");
 	console.log("包列表：");
-	packs.forEach(function(p) {
+	packs.forEach(function (p) {
 		console.log("  " + p.name + "  (" + p.uuid + ")  v" + p.version.join(".") + "  " + p.author);
 	});
 	console.log("");
 	console.log("命令助手里的源地址填：");
 	console.log("  " + base);
 	console.log("（或 info.json 的完整地址）");
-	return { packs : packs, publicKeyPem : publicKeyPem };
+	return { packs: packs, publicKeyPem: publicKeyPem };
 }
 
 function verify() {
@@ -329,14 +329,14 @@ function verify() {
 	if (!fs.existsSync(infoPath)) throw new Error("dist 还没有生成，先跑 node build.js");
 	const info = JSON.parse(fs.readFileSync(infoPath, "utf-8"));
 	const keyFile = fs.readFileSync(path.join(OUT, "verify.key"));
-	const publicKeyFromFile = crypto.createPublicKey({ key : keyFile, format : "der", type : "spki" });
-	const derFromFile = publicKeyFromFile.export({ type : "spki", format : "der" }).toString("hex");
-	const derExpected = publicKey.export({ type : "spki", format : "der" }).toString("hex");
+	const publicKeyFromFile = crypto.createPublicKey({ key: keyFile, format: "der", type: "spki" });
+	const derFromFile = publicKeyFromFile.export({ type: "spki", format: "der" }).toString("hex");
+	const derExpected = publicKey.export({ type: "spki", format: "der" }).toString("hex");
 	if (derFromFile !== derExpected) throw new Error("verify.key 与私钥不匹配");
 	let checked = 0, bad = 0;
 	for (let i = 0; i < info.indexPages; i++) {
 		const page = JSON.parse(fs.readFileSync(path.join(OUT, "index-" + i + ".json"), "utf-8"));
-		page.content.forEach(function(item) {
+		page.content.forEach(function (item) {
 			const libPath = path.join(OUT, "packs", item.uuid + ".lib");
 			if (!fs.existsSync(libPath)) {
 				console.log("  ✗ 缺文件：" + item.uuid + ".lib");

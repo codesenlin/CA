@@ -1,58 +1,60 @@
 ({
-	UNINITIALIZED : 0,
-	ONLY_COMMAND_NAME : 1,
-	UNKNOWN_COMMAND : -1,
-	COMMAND_WITH_PATTERN : 2,
-	UNKNOWN_PATTERN : -2,
+	UNINITIALIZED: 0,
+	ONLY_COMMAND_NAME: 1,
+	UNKNOWN_COMMAND: -1,
+	COMMAND_WITH_PATTERN: 2,
+	UNKNOWN_PATTERN: -2,
 
 	commandText: null,
-	input : [],
-	output : [],
-	cmdname : "",
-	prompt : [],
-	help : "",
-	patterns : [],
-	mode : 0,
-	last : {},
+	input: [],
+	output: [],
+	cmdname: "",
+	prompt: [],
+	help: "",
+	patterns: [],
+	mode: 0,
+	last: {},
 	// 枚举对象分类缓存：对象身份不变时复用 keys/descs，避免每次输入都 Object.keys
-	enumClassifyCache : null,
+	enumClassifyCache: null,
 	// jsonPro 参数的 JSON Language Service 实例缓存（按 schema 名）
-	jsonLanguageServices : {},
-	callDelay : function self(s) {
+	jsonLanguageServices: {},
+	callDelay: function self(s) {
 		if (CA.settings.iiMode != 2 && CA.settings.iiMode != 3) return;
 		if (!self.pool) {
 			self.pool = java.util.concurrent.Executors.newCachedThreadPool();
 			self.pool.setMaximumPoolSize(1);
 			self.pool.setRejectedExecutionHandler(new java.util.concurrent.ThreadPoolExecutor.DiscardPolicy());
 		}
-		self.pool.execute(function() {
+		self.pool.execute(function () {
 			CA.IntelliSense.proc(s);
 		});
 	},
-	apply : function() {
+	apply: function () {
 		if (this.ui) this.show.apply(this);
 	},
-	proc : function(s) {try {
-		if (CA.settings.iiMode != 2 && CA.settings.iiMode != 3 || CA.Library.loadingStatus) return;
-		if (this.commandText == s) return;
-		this.commandText = s;
-		var r = this.procCmd(s);
-		this.source = r.source;
-		this.cmdname = r.cmdname;
-		this.hasSlash = r.hasSlash;
-		this.strParam = r.strParam;
-		this.input = r.input;
-		this.output = r.output;
-		this.help = r.help;
-		this.prompt = r.prompt;
-		this.patterns = r.patterns;
-		//应用更改
-		this.apply();
-	} catch(e) {
-		erp(e, true);
-		Common.showTextDialog("当前命令库解析出错。\n" + e + (e instanceof Error ? "\n堆栈：\n" + e.stack : ""));
-	}},
-	procCmd : function(s) {
+	proc: function (s) {
+		try {
+			if (CA.settings.iiMode != 2 && CA.settings.iiMode != 3 || CA.Library.loadingStatus) return;
+			if (this.commandText == s) return;
+			this.commandText = s;
+			var r = this.procCmd(s);
+			this.source = r.source;
+			this.cmdname = r.cmdname;
+			this.hasSlash = r.hasSlash;
+			this.strParam = r.strParam;
+			this.input = r.input;
+			this.output = r.output;
+			this.help = r.help;
+			this.prompt = r.prompt;
+			this.patterns = r.patterns;
+			//应用更改
+			this.apply();
+		} catch (e) {
+			erp(e, true);
+			Common.showTextDialog("当前命令库解析出错。\n" + e + (e instanceof Error ? "\n堆栈：\n" + e.stack : ""));
+		}
+	},
+	procCmd: function (s) {
 		var c, ca, t, i, pp, r;
 
 		//分析命令结构 - 拆分
@@ -60,16 +62,16 @@
 		if (!c) return; //c = [匹配文本, 是否存在/, 命令名称, 是否存在命令名称后的空格, 命令参数]
 
 		r = {
-			source : c[0],
-			cmdname : c[2],
-			hasSlash : Boolean(c[1]),
-			strParam : c[4],
-			input : [],
-			output : {},
-			prompt : [],
-			patterns : [],
-			help : null,
-			canFinish : false
+			source: c[0],
+			cmdname: c[2],
+			hasSlash: Boolean(c[1]),
+			strParam: c[4],
+			input: [],
+			output: {},
+			prompt: [],
+			patterns: [],
+			help: null,
+			canFinish: false
 		};
 
 		if (c[3]) {
@@ -107,7 +109,7 @@
 				}
 			}
 			if (ca == null) {
-				ca = Object.keys(t).filter(function(e, i, a) {
+				ca = Object.keys(t).filter(function (e, i, a) {
 					return e.indexOf(c[2]) >= 0 || t[e].indexOf(c[2]) >= 0;
 				}).sort();
 			}
@@ -115,7 +117,7 @@
 			if (ca.length) {
 				//分类 - 可选命令长度大于0
 
-				ca.forEach(function(e, i, a) {
+				ca.forEach(function (e, i, a) {
 					pp = new G.SpannableStringBuilder(c[1] ? "/" : "");
 					appendSSB(pp, e, new G.ForegroundColorSpan(Common.theme.highlightcolor));
 					t = this.library.commands[e];
@@ -132,7 +134,7 @@
 						appendSSB(pp, t.description, new G.ForegroundColorSpan(Common.theme.promptcolor));
 					}
 					r.prompt.push(pp);
-					r.output[t.description ? e + " - "  + t.description : e] = (r.hasSlash ? "/" : "") + e + (t.noparams ?  "" : " ");
+					r.output[t.description ? e + " - " + t.description : e] = (r.hasSlash ? "/" : "") + e + (t.noparams ? "" : " ");
 				}, this);
 
 				t = this.library.commands[ca[0]];
@@ -156,7 +158,7 @@
 		}
 		return r;
 	},
-	procParams : function(c) {
+	procParams: function (c) {
 		var i, j, cm = this.library.commands[c.cmdname], ps, pa, ci, cp, t, f = true, k, u, ms, pp, cpl = [], nn = false, erm = [],
 			parsedParams = [], paramStart;
 
@@ -231,9 +233,9 @@
 								pp.append(this.getParamTag(pa[k], "", 2, null));
 							}
 							erm.push({
-								desp : "未结束的参数",
-								count : j,
-								pp : pp
+								desp: "未结束的参数",
+								count: j,
+								pp: pp
 							});
 							break;
 						}
@@ -254,9 +256,9 @@
 							pp.append(this.getParamTag(pa[k], "", 2, null));
 						}
 						erm.push({
-							desp : !t ? null : t.length >= 0 ? "字符多余：" + c.strParam.slice(ci - 1) : t.description,
-							count : j,
-							pp : pp
+							desp: !t ? null : t.length >= 0 ? "字符多余：" + c.strParam.slice(ci - 1) : t.description,
+							count: j,
+							pp: pp
 						});
 						break;
 						//下一个模式
@@ -271,10 +273,10 @@
 		//如果未找到正确用法
 		if (f) {
 			c.input = [];
-			erm.sort(function(a, b) {
+			erm.sort(function (a, b) {
 				return b.count - a.count;
 			});
-			erm.forEach(function(e) {
+			erm.forEach(function (e) {
 				e.pp.append("\n");
 				appendSSB(e.pp, e.desp ? e.desp : "用法不存在", new G.ForegroundColorSpan(Common.theme.criticalcolor));
 				c.prompt.push(e.pp);
@@ -292,30 +294,30 @@
 		}
 		c.mode = f ? this.UNKNOWN_PATTERN : this.COMMAND_WITH_PATTERN;
 	},
-	matchParam : function(cp, ps, parsedParams) {
+	matchParam: function (cp, ps, parsedParams) {
 		var i, r, t, t2, t3, t4;
 		switch (cp.type) {
 			case "text":
 			case "rawjson":
-			r = {
-				length : ps.length,
-				canFinish : true
-			};
-			break;
+				r = {
+					length: ps.length,
+					canFinish: true
+				};
+				break;
 
 			case "nbt":
 			case "json":
-			r = {
-				input : ["插入JSON"],
-				menu : {
-					"插入JSON" : function() {
-						CA.IntelliSense.assistJSON(cp);
-					}
-				},
-				length : ps.length,
-				canFinish : true
-			};
-			break;
+				r = {
+					input: ["插入JSON"],
+					menu: {
+						"插入JSON": function () {
+							CA.IntelliSense.assistJSON(cp);
+						}
+					},
+					length: ps.length,
+					canFinish: true
+				};
+				break;
 
 			case "jsonPro":
 				var schema = this.library.jsonSchema[cp.schema];
@@ -597,7 +599,7 @@
 				var allErrors = [];
 				// 语法错误（jsonc-parser）
 				if (jsonDoc.errors && jsonDoc.errors.length > 0) {
-					jsonDoc.errors.forEach(function(err) {
+					jsonDoc.errors.forEach(function (err) {
 						var errMsg = "JSON语法错误";
 						switch (err.error) {
 							case 1: errMsg = "非法符号"; break;
@@ -616,7 +618,7 @@
 				var validationResult = ls.doValidation(doc, jsonDoc);
 				var diagnostics = validationResult && validationResult.value ? validationResult.value : validationResult;
 				if (diagnostics && diagnostics.length > 0) {
-					diagnostics.forEach(function(d) {
+					diagnostics.forEach(function (d) {
 						if (d.severity === 1) { // Error
 							var errMsg = d.message;
 							// 这里的错误信息比较长且不友好，做个映射转换一下
@@ -646,7 +648,7 @@
 				}
 				var errorNavLabel = null;
 				if (allErrors.length > 0) {
-					allErrors.sort(function(a, b) { return a.offset - b.offset; });
+					allErrors.sort(function (a, b) { return a.offset - b.offset; });
 					var firstError = allErrors[0];
 					var pp = new G.SpannableStringBuilder();
 					appendSSB(pp, "JSON错误：" + firstError.message + " (位置: " + firstError.offset + ")", new G.ForegroundColorSpan(Common.theme.criticalcolor));
@@ -662,7 +664,7 @@
 				// CA 的 output 约定是「字符串」：proc 里会做 u + output[k]。
 				// 社区版这里给的是 { text, cursor } 对象，直接拼会变成 "[object Object]"，
 				// 所以统一降级成字符串（光标只能落在末尾，暂时放弃精确跳转）。
-				Object.keys(r.output).forEach(function(k) {
+				Object.keys(r.output).forEach(function (k) {
 					var v = r.output[k];
 					if (v && typeof v === "object" && typeof v.text === "string") {
 						r.output[k] = v.text;
@@ -672,286 +674,286 @@
 
 
 			case "status":
-			// 方块状态补全（param 形如 {"type":"status","subject":"block"}）
-			// 输入形如 [facing_direction=1, ...]，必须以 [ 开头且不跨空格
-			var recommend = {}, recommendEnums = {}, selResult, contextValue, curInput, stateSchema, pathArr, selKeys,
-				subParam, subRec, prefix, rk, ek;
-			r = {
-				length : ps.length,
-				canFinish : false,
-				recommend : {},
-				input : []
-			};
-			if (ps.charAt(0) !== "[") {
-				// 没在写方块状态
-				r.length = 0;
-				r.canFinish = true;
-				break;
-			}
-			selResult = this.parseSelectorPath(ps);
-			if (selResult.state == "complete") {
-				r.length = selResult.debug.selectorEnd;
-				r.canFinish = true;
-				return r;
-			}
-			// 上下文取上一个参数的原始值（比如 setblock 的方块 id）
-			contextValue = (parsedParams && parsedParams.length) ? parsedParams[parsedParams.length - 1] : "";
-			curInput = selResult.currentInput || "";
-			stateSchema = this.getSchemaByContext(contextValue, cp.subject);
-			if (!stateSchema) {
-				stateSchema = {};
-				r.description = "无法找到该命令的状态参数信息";
-			}
-			pathArr = selResult.stack ? selResult.stack.slice() : [];
-			selKeys = selResult.keys;
-			if (selResult.state == "wait_key") {
-				recommendEnums = this.getSelectorParamCompletions(curInput, ps, this.removeKeysFromSchema(stateSchema, selKeys), "=");
-			} else if (selResult.state == "wait_value") {
-				if (curInput.length >= 1) {
-					recommend[", - 下一个参数"] = ps + ",";
-					recommend["] - 结束参数"] = ps + "] ";
+				// 方块状态补全（param 形如 {"type":"status","subject":"block"}）
+				// 输入形如 [facing_direction=1, ...]，必须以 [ 开头且不跨空格
+				var recommend = {}, recommendEnums = {}, selResult, contextValue, curInput, stateSchema, pathArr, selKeys,
+					subParam, subRec, prefix, rk, ek;
+				r = {
+					length: ps.length,
+					canFinish: false,
+					recommend: {},
+					input: []
+				};
+				if (ps.charAt(0) !== "[") {
+					// 没在写方块状态
+					r.length = 0;
+					r.canFinish = true;
+					break;
 				}
-				if (pathArr[pathArr.length - 2] && stateSchema[pathArr[pathArr.length - 2]]) {
-					subParam = this.matchParam(stateSchema[pathArr[pathArr.length - 2]], curInput, []);
-					subRec = (subParam && (subParam.output || subParam.recommend)) || {};
-					prefix = ps.slice(0, ps.lastIndexOf("=") + 1);
-					for (rk in subRec) {
-						if (subRec.hasOwnProperty(rk)) recommendEnums[rk] = prefix + subRec[rk];
+				selResult = this.parseSelectorPath(ps);
+				if (selResult.state == "complete") {
+					r.length = selResult.debug.selectorEnd;
+					r.canFinish = true;
+					return r;
+				}
+				// 上下文取上一个参数的原始值（比如 setblock 的方块 id）
+				contextValue = (parsedParams && parsedParams.length) ? parsedParams[parsedParams.length - 1] : "";
+				curInput = selResult.currentInput || "";
+				stateSchema = this.getSchemaByContext(contextValue, cp.subject);
+				if (!stateSchema) {
+					stateSchema = {};
+					r.description = "无法找到该命令的状态参数信息";
+				}
+				pathArr = selResult.stack ? selResult.stack.slice() : [];
+				selKeys = selResult.keys;
+				if (selResult.state == "wait_key") {
+					recommendEnums = this.getSelectorParamCompletions(curInput, ps, this.removeKeysFromSchema(stateSchema, selKeys), "=");
+				} else if (selResult.state == "wait_value") {
+					if (curInput.length >= 1) {
+						recommend[", - 下一个参数"] = ps + ",";
+						recommend["] - 结束参数"] = ps + "] ";
+					}
+					if (pathArr[pathArr.length - 2] && stateSchema[pathArr[pathArr.length - 2]]) {
+						subParam = this.matchParam(stateSchema[pathArr[pathArr.length - 2]], curInput, []);
+						subRec = (subParam && (subParam.output || subParam.recommend)) || {};
+						prefix = ps.slice(0, ps.lastIndexOf("=") + 1);
+						for (rk in subRec) {
+							if (subRec.hasOwnProperty(rk)) recommendEnums[rk] = prefix + subRec[rk];
+						}
 					}
 				}
-			}
-			for (ek in recommendEnums) {
-				if (recommendEnums.hasOwnProperty(ek)) recommend[ek] = recommendEnums[ek];
-			}
-			r.recommend = recommend;
-			r.input = Object.keys(recommend);
-			break;
+				for (ek in recommendEnums) {
+					if (recommendEnums.hasOwnProperty(ek)) recommend[ek] = recommendEnums[ek];
+				}
+				r.recommend = recommend;
+				r.input = Object.keys(recommend);
+				break;
 
 			case "plain":
-			t = cp.name;
-			if (cp.prompt) t += " - " + cp.prompt;
-			r = {
-				input : [t],
-				output : {}
-			};
-			r.output[t] = cp.name;
-			if (ps.startsWith(cp.name + " ") || ps == cp.name) {
-				r.length = cp.name.length;
-				r.canFinish = true;
-			} else if (cp.name.indexOf(ps) >= 0 || cp.prompt && cp.prompt.indexOf(ps) >= 0) {
-				r.length = ps.length;
-				r.canFinish = false;
-			} else return {
-				description : "不可为" + ps
-			};
-			break;
+				t = cp.name;
+				if (cp.prompt) t += " - " + cp.prompt;
+				r = {
+					input: [t],
+					output: {}
+				};
+				r.output[t] = cp.name;
+				if (ps.startsWith(cp.name + " ") || ps == cp.name) {
+					r.length = cp.name.length;
+					r.canFinish = true;
+				} else if (cp.name.indexOf(ps) >= 0 || cp.prompt && cp.prompt.indexOf(ps) >= 0) {
+					r.length = ps.length;
+					r.canFinish = false;
+				} else return {
+					description: "不可为" + ps
+				};
+				break;
 
 			case "selector":
-			r = this.procSelector(cp, ps);
-			if (!r || !(r.length >= 0)) return r;
-			break;
+				r = this.procSelector(cp, ps);
+				if (!r || !(r.length >= 0)) return r;
+				break;
 
 			case "uint":
-			t = ps.search(" ") < 0 ? ps : ps.slice(0, ps.search(" "));
-			if (!(/^\d*$/).test(t)) return {
-				description : t + "不是自然数"
-			};
-			r = {
-				length : t.length,
-				canFinish : t.length > 0
-			};
-			break;
+				t = ps.search(" ") < 0 ? ps : ps.slice(0, ps.search(" "));
+				if (!(/^\d*$/).test(t)) return {
+					description: t + "不是自然数"
+				};
+				r = {
+					length: t.length,
+					canFinish: t.length > 0
+				};
+				break;
 
 			case "int":
-			t = ps.search(" ") < 0 ? ps : ps.slice(0, ps.search(" "));
-			if (!(/^(\+|-)?\d*$/).test(t)) return {
-				description : t + "不是整数"
-			};
-			r = {
-				length : t.length,
-				canFinish : t.length && !isNaN(t)
-			};
-			break;
+				t = ps.search(" ") < 0 ? ps : ps.slice(0, ps.search(" "));
+				if (!(/^(\+|-)?\d*$/).test(t)) return {
+					description: t + "不是整数"
+				};
+				r = {
+					length: t.length,
+					canFinish: t.length && !isNaN(t)
+				};
+				break;
 
 			case "float":
-			t = ps.search(" ") < 0 ? ps : ps.slice(0, ps.search(" "));
-			if (!(t2 = (/^(\+|-)?(\d*\.)?(\d)*$/).exec(t))) return {
-				description : t + "不是数值"
-			};
-			r = {
-				length : t.length,
-				canFinish : t.length && t2[3]
-			};
-			break;
+				t = ps.search(" ") < 0 ? ps : ps.slice(0, ps.search(" "));
+				if (!(t2 = (/^(\+|-)?(\d*\.)?(\d)*$/).exec(t))) return {
+					description: t + "不是数值"
+				};
+				r = {
+					length: t.length,
+					canFinish: t.length && t2[3]
+				};
+				break;
 
 			case "relative":
-			t = ps.search(" ") < 0 ? ps : ps.slice(0, ps.search(" "));
-			if (!(t2 = (/^(~)?((\+|-)?(\d*\.)?(\d)*)$/).exec(t))) return {
-				description : t + "不是数值"
-			};
-			r = {
-				length : t.length,
-				input : ["~ - 相对标识符"],
-				assist : {
-					"~ - 相对标识符" : "~"
-				},
-				canFinish : t2[5] || t2[1] && !t2[2].length
-			};
-			break;
+				t = ps.search(" ") < 0 ? ps : ps.slice(0, ps.search(" "));
+				if (!(t2 = (/^(~)?((\+|-)?(\d*\.)?(\d)*)$/).exec(t))) return {
+					description: t + "不是数值"
+				};
+				r = {
+					length: t.length,
+					input: ["~ - 相对标识符"],
+					assist: {
+						"~ - 相对标识符": "~"
+					},
+					canFinish: t2[5] || t2[1] && !t2[2].length
+				};
+				break;
 
 			case "position":
-			r = this.procPosition(cp, ps);
-			if (!r || !(r.length >= 0)) return r;
-			break;
+				r = this.procPosition(cp, ps);
+				if (!r || !(r.length >= 0)) return r;
+				break;
 
 			case "custom":
-			t = new RegExp(cp.input, "").exec(ps);
-			if (!t) return {
-				description : t + "不满足指定的条件"
-			};
-			r = {
-				length : t[0].length,
-				canFinish : new RegExp(cp.finish, "").test(ps)
-			};
-			break;
+				t = new RegExp(cp.input, "").exec(ps);
+				if (!t) return {
+					description: t + "不满足指定的条件"
+				};
+				r = {
+					length: t[0].length,
+					canFinish: new RegExp(cp.finish, "").test(ps)
+				};
+				break;
 
 			case "enum":
-			if (!(t = cp.list instanceof Object ? cp.list : this.library.enums[cp.list])) {
-				throw new Error("无法找到指定枚举类型");
-			}
-			r = {
-				output : {},
-				canFinish : false,
-				length : -1
-			};
-			if (Array.isArray(t)) {
-				var __ac = Accel.classifyArray(t, ps);
-				var __flags = __ac.flags, __i, __e;
-				r.length = __ac.length;
-				r.canFinish = __ac.canFinish;
-				r.input = [];
-				for (__i = 0; __i < __flags.length; __i++) {
-					if (!__flags[__i]) continue;
-					__e = t[__i];
-					r.output[__e] = __e;
-					r.input.push(__e);
+				if (!(t = cp.list instanceof Object ? cp.list : this.library.enums[cp.list])) {
+					throw new Error("无法找到指定枚举类型");
 				}
-				r.input.sort();
-			} else {
-				t2 = [];
-				r.input = [];
-				// 分类放到 Accel.classify：Java 里一次算完，JS 侧只做位测试，
-				// 不再对每个候选做两次字符串查找（没有 jar 时走等价 JS 实现）
-				var __cache = this.enumClassifyCache, __keys, __descs, __i, __e, __d, __flags, __f;
-				if (__cache && __cache.src === t) {
-					__keys = __cache.keys;
-					__descs = __cache.descs;
-				} else {
-					__keys = Object.keys(t);
-					__descs = [];
-					for (__i = 0; __i < __keys.length; __i++) __descs.push(t[__keys[__i]]);
-					this.enumClassifyCache = { src : t, keys : __keys, descs : __descs };
-				}
-				__flags = Accel.classify(__keys, __descs, ps);
-				for (__i = 0; __i < __keys.length; __i++) {
-					__f = __flags[__i];
-					if (__f === 0) continue;
-					__e = __keys[__i];
-					if (__f === 1) {
-						r.length = Math.max(r.length, __e.length);
-						r.canFinish = true;
-					} else {
-						r.length = Math.max(r.length, ps.length);
-					}
-					__d = t[__e];
-					if (__d) {
-						r.output[__e + " - " + __d] = __e;
-						r.input.push(__e + " - " + __d);
-					} else {
+				r = {
+					output: {},
+					canFinish: false,
+					length: -1
+				};
+				if (Array.isArray(t)) {
+					var __ac = Accel.classifyArray(t, ps);
+					var __flags = __ac.flags, __i, __e;
+					r.length = __ac.length;
+					r.canFinish = __ac.canFinish;
+					r.input = [];
+					for (__i = 0; __i < __flags.length; __i++) {
+						if (!__flags[__i]) continue;
+						__e = t[__i];
 						r.output[__e] = __e;
-						t2.push(__e);
+						r.input.push(__e);
 					}
+					r.input.sort();
+				} else {
+					t2 = [];
+					r.input = [];
+					// 分类放到 Accel.classify：Java 里一次算完，JS 侧只做位测试，
+					// 不再对每个候选做两次字符串查找（没有 jar 时走等价 JS 实现）
+					var __cache = this.enumClassifyCache, __keys, __descs, __i, __e, __d, __flags, __f;
+					if (__cache && __cache.src === t) {
+						__keys = __cache.keys;
+						__descs = __cache.descs;
+					} else {
+						__keys = Object.keys(t);
+						__descs = [];
+						for (__i = 0; __i < __keys.length; __i++) __descs.push(t[__keys[__i]]);
+						this.enumClassifyCache = { src: t, keys: __keys, descs: __descs };
+					}
+					__flags = Accel.classify(__keys, __descs, ps);
+					for (__i = 0; __i < __keys.length; __i++) {
+						__f = __flags[__i];
+						if (__f === 0) continue;
+						__e = __keys[__i];
+						if (__f === 1) {
+							r.length = Math.max(r.length, __e.length);
+							r.canFinish = true;
+						} else {
+							r.length = Math.max(r.length, ps.length);
+						}
+						__d = t[__e];
+						if (__d) {
+							r.output[__e + " - " + __d] = __e;
+							r.input.push(__e + " - " + __d);
+						} else {
+							r.output[__e] = __e;
+							t2.push(__e);
+						}
+					}
+					r.input.sort(); t2.sort(); r.input = r.input.concat(t2);
 				}
-				r.input.sort(); t2.sort(); r.input = r.input.concat(t2);
-			}
-			if (r.length < 0) {
-				r.description = ps + "不是有效的元素";
-			}
-			break;
+				if (r.length < 0) {
+					r.description = ps + "不是有效的元素";
+				}
+				break;
 
 			case "command":
-			t = this.procCmd(ps);
-			if (!t) return {
-				description : "不是合法的命令格式"
-			};
-			t2 = t.prompt[0];
-			t3 = t2.toString().indexOf("\n");
-			r = {
-				length : t.mode < 0 ? -1 : t.source.length,
-				input : t.input,
-				output : {},
-				menu : {},
-				canFinish : t.canFinish,
-				description : String(t2.subSequence(t3 + 1, t2.length())),
-				tag : t2.subSequence(0, t3)
-			}
-			for (i in t.output) {
-				if (t.output[i] instanceof Function) {
-					r.menu[i] = t.output[i];
-				} else {
-					r.output[i] = t.output[i];
+				t = this.procCmd(ps);
+				if (!t) return {
+					description: "不是合法的命令格式"
+				};
+				t2 = t.prompt[0];
+				t3 = t2.toString().indexOf("\n");
+				r = {
+					length: t.mode < 0 ? -1 : t.source.length,
+					input: t.input,
+					output: {},
+					menu: {},
+					canFinish: t.canFinish,
+					description: String(t2.subSequence(t3 + 1, t2.length())),
+					tag: t2.subSequence(0, t3)
 				}
-			}
-			break;
+				for (i in t.output) {
+					if (t.output[i] instanceof Function) {
+						r.menu[i] = t.output[i];
+					} else {
+						r.output[i] = t.output[i];
+					}
+				}
+				break;
 
 			case "subcommand":
-			t = {
-				source : cp.mainCommand + " " + ps,
-				cmdname : cp.mainCommand,
-				hasSlash: false,
-				strParam : ps,
-				input : [],
-				output : {},
-				prompt : [],
-				patterns : [],
-				help : null,
-				canFinish : false
-			};
-			this.procParams(t);
-			t2 = t.prompt[0];
-			t3 = t2.toString().indexOf("\n");
-			r = {
-				length : t.mode < 0 ? -1 : ps.length,
-				input : t.input,
-				output : {},
-				menu : {},
-				canFinish : t.canFinish,
-				description : String(t2.subSequence(t3 + 1, t2.length())),
-				tag : t2.subSequence(t.cmdname.length + 1, t3)
-			}
-			for (i in t.output) {
-				if (t.output[i] instanceof Function) {
-					r.menu[i] = t.output[i];
-				} else {
-					r.output[i] = t.output[i].slice(t.cmdname.length + 1);
+				t = {
+					source: cp.mainCommand + " " + ps,
+					cmdname: cp.mainCommand,
+					hasSlash: false,
+					strParam: ps,
+					input: [],
+					output: {},
+					prompt: [],
+					patterns: [],
+					help: null,
+					canFinish: false
+				};
+				this.procParams(t);
+				t2 = t.prompt[0];
+				t3 = t2.toString().indexOf("\n");
+				r = {
+					length: t.mode < 0 ? -1 : ps.length,
+					input: t.input,
+					output: {},
+					menu: {},
+					canFinish: t.canFinish,
+					description: String(t2.subSequence(t3 + 1, t2.length())),
+					tag: t2.subSequence(t.cmdname.length + 1, t3)
 				}
-			}
-			break;
+				for (i in t.output) {
+					if (t.output[i] instanceof Function) {
+						r.menu[i] = t.output[i];
+					} else {
+						r.output[i] = t.output[i].slice(t.cmdname.length + 1);
+					}
+				}
+				break;
 
 			case "string":
-			t = ps.search(" ") < 0 ? ps : ps.slice(0, ps.search(" "));
-			r = {
-				length : t.length,
-				canFinish : t.length > 0
-			};
-			break;
+				t = ps.search(" ") < 0 ? ps : ps.slice(0, ps.search(" "));
+				r = {
+					length: t.length,
+					canFinish: t.length > 0
+				};
+				break;
 
 			default:
-			t = ps.search(" ") < 0 ? ps : ps.slice(0, ps.search(" "));
-			r = {
-				length : t.length,
-				canFinish : true
-			};
+				t = ps.search(" ") < 0 ? ps : ps.slice(0, ps.search(" "));
+				r = {
+					length: t.length,
+					canFinish: true
+				};
 		}
 		if (!cp.suggestion) return r;
 		t = cp.suggestion instanceof Object ? cp.suggestion : this.library.enums[cp.suggestion];
@@ -959,81 +961,81 @@
 		this.matchString(t2, t, r);
 		return r;
 	},
-	getParamTag : function(cp, ms, mt, md) { //匹配模式，匹配字符串，匹配类型（已输入、输入中、未输入、出错），matchParam返回的匹配数据
+	getParamTag: function (cp, ms, mt, md) { //匹配模式，匹配字符串，匹配类型（已输入、输入中、未输入、出错），matchParam返回的匹配数据
 		var z = cp.name, t, t2;
 		if (mt == 1 || mt == 3) {
 			switch (cp.type) {
 				case "int":
-				z += ":整数";
-				break;
+					z += ":整数";
+					break;
 
 				case "uint":
-				z += ":正整数";
-				break;
+					z += ":正整数";
+					break;
 
 				case "float":
 				case "relative":
-				z += ":数值";
-				break;
+					z += ":数值";
+					break;
 
 				case "nbt":
-				z += ":数据标签";
-				break;
+					z += ":数据标签";
+					break;
 
 				case "rawjson":
-				z += ":文本JSON";
-				break;
+					z += ":文本JSON";
+					break;
 
 				case "json":
-				z += ":JSON";
-				break;
+					z += ":JSON";
+					break;
 
 				case "selector":
-				z += ":实体";
-				break;
+					z += ":实体";
+					break;
 
 				case "enum":
-				z += ":列表";
-				break;
+					z += ":列表";
+					break;
 
 				case "plain":
-				break;
+					break;
 
 				case "custom":
-				if (cp.vtype) z += ":" + cp.vtype;
-				break;
+					if (cp.vtype) z += ":" + cp.vtype;
+					break;
 
 				case "position":
-				if (mt == 3) {
-					z += ":x y z";
+					if (mt == 3) {
+						z += ":x y z";
+						break;
+					}
+					t2 = md.uv ? ["左", "上", "前"] : ["x", "y", "z"];
+					t = (/(\S*)\s*(\S*)\s*(\S*)/).exec(ms);
+					if (t[1]) t2[0] = t[1];
+					if (t[2]) t2[1] = t[2];
+					if (t[3]) t2[2] = t[3];
+					z += ":" + t2.join(" ");
 					break;
-				}
-				t2 = md.uv ? ["左", "上", "前"] : ["x", "y", "z"];
-				t = (/(\S*)\s*(\S*)\s*(\S*)/).exec(ms);
-				if (t[1]) t2[0] = t[1];
-				if (t[2]) t2[1] = t[2];
-				if (t[3]) t2[2] = t[3];
-				z += ":" + t2.join(" ");
-				break;
 
 				case "command":
-				if (md) {
-					return md.tag;
-				}
-				z += ":命令";
-				break;
+					if (md) {
+						return md.tag;
+					}
+					z += ":命令";
+					break;
 
 				case "subcommand":
-				if (md) {
-					return md.tag;
-				}
-				z += ":子命令";
-				break;
+					if (md) {
+						return md.tag;
+					}
+					z += ":子命令";
+					break;
 
 				case "text":
 				default:
-				z += ":文本";
-				break;
+					z += ":文本";
+					break;
 			}
 		}
 		if (cp.type != "plain" && !cp.optional && !cp.canIgnore && !cp.chainOptional) z = "<" + z + ">";
@@ -1053,18 +1055,18 @@
 		}
 		return z;
 	},
-	procSelector : function(cp, ps) {
+	procSelector: function (cp, ps) {
 		var c = (/^@(p|e|a|r|s|)(\[)?([^\s\]]*)(\])?(\s)?/).exec(ps), ml, t, i, pl, ms, rx, ls, cp2, mr, bb, sk = false;
 		//[全文, 选择器类型, "[", 修饰符, "]", 后置空格]
 		if (!c) {
 			//正在输入@ / 输入的是玩家名
 			t = {
-				length : (ms = ps.search(" ") < 0 ? ps : ps.slice(0, ps.search(" "))).length,
-				recommend : {},
-				canFinish : ps.length > 0
+				length: (ms = ps.search(" ") < 0 ? ps : ps.slice(0, ps.search(" "))).length,
+				recommend: {},
+				canFinish: ps.length > 0
 			};
 			if (!(/^[^@\^~]*$/).test(ms) || ms.length && !isNaN(ms)) return {
-				description : ms + "不是合法的玩家名或选择器"
+				description: ms + "不是合法的玩家名或选择器"
 			};
 			if (cp.target == "entity" || cp.target == "player") {
 				t.recommend["@a - 选择所有玩家"] = "@a";
@@ -1085,36 +1087,36 @@
 		} else if (c[1].length < 1) {
 			//正在输入p/e/a/r
 			t = {
-				length : 1,
-				recommend : {
-					"@a - 选择所有玩家" : "@a",
-					"@p - 选择距离最近的玩家" : "@p",
-					"@r - 选择随机玩家" : "@r",
-					"@s - 选择命令执行者" : "@s"
+				length: 1,
+				recommend: {
+					"@a - 选择所有玩家": "@a",
+					"@p - 选择距离最近的玩家": "@p",
+					"@r - 选择随机玩家": "@r",
+					"@s - 选择命令执行者": "@s"
 				},
-				canFinish : false
+				canFinish: false
 			};
 			if (cp.target == "entity") t.recommend["@e - 选择所有实体"] = "@e";
 			t.input = Object.keys(t.recommend);
 		} else if (c[1].length == 1 && !c[2]) {
 			//正在输入[ / 结束
 			t = {
-				length : 2,
-				assist : {
-					"[...] - 插入参数" : "["
+				length: 2,
+				assist: {
+					"[...] - 插入参数": "["
 				},
-				input : ["[...] - 插入参数"],
-				canFinish : true
+				input: ["[...] - 插入参数"],
+				canFinish: true
 			};
-		} else if(c[2] && !c[4] && !c[5]) {
+		} else if (c[2] && !c[4] && !c[5]) {
 			//正在输入修饰符
 			t = {
-				length : 3 + c[3].length,
-				recommend : {},
-				output : {},
-				menu : {},
-				input : [],
-				canFinish : false
+				length: 3 + c[3].length,
+				recommend: {},
+				output: {},
+				menu: {},
+				input: [],
+				canFinish: false
 			};
 			ml = c[3].split(",");
 			pl = {};
@@ -1130,7 +1132,7 @@
 			if (!sk) rx = /^([^\=]+)(\=)(.*)$/;
 			for (i in ml) { //检验之前的参数，此处需更新
 				if (!(ms = rx.exec(ml[i]))) return {
-					description : ml[i] + "不是合法的选择器参数对"
+					description: ml[i] + "不是合法的选择器参数对"
 				};
 				if (sk) continue;
 				if (!(cp2 = this.library.selectors[ms[1]])) continue;
@@ -1140,15 +1142,15 @@
 				mr = this.matchParam(cp2, ms[3] + " ");
 				if (!mr || !(mr.length >= 0)) {
 					return {
-						description : mr ? mr.description : ml[i] + "不是合法的选择器参数对"
+						description: mr ? mr.description : ml[i] + "不是合法的选择器参数对"
 					};
 				} else if (mr.length < ms[3].length || !mr.canFinish) return {
-					description : "未结束的选择器参数：" + ms[3]
+					description: "未结束的选择器参数：" + ms[3]
 				};
 			}
 			rx = sk ? /^(\+|-)?(\d*\.)?\d*$/ : /^([^\=]*)(\=)?(.*)$/;
 			if (!(ms = rx.exec(ls))) return {
-				description : ls + "不是合法的选择器参数对"
+				description: ls + "不是合法的选择器参数对"
 			};
 			if (sk) { // 特殊处理
 				t.recommend[", - 下一个参数"] = bb + ls + ",";
@@ -1158,7 +1160,7 @@
 			}
 			if (ms[2]) { // 输入修饰符内容
 				if (!ms[1]) return {
-					description : ls + "缺少等号"
+					description: ls + "缺少等号"
 				};
 				bb += ms[1] + ms[2];
 				if (cp2 = this.library.selectors[ms[1]]) {
@@ -1175,7 +1177,7 @@
 					}
 					mr = this.matchParam(cp2, ms[3]);
 					if (!mr || mr.length < ms[3].length) return {
-						description : mr ? mr.description : ls + "不是合法的选择器参数对"
+						description: mr ? mr.description : ls + "不是合法的选择器参数对"
 					};
 					if (mr.canFinish) {
 						t.recommend[", - 下一个参数"] = bb + ms[3] + ",";
@@ -1197,7 +1199,7 @@
 					t.recommend["= - 输入参数"] = bb + ms[1] + "=";
 					t.input.push("= - 输入参数");
 				}
-				Object.keys(this.library.selectors).forEach(function(e, i, a) {
+				Object.keys(this.library.selectors).forEach(function (e, i, a) {
 					if (!e.startsWith(ms[1])) return;
 					if (pl[e]) return;
 					t.recommend[e + " - " + this.library.selectors[e].name] = bb + e + "=";
@@ -1207,33 +1209,33 @@
 		} else if (c[4]) {
 			//输入完毕
 			t = {
-				length : (ms = ps.search(" ") < 0 ? ps : ps.slice(0, ps.search(" "))).length,
-				canFinish : true
+				length: (ms = ps.search(" ") < 0 ? ps : ps.slice(0, ps.search(" "))).length,
+				canFinish: true
 			};
 		} else return {
-			description : c[0] + "不是合法的选择器"
+			description: c[0] + "不是合法的选择器"
 		};
 		return t;
 	},
-	procPosition : function(cp, ps) {
+	procPosition: function (cp, ps) {
 		var l = ps.split(/\s+/), f = true, uv = false, i, n = Math.min(l.length, 3), t, pp, t2, t3;
 		for (i = 0; i < n; i++) {
 			if (i == 0 && l[0].startsWith("^") && CA.hasFeature("enableLocalCoord")) uv = true;
 			if (!(t = (uv ? /^(?:(\^)((\+|-)?(\d*\.)?\d*))?$/ : /^(~)?((\+|-)?(\d*\.)?\d*)$/).exec(l[i]))) return {
-				description : l[i] + "不是合法的坐标值"
+				description: l[i] + "不是合法的坐标值"
 			};
 			if ((!t[1] || t[2]) && !(/^(\+|-)?(\d*\.)?\d+$/).test(t[2])) if (i == n - 1) {
 				f = false;
 			} else return {
-				description : l[i] + "不是合法的坐标值"
+				description: l[i] + "不是合法的坐标值"
 			};
 		}
 		t = {
-			length : n == 3 && l[2].length > 0 ? (/^\S+\s+\S+\s+\S+/).exec(ps)[0].length : ps.length,
-			input : [],
-			assist : {},
-			canFinish : f && n == 3,
-			uv : uv
+			length: n == 3 && l[2].length > 0 ? (/^\S+\s+\S+\s+\S+/).exec(ps)[0].length : ps.length,
+			input: [],
+			assist: {},
+			canFinish: f && n == 3,
+			uv: uv
 		}
 		if (l[n - 1].length > 0) {
 			if (n < 3) {
@@ -1273,28 +1275,28 @@
 		} else MCAdapter.applySense(t);
 		return t;
 	},
-	matchString : function(ps, a, r) {
+	matchString: function (ps, a, r) {
 		// 匹配实现在 modules/Accel.js：有 jar 走 Java，没有走那里的等价 JS 实现
 		return Accel.matchString(ps, a, r);
 	},
-	assistJSON : function(param) {
+	assistJSON: function (param) {
 		CA.Assist.editParamJSON({
-			param : param
-		}, function(text) {
+			param: param
+		}, function (text) {
 			CA.cmd.getText().append(text);
 		});
 	},
-	showHelp : function() {
+	showHelp: function () {
 		var pp = new G.SpannableStringBuilder();
 		this.source = "/help";
 		this.cmdname = "help";
 		this.hasSlash = true;
 		this.strParam = "";
 		this.output = {
-			"设置" : function() {
+			"设置": function () {
 				CA.showSettings();
 			},
-			"关于命令助手..." : function() {
+			"关于命令助手...": function () {
 				if (CA.settings.splitScreenMode) return;
 				CA.showAssist.linear.setTranslationX(CA.showAssist.tx = -CA.showAssist.screenWidth);
 				CA.showAssist.hCheck();
@@ -1303,17 +1305,17 @@
 				animation.setDuration(200);
 				CA.showAssist.linear.startAnimation(animation);
 			},
-			"查看中文Wiki" : function() {
+			"查看中文Wiki": function () {
 				try {
 					AndroidBridge.startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://minecraft-zh.gamepedia.com/%E5%91%BD%E4%BB%A4"))
 						.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
-				} catch(e) {
+				} catch (e) {
 					Common.showWebViewDialog({
-						url : "https://minecraft-zh.gamepedia.com/%E5%91%BD%E4%BB%A4"
+						url: "https://minecraft-zh.gamepedia.com/%E5%91%BD%E4%BB%A4"
 					});
 				}
 			},
-			"意见反馈" : function() {
+			"意见反馈": function () {
 				GiteeFeedback.showFeedbacks();
 			}
 		};
@@ -1325,105 +1327,129 @@
 		this.patterns = [];
 		return this.apply();
 	},
-	show : function self() {G.ui(function() {try {
-		if (CA.IntelliSense.ui) return;
-		if (!self.prompt) {
-			self.adptcon = null;
-			self.apply = function(z) {G.ui(function() {try {
-				self.prompt.setText(z.prompt[0] || "");
-				try {
-					new java.net.URL(z.help);
-					CA.showAssist.postHelp(0, z.help);
-				} catch(e) {
-					CA.showAssist.postHelp(1, z.help || "暂时没有帮助，以后会加上的啦");
-				}
-				if (self.adptcon) {
-					self.adptcon.setArray(z.input);
-				} else {
-					var a = new SimpleListAdapter(z.input.slice(), self.vmaker, self.vbinder, null, true);
-					self.adptcon = SimpleListAdapter.getController(a);
-					self.list.setAdapter(a);
-				}
-			} catch(e) {erp(e)}})}
-			self.vmaker = function(holder) {
-				var view = new G.TextView(ctx);
-				view.setLayoutParams(new G.AbsListView.LayoutParams(-1, -2));
-				Common.applyStyle(view, "textview_default", 3);
-				return view;
-			}
-			self.vbinder = function(holder, s, i, a) {
-				if (self.keep) {
-					holder.self.setPadding(15 * G.dp, 15 * G.dp, 15 * G.dp, 15 * G.dp);
-				} else {
-					holder.self.setPadding(15 * G.dp, 2 * G.dp, 15 * G.dp, 2 * G.dp);
-				}
-				holder.self.setText(s);
-			}
-			self.prompt = new G.TextView(ctx);
-			self.prompt.setLayoutParams(new G.AbsListView.LayoutParams(-1, -2));
-			self.prompt.setPadding(20 * G.dp, 10 * G.dp, 20 * G.dp, 10 * G.dp);
-			self.prompt.setTypeface(G.Typeface.MONOSPACE || G.Typeface.DEFAULT);
-			self.prompt.setLineSpacing(10, 1);
-			Common.applyStyle(self.prompt, "textview_default", 2);
-			self.list = new G.ListView(ctx);
-			self.list.setOnItemClickListener(new G.AdapterView.OnItemClickListener({onItemClick : function(parent, view, pos, id) {try {
-				if (pos == 0) {
-					CA.IntelliSense.showMoreUsage();
-					return;
-				}
-				var a = CA.IntelliSense.output[CA.IntelliSense.input[pos - parent.getHeaderViewsCount()]];
-				if (a instanceof Function) {
-					a();
-				} else if (a) {
-					CA.cmd.setText(String(a));
-					CA.showGen.activate(false);
-				}
-			} catch(e) {erp(e)}}}));
-			self.list.setOnItemLongClickListener(new G.AdapterView.OnItemLongClickListener({onItemLongClick : function(parent, view, pos, id) {try {
-				if (pos == 0) {
-					CA.IntelliSense.showMoreUsage();
-					return true;
-				}
-				var a = CA.IntelliSense.output[CA.IntelliSense.input[pos - parent.getHeaderViewsCount()]];
-				if (a && !(a instanceof Function)) {
-					var rect, metrics = Common.getMetrics();
-					if (self.lastToast) self.lastToast.cancel();
-					self.lastToast = G.Toast.makeText(ctx, String(a), 0);
-					view.getGlobalVisibleRect(rect = new G.Rect());
-					self.lastToast.setGravity(G.Gravity.CENTER, rect.centerX() - metrics[0] / 2, rect.centerY() - metrics[1] / 2);
-					self.lastToast.show();
-				}
-				return true;
-			} catch(e) {return erp(e), true}}}));
-			self.list.addOnLayoutChangeListener(new G.View.OnLayoutChangeListener({onLayoutChange : function(v, l, t, r, b, ol, ot, or, ob) {try {
-				var t = (b - t > Common.theme.textsize[3] * G.sp * 8) || CA.settings.keepWhenIME;
-				if (self.keep == t) return;
-				self.keep = t;
-				if (t) {
+	show: function self() {
+		G.ui(function () {
+			try {
+				if (CA.IntelliSense.ui) return;
+				if (!self.prompt) {
+					self.adptcon = null;
+					self.apply = function (z) {
+						G.ui(function () {
+							try {
+								self.prompt.setText(z.prompt[0] || "");
+								try {
+									new java.net.URL(z.help);
+									CA.showAssist.postHelp(0, z.help);
+								} catch (e) {
+									CA.showAssist.postHelp(1, z.help || "暂时没有帮助，以后会加上的啦");
+								}
+								if (self.adptcon) {
+									self.adptcon.setArray(z.input);
+								} else {
+									var a = new SimpleListAdapter(z.input.slice(), self.vmaker, self.vbinder, null, true);
+									self.adptcon = SimpleListAdapter.getController(a);
+									self.list.setAdapter(a);
+								}
+							} catch (e) { erp(e) }
+						})
+					}
+					self.vmaker = function (holder) {
+						var view = new G.TextView(ctx);
+						view.setLayoutParams(new G.AbsListView.LayoutParams(-1, -2));
+						Common.applyStyle(view, "textview_default", 3);
+						return view;
+					}
+					self.vbinder = function (holder, s, i, a) {
+						if (self.keep) {
+							holder.self.setPadding(15 * G.dp, 15 * G.dp, 15 * G.dp, 15 * G.dp);
+						} else {
+							holder.self.setPadding(15 * G.dp, 2 * G.dp, 15 * G.dp, 2 * G.dp);
+						}
+						holder.self.setText(s);
+					}
+					self.prompt = new G.TextView(ctx);
+					self.prompt.setLayoutParams(new G.AbsListView.LayoutParams(-1, -2));
 					self.prompt.setPadding(20 * G.dp, 10 * G.dp, 20 * G.dp, 10 * G.dp);
-				} else {
-					self.prompt.setPadding(20 * G.dp, 2 * G.dp, 20 * G.dp, 2 * G.dp);
+					self.prompt.setTypeface(G.Typeface.MONOSPACE || G.Typeface.DEFAULT);
+					self.prompt.setLineSpacing(10, 1);
+					Common.applyStyle(self.prompt, "textview_default", 2);
+					self.list = new G.ListView(ctx);
+					self.list.setOnItemClickListener(new G.AdapterView.OnItemClickListener({
+						onItemClick: function (parent, view, pos, id) {
+							try {
+								if (pos == 0) {
+									CA.IntelliSense.showMoreUsage();
+									return;
+								}
+								var a = CA.IntelliSense.output[CA.IntelliSense.input[pos - parent.getHeaderViewsCount()]];
+								if (a instanceof Function) {
+									a();
+								} else if (a) {
+									CA.cmd.setText(String(a));
+									CA.showGen.activate(false);
+								}
+							} catch (e) { erp(e) }
+						}
+					}));
+					self.list.setOnItemLongClickListener(new G.AdapterView.OnItemLongClickListener({
+						onItemLongClick: function (parent, view, pos, id) {
+							try {
+								if (pos == 0) {
+									CA.IntelliSense.showMoreUsage();
+									return true;
+								}
+								var a = CA.IntelliSense.output[CA.IntelliSense.input[pos - parent.getHeaderViewsCount()]];
+								if (a && !(a instanceof Function)) {
+									var rect, metrics = Common.getMetrics();
+									if (self.lastToast) self.lastToast.cancel();
+									self.lastToast = G.Toast.makeText(ctx, String(a), 0);
+									view.getGlobalVisibleRect(rect = new G.Rect());
+									self.lastToast.setGravity(G.Gravity.CENTER, rect.centerX() - metrics[0] / 2, rect.centerY() - metrics[1] / 2);
+									self.lastToast.show();
+								}
+								return true;
+							} catch (e) { return erp(e), true }
+						}
+					}));
+					self.list.addOnLayoutChangeListener(new G.View.OnLayoutChangeListener({
+						onLayoutChange: function (v, l, t, r, b, ol, ot, or, ob) {
+							try {
+								var t = (b - t > Common.theme.textsize[3] * G.sp * 8) || CA.settings.keepWhenIME;
+								if (self.keep == t) return;
+								self.keep = t;
+								if (t) {
+									self.prompt.setPadding(20 * G.dp, 10 * G.dp, 20 * G.dp, 10 * G.dp);
+								} else {
+									self.prompt.setPadding(20 * G.dp, 2 * G.dp, 20 * G.dp, 2 * G.dp);
+								}
+								v.post(function () { CA.IntelliSense.apply() });
+							} catch (e) { erp(e) }
+						}
+					}));
+					self.list.addHeaderView(self.prompt);
+					self.list.setLayoutParams(new G.FrameLayout.LayoutParams(-1, -1));
+					if (G.style == "Material") { //Fixed：Android 5.0以下FastScroller会尝试将RhinoListAdapter强转为BaseAdapter
+						self.list.setFastScrollEnabled(true);
+						self.list.setFastScrollAlwaysVisible(false);
+					}
+					CA.showAssist.initContent(self.list);
+					PWM.registerResetFlag(CA.IntelliSense, "ui");
+					PWM.registerResetFlag(self, "prompt");
 				}
-				v.post(function() {CA.IntelliSense.apply()});
-			} catch(e) {erp(e)}}}));
-			self.list.addHeaderView(self.prompt);
-			self.list.setLayoutParams(new G.FrameLayout.LayoutParams(-1, -1));
-			if (G.style == "Material") { //Fixed：Android 5.0以下FastScroller会尝试将RhinoListAdapter强转为BaseAdapter
-				self.list.setFastScrollEnabled(true);
-				self.list.setFastScrollAlwaysVisible(false);
-			}
-			CA.showAssist.initContent(self.list);
-			PWM.registerResetFlag(CA.IntelliSense, "ui");
-			PWM.registerResetFlag(self, "prompt");
-		}
-		CA.showAssist.con.addView(CA.IntelliSense.ui = self.list);
-	} catch(e) {erp(e)}})},
-	hide : function() {G.ui(function() {try {
-		if (!CA.IntelliSense.ui) return;
-		CA.showAssist.con.removeView(CA.IntelliSense.ui);
-		CA.IntelliSense.ui = null;
-	} catch(e) {erp(e)}})},
-	showMoreUsage : function() {
+				CA.showAssist.con.addView(CA.IntelliSense.ui = self.list);
+			} catch (e) { erp(e) }
+		})
+	},
+	hide: function () {
+		G.ui(function () {
+			try {
+				if (!CA.IntelliSense.ui) return;
+				CA.showAssist.con.removeView(CA.IntelliSense.ui);
+				CA.IntelliSense.ui = null;
+			} catch (e) { erp(e) }
+		})
+	},
+	showMoreUsage: function () {
 		var pp = new G.SpannableStringBuilder(), i, l = CA.IntelliSense.prompt.length;
 		pp.append(this.prompt[0]);
 		for (i = 1; i < l; i++) {
@@ -1433,7 +1459,7 @@
 		Common.showTextDialog(pp);
 	},
 
-	getParserCompletions: function(parserType, ps, cursorOffset, node) {
+	getParserCompletions: function (parserType, ps, cursorOffset, node) {
 		var valueStart, valueEnd, value;
 		if (node && (node.type === 'string' || node.type === 'number' || node.type === 'boolean' || node.type === 'null')) {
 			valueStart = node.offset;

@@ -16,11 +16,11 @@ MapScript.loadModule("QuickAccel", (function () {
 	// 基准函数（纯 JS、无 Java 依赖；结果要稳定便于校验）
 	r.benchSource =
 		"function bench(n) {" +
-			"var a = [], i, s = 0;" +
-			"for (i = 0; i < n; i++) a.push((i * 2654435761) % 1000003);" +
-			"a.sort(function (x, y) { return x - y; });" +
-			"for (i = 0; i < a.length; i++) s = (s + a[i] * (i + 1)) % 1000000007;" +
-			"return s;" +
+		"var a = [], i, s = 0;" +
+		"for (i = 0; i < n; i++) a.push((i * 2654435761) % 1000003);" +
+		"a.sort(function (x, y) { return x - y; });" +
+		"for (i = 0; i < a.length; i++) s = (s + a[i] * (i + 1)) % 1000000007;" +
+		"return s;" +
 		"}";
 
 	r.runBench = function (n) {
@@ -53,13 +53,13 @@ MapScript.loadModule("QuickAccel", (function () {
 	// worker 里缓存 command_snap（只同步一次），之后每次只传前缀、回传匹配数组
 	r.matchSource =
 		"function matchCommands(prefix) {" +
-			"var t = globalThis.__commandSnap, out = [], k;" +
-			"if (!t) return [];" +
-			"for (k in t) {" +
-				"if (k.indexOf(prefix) >= 0 || String(t[k]).indexOf(prefix) >= 0) out.push(k);" +
-			"}" +
-			"out.sort();" +
-			"return out;" +
+		"var t = globalThis.__commandSnap, out = [], k;" +
+		"if (!t) return [];" +
+		"for (k in t) {" +
+		"if (k.indexOf(prefix) >= 0 || String(t[k]).indexOf(prefix) >= 0) out.push(k);" +
+		"}" +
+		"out.sort();" +
+		"return out;" +
 		"}";
 
 	// 其余无 jar 回退用的纯计算函数。数据由 quickWorkerSetVar 缓存一次，

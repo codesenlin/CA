@@ -1,5 +1,5 @@
 MapScript.loadModule("DexPlugin", {
-	load : function(packageName, mainClass) {
+	load: function (packageName, mainClass) {
 		var r, pi, dir, cx, cl;
 		try {
 			pi = ctx.getPackageManager().getPackageInfo(packageName, 0);
@@ -11,7 +11,7 @@ MapScript.loadModule("DexPlugin", {
 				null,
 				cx.getApplicationClassLoader()
 			);
-		} catch(e) {Log.e(e)}
+		} catch (e) { Log.e(e) }
 		if (!cl) return null;
 		r = Object.create(this);
 		r.classes = {};
@@ -20,7 +20,7 @@ MapScript.loadModule("DexPlugin", {
 		if (mainClass) r.mainClass = r.get(mainClass);
 		return r;
 	},
-	get : function(className) {
+	get: function (className) {
 		var cx, cls;
 		if (className) {
 			if (className in this.classes) {
@@ -29,7 +29,7 @@ MapScript.loadModule("DexPlugin", {
 				try {
 					cx = org.mozilla.javascript.Context.getCurrentContext();
 					cls = cx.getWrapFactory().wrapJavaClass(cx, MapScript.global, this.classLoader.loadClass(className));
-				} catch(e) {Log.e(e)}
+				} catch (e) { Log.e(e) }
 				this.classes[className] = cls;
 			}
 		} else {

@@ -12,16 +12,16 @@ MapScript.loadModule("L", (function self(defaultContext) {
 	// 不能用 instanceof：Rhino 1.7 静默返回 false，1.9 按 ES6 规范抛 TypeError。
 	// 判定改用 isPrototypeOf。
 	var LHolder = {
-		get : function(name) {
+		get: function (name) {
 			return name in this.data ? this.data[name] : this.parent ? this.parent.get(name) : undefined;
 		},
-		getAsTopLevel : function(name) {
+		getAsTopLevel: function (name) {
 			return this.data[name];
 		},
-		getData : function() {
+		getData: function () {
 			return this.data;
 		},
-		getChildren : function() {
+		getChildren: function () {
 			var p = this, i, r = [], a;
 			while (p) {
 				if (p.data.children) {
@@ -34,7 +34,7 @@ MapScript.loadModule("L", (function self(defaultContext) {
 			}
 			return r;
 		},
-		flatten : function(target) {
+		flatten: function (target) {
 			var i;
 			if (!target) target = {};
 			if (this.parent) this.parent.flatten(target);
@@ -44,14 +44,14 @@ MapScript.loadModule("L", (function self(defaultContext) {
 			return target;
 		}
 	}, LValue = {
-		get : function(modelContext) {
+		get: function (modelContext) {
 			if (this.getter) {
 				return this.getter(modelContext.data);
 			} else if (this.field) {
 				return modelContext.data[this.field];
 			} else return modelContext.data;
 		},
-		fill : function(obj, modelContext) {
+		fill: function (obj, modelContext) {
 			var i, r;
 			if (!this.isAbstract(obj)) return obj;
 			if (LValue.isPrototypeOf(obj)) return obj.get(modelContext);
@@ -70,7 +70,7 @@ MapScript.loadModule("L", (function self(defaultContext) {
 			}
 			return obj;
 		},
-		isAbstract : function isAbstract(obj) {
+		isAbstract: function isAbstract(obj) {
 			var i;
 			if (LValue.isPrototypeOf(obj)) return true;
 			if (obj instanceof Object) {
@@ -111,7 +111,7 @@ MapScript.loadModule("L", (function self(defaultContext) {
 	function classKeyOf(cls) {
 		try {
 			if (cls && cls.__name) return cls.__name;
-		} catch(e) {/* Rhino 的 NativeJavaClass 没有 __name，访问会抛异常 */}
+		} catch (e) {/* Rhino 的 NativeJavaClass 没有 __name，访问会抛异常 */ }
 		return String(cls);
 	}
 	function findDeclaredMethod(cls, params, parent) {
@@ -126,7 +126,7 @@ MapScript.loadModule("L", (function self(defaultContext) {
 	function findDeclaredMethod0(cls, params, parent) {
 		try {
 			return cls.getDeclaredMethod.apply(cls, params);
-		} catch(e) {/*Class not found*/}
+		} catch (e) {/*Class not found*/ }
 		if (!parent) parent = java.lang.Object;
 		if (cls == java.lang.Object || cls == parent) return null;
 		return findDeclaredMethod(cls.getSuperclass(), params, parent);
@@ -231,7 +231,7 @@ MapScript.loadModule("L", (function self(defaultContext) {
 		if (!baseClass.isAssignableFrom(clazz)) Log.throwError(new Error(clazz + " is not a view class"));
 		try {
 			constructor = clazz.getConstructor(android.content.Context);
-		} catch(e) {/* constructor not found */}
+		} catch (e) {/* constructor not found */ }
 		if (!constructor) Log.throwError(new Error("Unable to construct " + clazz));
 		return constructor.newInstance(context);
 	}
@@ -246,13 +246,13 @@ MapScript.loadModule("L", (function self(defaultContext) {
 		try {
 			field = cls.getField(name);
 			if (field) value = field.get(null);
-		} catch(e) {/* field not found or not static */}
+		} catch (e) {/* field not found or not static */ }
 		constantCache[key] = value;
 		return value;
 	}
 	function calculateConstant(clazz, exp) {
 		var i, r;
-		exp = exp.split("|").map(function(e) {
+		exp = exp.split("|").map(function (e) {
 			// 常量基本都是大写形式，先试大写减少一次必然失败的反射
 			return findConstant(clazz, e.toUpperCase()) || findConstant(clazz, e);
 		});
@@ -278,31 +278,31 @@ MapScript.loadModule("L", (function self(defaultContext) {
 		return view;
 	}
 	var LTemplate = {
-		init : function(baseView) {
+		init: function (baseView) {
 			var self = this;
 			this.context = baseView.getContext();
 			this.views = [];
 			this.jsons = [];
 			this.valueData = {};
 			this.srcJson = this.viewToJson(baseView);
-			this.jsons.forEach(function(e) {
+			this.jsons.forEach(function (e) {
 				var k = self.analyzeJson(e);
 				if (k) self.valueData[e._holderId] = k;
 			});
 		},
-		create : function(holder, rootView) {
+		create: function (holder, rootView) {
 			if (!holder) holder = {};
 			var view = fromJSON(this.srcJson, this.context, {
-				holder : holder._lHolder = {}
+				holder: holder._lHolder = {}
 			});
 			holder._lTag = view.tag;
 			holder._lRoot = view;
 			view.tag = holder;
 			return view;
 		},
-		bind : function(viewOrHolder, data, rootView) {
+		bind: function (viewOrHolder, data, rootView) {
 			var holder = viewOrHolder instanceof android.view.View ? viewOrHolder.tag : viewOrHolder, vholder;
-			var i, modelContext = { data : data }, filledJson, filledHolder;
+			var i, modelContext = { data: data }, filledJson, filledHolder;
 			vholder = holder._lHolder;
 			for (i in this.valueData) {
 				filledJson = LValue.fill(this.valueData[i], modelContext);
@@ -312,26 +312,26 @@ MapScript.loadModule("L", (function self(defaultContext) {
 				filledJson = filledHolder.flatten();
 				if (vholder[i].layoutParams) {
 					attachLayoutParams(vholder[i].layoutParams, filledJson);
-				} else if (rootView) { 
+				} else if (rootView) {
 					vholder[i].layoutParams = calculateLayoutParams(rootView, filledJson, modelContext);
 				}
 				listener.trigger("afterAttach", vholder[i], filledHolder);
 			}
 			return viewOrHolder;
 		},
-		makeView : function(data, rootView) {
+		makeView: function (data, rootView) {
 			var holder = {}, r = this.create(holder);
 			this.bind(holder, data, rootView);
 			r.tag = holder._lTag;
 			return r;
 		},
-		viewToJson : function(view) {
+		viewToJson: function (view) {
 			if (LValue.isPrototypeOf(view)) return view;
 			var holder = view.tag, self = this;
 			if (!(LHolder.isPrototypeOf(holder))) Log.throwError(new Error(holder + " is not a LHolder"));
 			var json = holder.flatten(), i;
 			delete json.child;
-			json.children = holder.getChildren().map(function(e) {
+			json.children = holder.getChildren().map(function (e) {
 				return self.viewToJson(e);
 			});
 			json._holderId = this.views.length;
@@ -340,7 +340,7 @@ MapScript.loadModule("L", (function self(defaultContext) {
 			this.jsons.push(json);
 			return json;
 		},
-		analyzeJson : function(json) {
+		analyzeJson: function (json) {
 			var i, a, r = {}, hasAbstractKey = false;
 			a = Object.keys(json);
 			for (i = 0; i < a.length; i++) {
@@ -354,19 +354,19 @@ MapScript.loadModule("L", (function self(defaultContext) {
 			if (hasAbstractKey) return r;
 		}
 	};
-	var listener = EventSender.init({listener : {}});
+	var listener = EventSender.init({ listener: {} });
 	var kv = {
-		__noSuchMethod__ : function(name) {
+		__noSuchMethod__: function (name) {
 			throw new Error(name + " is not a function, it is undefined.");
 		},
-		attach : attach,
-		inflate : inflate,
-		Template : function(view) {
+		attach: attach,
+		inflate: inflate,
+		Template: function (view) {
 			var o = Object.create(LTemplate);
 			o.init(view);
 			return o;
 		},
-		Value : function(f) {
+		Value: function (f) {
 			var o = Object.create(LValue);
 			if (f instanceof Function) {
 				o.getter = f;
@@ -375,41 +375,43 @@ MapScript.loadModule("L", (function self(defaultContext) {
 			}
 			return o;
 		},
-		on : listener.on.bind(listener),
-		off : listener.off.bind(listener),
-		clearListeners : listener.clearListeners.bind(listener),
-		withContext : function(context) {
+		on: listener.on.bind(listener),
+		off: listener.off.bind(listener),
+		clearListeners: listener.clearListeners.bind(listener),
+		withContext: function (context) {
 			return self(context);
 		},
-		asClass : function self(clazz) {
+		asClass: function self(clazz) {
 			return clazz(self);
 		}
 	};
-	var LView = kv.Class = function(clazz, json) {try {
-		var r;
-		if (typeof clazz == "string") clazz = java.lang.Class.forName(clazz);
-		if (typeof json == "function") {
-			if (json == kv.asClass) {
-				return cx.getWrapFactory().wrapJavaClass(cx, scope, clazz);
+	var LView = kv.Class = function (clazz, json) {
+		try {
+			var r;
+			if (typeof clazz == "string") clazz = java.lang.Class.forName(clazz);
+			if (typeof json == "function") {
+				if (json == kv.asClass) {
+					return cx.getWrapFactory().wrapJavaClass(cx, scope, clazz);
+				}
+				return kv.Class(clazz, json.call(kv));
+			} else if (typeof json == "object") { // view builder
+				return inflate(clazz, defaultContext, json, null);
+			} else if (typeof json == "string") { // constant
+				return calculateConstant(clazz, json);
+			} else if (typeof json == "undefined") { // no parameter view builder
+				return inflate(clazz, defaultContext, {}, null);
 			}
-			return kv.Class(clazz, json.call(kv));
-		} else if (typeof json == "object") { // view builder
-			return inflate(clazz, defaultContext, json, null);
-		} else if (typeof json == "string") { // constant
-			return calculateConstant(clazz, json);
-		} else if (typeof json == "undefined") { // no parameter view builder
-			return inflate(clazz, defaultContext, {}, null);
+		} catch (e) {
+			Log.e(e);
+			throw e;
 		}
-	} catch(e) {
-		Log.e(e);
-		throw e;
-	}}
+	}
 	function wrapViewClass(cls) {
 		return LView.bind(kv, cls);
 	}
 	function withCallback(defaultValue, f) {
 		var result = undefined;
-		f(function(newValue) {
+		f(function (newValue) {
 			result = newValue;
 		});
 		return result;
@@ -435,18 +437,18 @@ MapScript.loadModule("L", (function self(defaultContext) {
 	function peekClass(name) {
 		var i, forName = java.lang.Class.forName;
 		for (i in pprefix) {
-			try {return forName(pprefix[i] + name)} catch(e) {}
+			try { return forName(pprefix[i] + name) } catch (e) { }
 		}
 		return undefined;
 	}
 	var r = new org.mozilla.javascript.Scriptable({
-		delete : function(name) {
+		delete: function (name) {
 			delete kv[name];
 		},
-		get : function(name, start) {
+		get: function (name, start) {
 			var cls;
 			if (name in kv) return kv[name];
-			cls = withCallback(null, function(consumer) {
+			cls = withCallback(null, function (consumer) {
 				listener.trigger("pickClass", consumer);
 			});
 			if (!cls) {
@@ -455,32 +457,32 @@ MapScript.loadModule("L", (function self(defaultContext) {
 			if (!cls) return undefined;
 			return kv[name] = wrapViewClass(cls);
 		},
-		getClassName : function() {
+		getClassName: function () {
 			return "Proxy_L";
 		},
-		getDefaultValue : function(hint) {
+		getDefaultValue: function (hint) {
 			return kv;
 		},
-		getIds : function() {
+		getIds: function () {
 			return Object.keys(kv);
 		},
-		getParentScope : function() {
+		getParentScope: function () {
 			return scope;
 		},
-		getPrototype : function() {
+		getPrototype: function () {
 			return kv;
 		},
-		has : function(name, start) {
+		has: function (name, start) {
 			return name in kv;
 		},
-		hasInstance : function(instance) {
+		hasInstance: function (instance) {
 			return false;
 		},
-		put : function(name, start, value) {
+		put: function (name, start, value) {
 			kv[name] = value;
 		},
-		setParentScope : function(scope) {},
-		setPrototype : function(protptype) {}
+		setParentScope: function (scope) { },
+		setPrototype: function (protptype) { }
 	});
 	return cx.toObject(r, scope);
 })(ctx));

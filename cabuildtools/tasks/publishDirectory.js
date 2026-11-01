@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const publish = require("../publish");
 
-module.exports = function(context, args) {
+module.exports = function (context, args) {
 	var operations = prepareUpload([], args[1].localPath, args[1].remotePath);
 	return publish.uploadOperations(context, args[0], operations);
 }
@@ -19,12 +19,12 @@ function prepareUpload(operations, localPath, remotePath) {
 		if (seen[relative]) return;
 		seen[relative] = true;
 		operations.push({
-			localPath : absolute,
-			remotePath : remotePath + "/" + relative.split(path.sep).join("/")
+			localPath: absolute,
+			remotePath: remotePath + "/" + relative.split(path.sep).join("/")
 		});
 	}
 	function collect(dir) {
-		fs.globSync("**/{*,.*}", { cwd : dir, withFileTypes : true }).forEach(function(entry) {
+		fs.globSync("**/{*,.*}", { cwd: dir, withFileTypes: true }).forEach(function (entry) {
 			if (!entry.isDirectory()) {
 				addFile(entry);
 			} else if (entry.name.charAt(0) === ".") {

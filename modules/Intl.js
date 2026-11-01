@@ -1,6 +1,6 @@
 MapScript.loadModule("Intl", {
-	rescache : {},
-	getLocales : function() {
+	rescache: {},
+	getLocales: function () {
 		var r, i, a;
 		if (android.os.Build.VERSION.SDK_INT >= 24) {
 			a = ctx.getResources().getConfiguration().getLocales();
@@ -13,7 +13,7 @@ MapScript.loadModule("Intl", {
 			return [java.util.Locale.getDefault()];
 		}
 	},
-	getData : function(path, root) {
+	getData: function (path, root) {
 		var i, seg = path.split("."), data = root || this.namespaces;
 		for (i = 0; i < seg.length; i++) {
 			data = data[seg[i]];
@@ -21,7 +21,7 @@ MapScript.loadModule("Intl", {
 		}
 		return data;
 	},
-	createNamespace : function(path, root) {
+	createNamespace: function (path, root) {
 		var i, seg = path.split("."), data = root || this.namespaces;
 		for (i = 0; i < seg.length; i++) {
 			if (typeof data[seg[i]] == "undefined") {
@@ -31,7 +31,7 @@ MapScript.loadModule("Intl", {
 		}
 		return data;
 	},
-	getNamespace : function(path, createIfNotExist) {
+	getNamespace: function (path, createIfNotExist) {
 		var namespace = this.getData(path);
 		if (typeof namespace == "undefined") {
 			if (createIfNotExist) {
@@ -42,12 +42,12 @@ MapScript.loadModule("Intl", {
 		}
 		return namespace;
 	},
-	mapNamespace : function(obj, propertyName, path) {
+	mapNamespace: function (obj, propertyName, path) {
 		var cache;
 		Object.defineProperty(obj, propertyName, {
 			enumerable: false,
 			configurable: true,
-			get: function() {
+			get: function () {
 				var data;
 				if (!cache) {
 					data = Intl.getNamespace(path, true);
@@ -57,7 +57,7 @@ MapScript.loadModule("Intl", {
 			}
 		});
 	},
-	getRes : function(name) {
+	getRes: function (name) {
 		var res, id;
 		if (name in this.rescache) return this.rescache[name];
 		res = ctx.getResources();
@@ -68,43 +68,43 @@ MapScript.loadModule("Intl", {
 			return undefined;
 		}
 	},
-	resolve : java.lang.String.format,
-	get : function(path, root) {
+	resolve: java.lang.String.format,
+	get: function (path, root) {
 		var entry = Object.create(this.Entry);
 		entry.id = path;
 		entry.root = root;
 		return entry;
 	},
-	Namespace : {
-		get : function(id) {
+	Namespace: {
+		get: function (id) {
 			return Intl.get(id, this);
 		},
-		resolve : function(id) {
+		resolve: function (id) {
 			var i, args = new Array(arguments.length);
 			for (i = 1; i < arguments.length; i++) args[i] = arguments[i];
 			args[0] = Intl.getData(id, this);
 			return Intl.resolve.apply(Intl, args);
 		},
-		toString : function() {
+		toString: function () {
 			return this.__defaultEntry__;
 		}
 	},
-	Entry : {
-		get : function() {
+	Entry: {
+		get: function () {
 			return Intl.getData(this.id, this.root);
 		},
-		resolve : function() {
+		resolve: function () {
 			var i, args = new Array(arguments.length + 1);
 			args[0] = this.get();
 			for (i = 0; i < arguments.length; i++) args[i + 1] = arguments[i];
 			return Intl.resolve.apply(Intl, args);
 		},
-		toString : function() {
-			if (this === Intl.Entry) return "[class Entry]"; 
+		toString: function () {
+			if (this === Intl.Entry) return "[class Entry]";
 			return String(this.get());
 		}
 	},
-	mixNamespace : function(o, target) {
+	mixNamespace: function (o, target) {
 		var i, oldValue;
 		if (typeof o == "object") {
 			for (i in o) {
@@ -122,7 +122,7 @@ MapScript.loadModule("Intl", {
 			target.__defaultEntry__ = o;
 		}
 	},
-	cloneNamespace : function(o) {
+	cloneNamespace: function (o) {
 		var r, i;
 		if (typeof o == "object") {
 			r = Object.create(this.Namespace);
@@ -134,7 +134,7 @@ MapScript.loadModule("Intl", {
 			return o;
 		}
 	},
-	getFitLocaleIndex : function(range) {
+	getFitLocaleIndex: function (range) {
 		var i, e;
 		for (i = 0; i < this.locales.length; i++) {
 			e = this.locales[i];
@@ -149,7 +149,7 @@ MapScript.loadModule("Intl", {
 			return -1;
 		}
 	},
-	loadLang : function(range, o, full) {
+	loadLang: function (range, o, full) {
 		var index = this.getFitLocaleIndex(range);
 		if (index < 0) return false;
 		if (this.currentLocIndex == index) {
@@ -167,7 +167,7 @@ MapScript.loadModule("Intl", {
 		}
 		return true;
 	},
-	lookupLang : function(ranges) {
+	lookupLang: function (ranges) {
 		var minIndex, minValue = Infinity, v, i;
 		for (i in ranges) {
 			v = this.getFitLocaleIndex(ranges[i]);
@@ -177,7 +177,7 @@ MapScript.loadModule("Intl", {
 		}
 		return minIndex;
 	},
-	onCreate : function() {
+	onCreate: function () {
 		this.locales = this.getLocales();
 		this.currentLocIndex = -1;
 	}

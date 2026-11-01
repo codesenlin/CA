@@ -18,7 +18,7 @@ function createTestFile(name, content) {
 
 function cleanupTestFiles(files) {
     files.forEach(f => {
-        try { fs.unlinkSync(f); } catch(e) {}
+        try { fs.unlinkSync(f); } catch (e) { }
     });
 }
 

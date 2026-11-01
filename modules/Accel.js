@@ -8,7 +8,7 @@
  * jar 通过 Android 侧 libs/ 引入，Rhino 里用 Packages 直接访问；
  * 纯 JS 环境（比如 node 构建脚本）里 Packages 不存在，自动回退。
  */
-MapScript.loadModule("Accel", (function() {
+MapScript.loadModule("Accel", (function () {
 	var impl = null;
 	var idTextsCache = null;
 	var lastIDTexts = null;
@@ -41,7 +41,7 @@ MapScript.loadModule("Accel", (function() {
 		commandDescs = ds;
 		commandSnapRef = snap;
 		if (impl != null) {
-			try { impl.setCommandSnapshot(ks, ds); } catch(e) { /* 老 jar */ }
+			try { impl.setCommandSnapshot(ks, ds); } catch (e) { /* 老 jar */ }
 		}
 	}
 	try {
@@ -58,7 +58,7 @@ MapScript.loadModule("Accel", (function() {
 		if (!(r.output instanceof Object)) r.output = {};
 		if (Array.isArray(a)) {
 			t = [];
-			a.forEach(function(e) {
+			a.forEach(function (e) {
 				if (e.indexOf(ps) < 0) return;
 				r.output[e] = e;
 				if (r.input.indexOf(e) < 0) t.push(e);
@@ -67,7 +67,7 @@ MapScript.loadModule("Accel", (function() {
 			r.input = r.input.concat(t);
 		} else {
 			t = []; t2 = [];
-			Object.keys(a).forEach(function(e) {
+			Object.keys(a).forEach(function (e) {
 				if (e.indexOf(ps) < 0 && a[e].indexOf(ps) < 0) return;
 				if (a[e]) {
 					t3 = e + " - " + a[e];
@@ -129,13 +129,13 @@ MapScript.loadModule("Accel", (function() {
 	}
 
 	return {
-		available : function() {
+		available: function () {
 			return impl != null;
 		},
-		version : function() {
+		version: function () {
 			return impl != null ? String(impl.version()) : "js";
 		},
-		matchString : function(ps, a, r) {
+		matchString: function (ps, a, r) {
 			function mergeMatchResult(res) {
 				return merge(r, res);
 			}
@@ -143,14 +143,14 @@ MapScript.loadModule("Accel", (function() {
 				try {
 					syncMatchSource(a);
 					return mergeMatchResult(impl.matchCached(String(ps)));
-				} catch(e) {
+				} catch (e) {
 					matchCacheSupported = false;
 				}
 			}
 			if (impl != null) {
 				try {
 					return mergeMatchResult(impl.matchString(String(ps), a));
-				} catch(e) { }
+				} catch (e) { }
 			}
 			return jsMatchString(ps, a, r);
 		},
@@ -158,7 +158,7 @@ MapScript.loadModule("Accel", (function() {
 		 * 批量过滤：返回与 arr 等长的下标掩码，true 表示保留。
 		 * 对应 setFilter(function(e, i){ return e.indexOf(s) >= 0; })
 		 */
-		filter : function(arr, s) {
+		filter: function (arr, s) {
 			var keep = [], i, p = String(s);
 			if (impl != null) {
 				try { return impl.filter(arr, p); } catch (e) { /* jar 太旧没有 filter，走下面的回退 */ }
@@ -167,17 +167,17 @@ MapScript.loadModule("Accel", (function() {
 			return keep;
 		},
 		/** 同步建议列表文本到缓存（CA.Assist 打开时调用一次） */
-		setFilterTexts : function(texts) {
+		setFilterTexts: function (texts) {
 			filterTextsCache = texts;
 			if (impl != null) {
-				try { impl.setFilterTexts(texts); } catch(e) { /* 老 jar */ }
+				try { impl.setFilterTexts(texts); } catch (e) { /* 老 jar */ }
 			}
 		},
 		/** 缓存版 filter：返回 boolean 掩码；没有 jar 时走 JS */
-		filterTexts : function(s) {
+		filterTexts: function (s) {
 			var p = String(s), keep = [], i, qa;
 			if (impl != null) {
-				try { return impl.filterTexts(p); } catch(e) { }
+				try { return impl.filterTexts(p); } catch (e) { }
 			}
 			qa = quickAccel();
 			if (qa && filterTextsCache != null) {
@@ -192,23 +192,23 @@ MapScript.loadModule("Accel", (function() {
 			return keep;
 		},
 		/** 同步 ID 列表文本到 Java/JS 缓存（CA.buildIDList 时调用一次） */
-		setIDTexts : function(texts) {
+		setIDTexts: function (texts) {
 			if (texts === lastIDTexts) return;
 			lastIDTexts = texts;
 			idTextsCache = texts;
 			if (impl != null) {
-				try { impl.setIDTexts(texts); } catch(e) { /* 老 jar 没有缓存方法 */ }
+				try { impl.setIDTexts(texts); } catch (e) { /* 老 jar 没有缓存方法 */ }
 			}
 		},
 		/** 在缓存的 ID 文本里找包含 s 的下标；有 Java 缓存走 Java，否则走 JS 循环 */
-		filterIDTexts : function(s) {
+		filterIDTexts: function (s) {
 			var p = String(s), out = [], i;
 			if (impl != null) {
 				try {
 					var res = impl.filterIDTexts(p);
 					for (i = 0; i < res.length; i++) out.push(res[i]);
 					return out;
-				} catch(e) { }
+				} catch (e) { }
 			}
 			if (idTextsCache != null) {
 				for (i = 0; i < idTextsCache.length; i++) {
@@ -218,10 +218,10 @@ MapScript.loadModule("Accel", (function() {
 			return out;
 		},
 		/** 同 filterIDTexts，但 jar 可用时直接返回 Java int[]（给 ID 列表适配器用，少一次逐项转 JS 数组） */
-		filterIDTextsRaw : function(s) {
+		filterIDTextsRaw: function (s) {
 			var p = String(s), out = [], i;
 			if (impl != null) {
-				try { return impl.filterIDTexts(p); } catch(e) { }
+				try { return impl.filterIDTexts(p); } catch (e) { }
 			}
 			if (idTextsCache != null) {
 				for (i = 0; i < idTextsCache.length; i++) {
@@ -231,20 +231,20 @@ MapScript.loadModule("Accel", (function() {
 			return out;
 		},
 		/** 生成 [0,n) 下标；有 jar 走 Java int[]，否则 JS 数组 */
-		rangeIndices : function(n) {
+		rangeIndices: function (n) {
 			var out = [], i;
 			if (impl != null) {
-				try { return impl.rangeIndices(n); } catch(e) { }
+				try { return impl.rangeIndices(n); } catch (e) { }
 			}
 			for (i = 0; i < n; i++) out.push(i);
 			return out;
 		},
 		/** 同步命令快照（命令库重建时调用一次） */
-		setCommandSnapshot : function(snap) {
+		setCommandSnapshot: function (snap) {
 			syncCommandSnapshot(snap);
 		},
 		/** 匹配命令名/描述；有 jar 走 Java，否则走等价 JS 实现 */
-		matchCommandNames : function(snap, prefix) {
+		matchCommandNames: function (snap, prefix) {
 			syncCommandSnapshot(snap);
 			if (impl != null) {
 				try {
@@ -252,7 +252,7 @@ MapScript.loadModule("Accel", (function() {
 					var out = [], i;
 					for (i = 0; i < res.length; i++) out.push(String(res[i]));
 					return out;
-				} catch(e) { }
+				} catch (e) { }
 			}
 			var qa = quickAccel();
 			if (qa) {
@@ -262,11 +262,11 @@ MapScript.loadModule("Accel", (function() {
 			return jsMatchCommandNames(prefix);
 		},
 		/** 调试用：强制走 JS 命令匹配 */
-		_matchCommandNamesJS : function(prefix) {
+		_matchCommandNamesJS: function (prefix) {
 			return jsMatchCommandNames(prefix);
 		},
 		/** 版本号数组比较，对应 NeteaseAdapter.compareVersion */
-		compareVersionArray : function(a, b) {
+		compareVersionArray: function (a, b) {
 			if (impl != null) {
 				try { return impl.compareVersionArray(a, b); } catch (e) { }
 			}
@@ -280,16 +280,16 @@ MapScript.loadModule("Accel", (function() {
 			return 0;
 		},
 		/** 数组 enum 匹配：返回 { flags, length, canFinish }；有 jar 走 Java */
-		classifyArray : function(arr, ps) {
+		classifyArray: function (arr, ps) {
 			if (impl != null) {
 				try {
 					var res = impl.classifyArray(arr, String(ps));
 					return {
-						flags : res.flags,
-						length : res.length,
-						canFinish : res.canFinish
+						flags: res.flags,
+						length: res.length,
+						canFinish: res.canFinish
 					};
-				} catch(e) { }
+				} catch (e) { }
 			}
 			var p = String(ps), flags = [], length = -1, canFinish = false, i, e;
 			for (i = 0; i < arr.length; i++) {
@@ -310,13 +310,13 @@ MapScript.loadModule("Accel", (function() {
 				}
 			}
 			return {
-				flags : flags,
-				length : length,
-				canFinish : canFinish
+				flags: flags,
+				length: length,
+				canFinish: canFinish
 			};
 		},
 		/** 枚举候选分类：1=精确命中 2=模糊命中 0=不命中 */
-		classify : function(keys, descs, ps) {
+		classify: function (keys, descs, ps) {
 			if (impl != null) {
 				try { return impl.classify(keys, descs, String(ps)); } catch (e) { }
 			}
@@ -330,11 +330,11 @@ MapScript.loadModule("Accel", (function() {
 			return flags;
 		},
 		// 调试用：绕过候选源缓存，每次调用都直接走 Java matchString（模拟旧路径）
-		_matchStringDirect : function(ps, a, r) {
+		_matchStringDirect: function (ps, a, r) {
 			if (impl == null) return jsMatchString(ps, a, r);
 			return merge(r, impl.matchString(String(ps), a));
 		},
 		// 供单测/调试：强制走 JS 实现
-		_matchStringJS : jsMatchString
+		_matchStringJS: jsMatchString
 	};
 })());

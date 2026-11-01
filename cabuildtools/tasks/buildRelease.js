@@ -1,7 +1,7 @@
 const flavorOf = require("../flavor");
 const channelOf = require("../channel");
 
-module.exports = function(context, args) {
+module.exports = function (context, args) {
 	// 带 -beta 时 variants = "beta"：产物名带 -beta 后缀，且不写 update.json（避免覆盖正式更新）
 	var channel = channelOf(args);
 	// 不带渠道参数就是 stable（正式版）；带参数时渠道名同时作为 variants
@@ -22,7 +22,7 @@ module.exports = function(context, args) {
 		.then(context.pipe("writeSnapshotLib"))
 		.then(context.pipe("compressSource"))
 		.then(context.pipe("writeRelease"))
-		.then(function(r) {
+		.then(function (r) {
 			return context.buildConfig.variants == "release" ? context.execute("writeUpdateRelease") : r;
 		});
 }

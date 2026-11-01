@@ -38,12 +38,12 @@ function packSigned(content, privateKey, timestamp) {
 }
 
 module.exports = {
-	MAGIC_LIBRARY : MAGIC_LIBRARY,
-	MAGIC_SIGNED : MAGIC_SIGNED,
-	SIGN_LEN : SIGN_LEN,
-	gzip : gzip,
-	writeStamp : writeStamp,
-	readStamp : readStamp,
-	packLibrary : packLibrary,
-	packSigned : packSigned
+	MAGIC_LIBRARY: MAGIC_LIBRARY,
+	MAGIC_SIGNED: MAGIC_SIGNED,
+	SIGN_LEN: SIGN_LEN,
+	gzip: gzip,
+	writeStamp: writeStamp,
+	readStamp: readStamp,
+	packLibrary: packLibrary,
+	packSigned: packSigned
 };

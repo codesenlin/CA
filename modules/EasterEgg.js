@@ -1,8 +1,8 @@
 MapScript.loadModule("EasterEgg", {
-	onCreate : function() {
+	onCreate: function () {
 		G.ui(this.initIcon);
 	},
-	getBitmap : function(w) {
+	getBitmap: function (w) {
 		var zf = new java.util.zip.ZipFile(ctx.getPackageManager().getApplicationInfo("com.mojang.minecraftpe", 128).publicSourceDir);
 		var b = zf.getInputStream(zf.getEntry("assets/resource_packs/vanilla/textures/blocks/command_block_front_mipmap.png"));
 		var bmp = G.Bitmap.createBitmap(w, w, G.Bitmap.Config.ARGB_8888);
@@ -24,13 +24,13 @@ MapScript.loadModule("EasterEgg", {
 		cv.drawText(" CA_", 0, 170 - fm.descent, pt);
 		return bmp;
 	},
-	initIcon : function() {
+	initIcon: function () {
 		var img;
 		try {
 			img = EasterEgg.getBitmap(480);
-		} catch(e) {Log.e(e)}
+		} catch (e) { Log.e(e) }
 		if (img) {
-			CA.Icon.easteregg = function(size) {
+			CA.Icon.easteregg = function (size) {
 				var zp = G.dp * size;
 				var frm = new G.FrameLayout(ctx);
 				var view = new G.ImageView(ctx);

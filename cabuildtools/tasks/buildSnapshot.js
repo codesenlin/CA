@@ -1,7 +1,7 @@
 const flavorOf = require("../flavor");
 const channelOf = require("../channel");
 
-module.exports = function(context, args) {
+module.exports = function (context, args) {
 	// 带 -beta 时 variants = "beta"：产物叫 beta.js / beta.lib，lib 的 uuid 与名字也不同
 	var channel = channelOf(args);
 	// 不带渠道参数就是 stable（正式版）；带参数时渠道名同时作为 variants
@@ -23,7 +23,7 @@ module.exports = function(context, args) {
 		.then(context.task("assembleSourceSnapshot"))
 		.then(context.pipe("writeSnapshot"))
 		.then(context.pipe("writeSnapshotLib"))
-		.then(function(r) {
+		.then(function (r) {
 			return context.buildConfig.variants == "snapshot" ? context.execute("writeUpdateSnapshot") : r;
 		});
 }

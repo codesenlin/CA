@@ -25,7 +25,7 @@ function locateClasses(names, classes, packages) {
 	});
 	return r;
 }
-module.exports = function(context, args) {
+module.exports = function (context, args) {
 	var param = args[1];
 	var target = fs.readFileSync(param.target, "utf-8");
 	var names = searchClasses(args[0], param.scopeName);

@@ -23,7 +23,7 @@ function wind(str, p) {
 	return seq.join("");
 }
 function unwind(str, p) {
-	var seed = [str.length * p], seq = [], j, t;p
+	var seed = [str.length * p], seq = [], j, t; p
 	for (i = 0; i < str.length; i++) seq[i] = str.charAt(i);
 	while (i > 0) {
 		j = Math.floor(random(seed) * i--);

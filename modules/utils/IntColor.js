@@ -1,4 +1,4 @@
-MapScript.loadModule("IntColor", (function() {
+MapScript.loadModule("IntColor", (function () {
 	var r = {};
 	try {
 		r.Color = {};
@@ -30,7 +30,7 @@ MapScript.loadModule("IntColor", (function() {
 		r.SweepGradient = {};
 		r.SweepGradient.buildFromArray = JavaReflect.constructor("android.graphics.SweepGradient", ["float", "float", "int[]", "float[]"]);
 		r.SweepGradient.buildFromEnds = JavaReflect.constructor("android.graphics.SweepGradient", ["float", "float", "int", "int"]);
-		
+
 		if (android.os.Build.VERSION.SDK_INT >= 26) {
 			r.Color.alphaLong = JavaReflect.staticMethod("android.graphics.Color", "alpha", ["long"]);
 			r.Color.argbFloat = JavaReflect.staticMethod("android.graphics.Color", "argb", ["float", "float", "float", "float"]);
@@ -55,7 +55,7 @@ MapScript.loadModule("IntColor", (function() {
 			r.SweepGradient.buildFromArrayLong = JavaReflect.constructor("android.graphics.SweepGradient", ["float", "float", "long[]", "float[]"]);
 			r.SweepGradient.buildFromEndsLong = JavaReflect.constructor("android.graphics.SweepGradient", ["float", "float", "long", "long"]);
 		}
-	} catch(e) {
+	} catch (e) {
 		erp(e);
 	}
 	return r;

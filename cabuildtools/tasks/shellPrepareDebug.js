@@ -1,4 +1,4 @@
-module.exports = function(context, args) {
+module.exports = function (context, args) {
 	return context.execute("getBuildConfig", ["debug", "stable", require("../flavor")(args)])
 		.then(context.task("getShellConfig"))
 		.then(context.task("shellUpdateGradle"))

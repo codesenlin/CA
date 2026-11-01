@@ -24,7 +24,7 @@
     answer: "execute\\s+B\\s+~\\s+~\\s+~\\s+(tp|teleport)\\s+A\\s+\\^\\s+\\^\\s+\\^2"
 }, {
     question: "如何给予以(5,31,2)为中心，半径50格范围内的所有玩家“雷罚”一次？",
-    answer: function(str, unwind) {
+    answer: function (str, unwind) {
         var a = new RegExp("^execute\\s+@a\\[(.+?)\\]\\s+~\\s+~\\s+~\\s+summon\\s+minecraft:lightning_bolt(\\s+~\\s+~\\s+~)?$", "").exec(str);
         if (!a) return false;
         var i, p = parseSelector(a[1], [
@@ -41,7 +41,7 @@
         if (!p) return false;
         var pos = p.positive;
         return pos.x == 5 && pos.y == 31 && pos.z == 2 && pos.r == 50;
-    } 
+    }
 }, {
     question: "如何将(1,3,5)-(2,4,6)区域内所有的石头方块替换为空气？（请让第一个坐标的X、Y、Z分别小于等于第二个坐标的X、Y、Z）",
     answer: "fill\\s+1\\s+3\\s+5\\s+2\\s+4\\s+6\\s+air\\s+0\\s+replace\\s+stone(\\s+0)?"
@@ -53,7 +53,7 @@
     answer: "gamemode\\s+(0|s|survival)\\s+@a\\[m=!(0|s|survival)\\]"
 }, {
     question: "如何把以(4,5,6)为中心，边长为4的正方体内的所有玩家变成生存模式？",
-    answer: function(str, unwind) {
+    answer: function (str, unwind) {
         var a = new RegExp("^gamemode\\s+(0|s|survival)\\s+@a\\[(.+?)\\]$", "").exec(str);
         if (!a) return false;
         var i, p = parseSelector(a[2], [
@@ -77,7 +77,7 @@
     answer: "gamerule\\s+drowningdamage\\s+false"
 }, {
     question: "如何给予最近玩家一把在冒险模式下只能挖黑曜石的钻石镐？",
-    answer: function(str, unwind) {
+    answer: function (str, unwind) {
         var a = new RegExp("^give\\s+@p\\s+diamond_pickaxe\\s+1\\s+(\\d+)\\s+(.+)$", "").exec(str);
         var p = JSON.parse(a[2]);
         p = p["minecraft:can_destroy"].blocks;
@@ -85,7 +85,7 @@
     }
 }, {
     question: "如果游戏内一开始有6个盔甲架，执行两次execute @e[type=armor_stand] ~ ~ ~ execute @e[type=armor_stand] ~ ~ ~ summon armor_stand后游戏内会有几个盔甲架（不考虑运行环境限制）",
-    answer: function(str) {
+    answer: function (str) {
         return Math.abs(Number(str) - 6 * Math.pow(2, 6) * Math.pow(2, 384)) < 1e+115;
     },
     answerType: "number"
@@ -97,7 +97,7 @@
     answer: "replaceitem\\s+block\\s+51\\s+8\\s+-56\\s+slot\\.container\\s+4\\s+conduit(\\s+1(\\s+\\d+)?)?"
 }, {
     question: "如何替换最近玩家的快捷栏第一格为一块在冒险模式下只能放在草方块上的玻璃？",
-    answer: function(str, unwind) {
+    answer: function (str, unwind) {
         var a = new RegExp("^replaceitem\\s+entity\\s+@p\\s+slot.hotbar\\s+0\\s+glass\\s+1\\s+0\\s+(.+)$").exec(str);
         var p = JSON.parse(a[1]);
         p = p["minecraft:can_place_on"].blocks;
@@ -114,7 +114,7 @@
     answer: "title\\s+@a\\s+times\\s+0\\s+20\\s+0"
 }, {
     question: "如何让所有名称为A的盔甲架不断原地旋转？",
-    answer: function(str, unwind) {
+    answer: function (str, unwind) {
         var a = new RegExp("^execute\\s+@e\\[(.+)\\]\\s+~\\s+~\\s+~\\s+tp\\s+(@s\\s+)?~\\s+~\\s+~\\s+~(-?\\d+)(\\s+~)?$", "").exec(str);
         if (!a) return false;
         var i, p = parseSelector(a[1], [
@@ -131,7 +131,7 @@
     }
 }, {
     question: "如何把以(7,8,9)为顶点，第五卦限方向里边长为6的正方体里的所有生物传送到(0,4,0)？（不懂什么叫卦限的自己百度）",
-    answer: function(str, unwind) {
+    answer: function (str, unwind) {
         var a = new RegExp("^tp\\s+@e\\[(.+?)\\]\\s+0\\s+4\\s+0$", "").exec(str);
         if (!a) return false;
         var i, p = parseSelector(a[1], [
@@ -150,16 +150,16 @@
         normalizeSelectorBox(pos);
         return pos.x == 7 && pos.y == 8 && pos.z == 3 && pos.dx == 6 && pos.dy == 6 && pos.dz == 6;
     }
-}, (function() {
+}, (function () {
     var op = [{
         id: "+=",
-        op: (a, b) => {a[0] = a[0] + b[0]}
+        op: (a, b) => { a[0] = a[0] + b[0] }
     }, {
         id: "-=",
-        op: (a, b) => {a[0] = a[0] - b[0]}
+        op: (a, b) => { a[0] = a[0] - b[0] }
     }, {
         id: "*=",
-        op: (a, b) => {a[0] = a[0] * b[0]}
+        op: (a, b) => { a[0] = a[0] * b[0] }
     }, {
         id: "><",
         op: (a, b) => {
@@ -190,7 +190,7 @@
     op[m3].op(a, b);
     return {
         question: question,
-        answer: function(str) {
+        answer: function (str) {
             return Number(str) == a[0];
         },
         answerType: "number"
@@ -203,7 +203,7 @@
     answer: "scoreboard\\s+players\\s+test\\s+Mark\\s+mark\\s+\\*\\s+50"
 }, {
     question: "如何检测所有记分项mark大于等于30，但time小于等于20的玩家？（使用testfor命令）",
-    answer: function(str, unwind) {
+    answer: function (str, unwind) {
         var a = new RegExp("testfor\\s+@a\\[(.+)\\]", "").exec(str);
         if (!a) return false;
         var i, p = parseSelector(a[1], [

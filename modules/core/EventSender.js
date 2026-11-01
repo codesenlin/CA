@@ -1,18 +1,18 @@
 MapScript.loadModule("EventSender", {
-	init : function(o) {
+	init: function (o) {
 		o.on = this.on;
 		o.off = this.off;
 		o.trigger = this.trigger;
 		o.clearListeners = this.clearListeners;
 		return o;
 	},
-	on : function(name, f) {
+	on: function (name, f) {
 		if (!this.listener[name]) this.listener[name] = [];
 		if (this.listener[name].indexOf(f) < 0) this.listener[name].push(f);
 		if (this.__eventsender_observer__) this.__eventsender_observer__("on", name, f);
 		return this;
 	},
-	off : function(name, f) {
+	off: function (name, f) {
 		var i, t;
 		if (this.listener[name]) {
 			if (arguments.length == 1) {
@@ -25,7 +25,7 @@ MapScript.loadModule("EventSender", {
 		if (this.__eventsender_observer__) this.__eventsender_observer__("off", name, f);
 		return this;
 	},
-	trigger : function(name) {
+	trigger: function (name) {
 		var i, a;
 		if (this.listener[name]) {
 			a = this.listener[name];
@@ -36,7 +36,7 @@ MapScript.loadModule("EventSender", {
 		if (this.__eventsender_observer__) this.__eventsender_observer__("trigger", arguments);
 		return this;
 	},
-	clearListeners : function() {
+	clearListeners: function () {
 		var i;
 		for (i in this.listener) {
 			delete this.listener[i];

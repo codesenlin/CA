@@ -1,8 +1,8 @@
-module.exports = function(context, args) {
-	return new Promise(function(resolve, reject) {
+module.exports = function (context, args) {
+	return new Promise(function (resolve, reject) {
 		var ms = parseInt(Array.isArray(args) ? args[0] : args);
 		if (ms > 0) {
-			setTimeout(function() {
+			setTimeout(function () {
 				resolve();
 			}, ms);
 		} else {

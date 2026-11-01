@@ -1,6 +1,6 @@
-MapScript.loadModule("PopupPage", (function() {
+MapScript.loadModule("PopupPage", (function () {
 	var id = 0;
-	var r = function(mainView, name, modal) {
+	var r = function (mainView, name, modal) {
 		this.mainView = mainView;
 		this.name = name || ("Unnamed@" + id);
 		this.id = id++;
@@ -14,188 +14,216 @@ MapScript.loadModule("PopupPage", (function() {
 		r.fullscreen = true;
 		r.focusable = true;
 		r.debugPrint = false;
-		r.focusedAlpha = 1; 
+		r.focusedAlpha = 1;
 		r.unfocusedAlpha = 0.6;
-		r.initialize = function() {G.ui(function() {try {
-			var vcfg = G.ViewConfiguration.get(ctx);
-			var longPressTimeout = vcfg.getLongPressTimeout();
-			var touchSlop = vcfg.getScaledTouchSlop();
-			r.baseTouchListener = new G.View.OnTouchListener({onTouch : function touch(v, e) {try {
-				if (e.getAction() == e.ACTION_DOWN) r.onPageMissing(v);
-				return false;
-			} catch(e) {return erp(e), false}}});
-			r.defaultWindow = ScriptInterface.createFrameLayout({
-				dispatchKeyEvent : function(event, thisObj) {
-					var state = thisObj.getKeyDispatcherState();
-					if (event.getKeyCode() == event.KEYCODE_BACK) {
-						if (!state) return 0;
-						if (event.getAction() == event.ACTION_DOWN && event.getRepeatCount() == 0) {
-							state.startTracking(event, thisObj);
-							return 1;
-						} else if (event.getAction() == event.ACTION_UP) {
-							if (state.isTracking(event) && !event.isCanceled()) {
-								r.back(r.defaultContainer);
-								return 1;
+		r.initialize = function () {
+			G.ui(function () {
+				try {
+					var vcfg = G.ViewConfiguration.get(ctx);
+					var longPressTimeout = vcfg.getLongPressTimeout();
+					var touchSlop = vcfg.getScaledTouchSlop();
+					r.baseTouchListener = new G.View.OnTouchListener({
+						onTouch: function touch(v, e) {
+							try {
+								if (e.getAction() == e.ACTION_DOWN) r.onPageMissing(v);
+								return false;
+							} catch (e) { return erp(e), false }
+						}
+					});
+					r.defaultWindow = ScriptInterface.createFrameLayout({
+						dispatchKeyEvent: function (event, thisObj) {
+							var state = thisObj.getKeyDispatcherState();
+							if (event.getKeyCode() == event.KEYCODE_BACK) {
+								if (!state) return 0;
+								if (event.getAction() == event.ACTION_DOWN && event.getRepeatCount() == 0) {
+									state.startTracking(event, thisObj);
+									return 1;
+								} else if (event.getAction() == event.ACTION_UP) {
+									if (state.isTracking(event) && !event.isCanceled()) {
+										r.back(r.defaultContainer);
+										return 1;
+									}
+								}
 							}
-						}
-					}
-					return 0;
-				},
-				dispatchTouchEvent : function(e, thisObj) {
-					switch (e.getAction()) {
-						case e.ACTION_DOWN:
-						r.setFocused(true);
-						break;
-						case e.ACTION_OUTSIDE:
-						r.setFocused(false);
-						break;
-					}
-					return 0;
-				}
-			});
-			r.defaultWindow.setRoundRectRadius(8 * G.dp, 2);
-			r.defaultWindow.setContentDescription("DefaultWindow");
-			r.longClick = new java.lang.Runnable({run : function() {try {
-				if (r.longClicked) r.setFullScreen(false, true);
-				r.longClicked = false;
-			} catch(e) {erp(e)}}});
-			r.defaultDecorLinear = new G.LinearLayout(ctx);
-			r.defaultDecorLinear.setOrientation(G.LinearLayout.VERTICAL);
-			r.defaultDecorLinear.setLayoutParams(new G.FrameLayout.LayoutParams(-1, -1));
-			r.headerView = new G.LinearLayout(ctx);
-			r.headerView.setOrientation(G.LinearLayout.HORIZONTAL);
-			r.headerView.setLayoutParams(new G.LinearLayout.LayoutParams(-1, -2));
-			r.titleView = new G.TextView(ctx);
-			r.titleView.setText("CA");
-			r.titleView.setPadding(5 * G.dp, 5 * G.dp, 5 * G.dp, 5 * G.dp);
-			r.titleView.setSingleLine(true);
-			r.titleView.setLayoutParams(new G.LinearLayout.LayoutParams(-2, -2, 1));
-			r.titleView.setOnTouchListener(new G.View.OnTouchListener({onTouch : function touch(v, e) {try {
-				switch (e.getAction()) {
-					case e.ACTION_MOVE:
-					if (touch.stead) {
-						if (Math.abs(touch.lx - e.getRawX()) + Math.abs(touch.ly - e.getRawY()) < touchSlop) {
-							break;
-						}
-						touch.stead = false;
-					}
-					r.setRect(e.getRawX() + touch.offx, e.getRawY() + touch.offy, -1, -1, true);
-					break;
-					case e.ACTION_DOWN:
-					touch.offx = r.x - (touch.lx = e.getRawX());
-					touch.offy = r.y - (touch.ly = e.getRawY());
-					touch.stead = true;
-					Common.applyStyle(v, "button_reactive_pressed", 2);
-					break;
-					case e.ACTION_UP:
-					case e.ACTION_CANCEL:
-					Common.applyStyle(v, "button_reactive", 2);
-				}
-				return true;
-			} catch(e) {return erp(e), false}}}));
-			r.headerView.addView(r.titleView);
-			r.resizeView = new G.TextView(ctx);
-			r.resizeView.setText("■");
-			r.resizeView.setPadding(5 * G.dp, 5 * G.dp, 5 * G.dp, 5 * G.dp);
-			r.resizeView.setSingleLine(true);
-			r.resizeView.setGravity(G.Gravity.RIGHT);
-			r.resizeView.setLayoutParams(new G.LinearLayout.LayoutParams(-2, -2));
-			r.resizeView.setOnTouchListener(new G.View.OnTouchListener({onTouch : function touch(v, e) {try {
-				switch (e.getAction()) {
-					case e.ACTION_MOVE:
-					if (r.locked) break;
-					if (touch.stead) {
-						if (Math.abs(touch.lx - e.getRawX()) + Math.abs(touch.ly - e.getRawY()) < touchSlop) {
-							break;
-						}
-						r.longClicked = false;
-						touch.stead = false;
-						r.defaultStub.setVisibility(G.View.VISIBLE);
-						r.defaultContainer.setVisibility(G.View.GONE);
-					}
-					break;
-					case e.ACTION_DOWN:
-					touch.offwidth = r.width - (touch.lx = e.getRawX());
-					touch.offheight = r.height + (touch.ly = e.getRawY());
-					touch.offy = r.y - touch.ly;
-					touch.stead = true;
-					v.postDelayed(r.longClick, longPressTimeout);
-					r.longClicked = true;
-					Common.applyStyle(v, "button_reactive_pressed", 2);
-					break;
-					case e.ACTION_UP:
-					case e.ACTION_CANCEL:
-					r.longClicked = false;
-					Common.applyStyle(v, "button_reactive", 2);
-					if (r.locked) break;
-					if (!touch.stead) {
-						r.defaultStub.setVisibility(G.View.GONE);
-						r.defaultContainer.setVisibility(G.View.VISIBLE);
-						r.setRect(-1, e.getRawY() + touch.offy, e.getRawX() + touch.offwidth, touch.offheight - e.getRawY(), true);
-					}
-				}
-				return true;
-			} catch(e) {return erp(e), false}}}));
-			r.headerView.addView(r.resizeView);
-			r.headerView.measure(0, 0);
-			r.minWidth = r.headerView.getMeasuredWidth();
-			r.minHeight = r.headerView.getMeasuredHeight();
-			r.defaultDecorLinear.addView(r.headerView);
-			r.defaultContainer = new G.FrameLayout(ctx);
-			r.defaultContainer.setLayoutParams(new G.LinearLayout.LayoutParams(-1, -1));
-			r.defaultContainer.setOnTouchListener(r.baseTouchListener);
-			r.defaultContainer.addOnLayoutChangeListener(new G.View.OnLayoutChangeListener({onLayoutChange : function(view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) {try {
-				var i, w = right - left, h = bottom - top, ow = oldRight - oldLeft, oh = oldBottom - oldTop, e;
-				if (w == ow && h == oh) return;
-				for (i = r.defaultStack.length - 1; i >= 0; i--) {
-					e = r.defaultStack[i];
-					e.page.trigger("resize", w, h);
-				}
-			} catch(e) {erp(e)}}}));
-			r.defaultDecorLinear.addView(r.defaultContainer);
-			r.defaultStub = new G.TextView(ctx);
-			r.defaultStub.setLayoutParams(new G.LinearLayout.LayoutParams(-1, -1));
-			r.defaultStub.setVisibility(G.View.GONE);
-			r.defaultStub.setGravity(G.Gravity.CENTER);
-			r.defaultStub.setPadding(20 * G.dp, 20 * G.dp, 20 * G.dp, 20 * G.dp);
-			r.defaultStub.setText("拖动右上角方块调整大小\n长按右上角方块隐藏顶栏");
-			r.defaultDecorLinear.addView(r.defaultStub);
-			r.defaultWindow.addView(r.defaultDecorLinear);
-			r.floatWindow = r.floatContainer = ScriptInterface.createFrameLayout({
-				dispatchKeyEvent : function(event, thisObj) {
-					var state = thisObj.getKeyDispatcherState();
-					if (event.getKeyCode() == event.KEYCODE_BACK) {
-						if (!state) return 0;
-						if (event.getAction() == event.ACTION_DOWN && event.getRepeatCount() == 0) {
-							state.startTracking(event, thisObj);
-							return 1;
-						} else if (event.getAction() == event.ACTION_UP) {
-							if (state.isTracking(event) && !event.isCanceled()) {
-								r.back(r.defaultContainer);
-								return 1;
+							return 0;
+						},
+						dispatchTouchEvent: function (e, thisObj) {
+							switch (e.getAction()) {
+								case e.ACTION_DOWN:
+									r.setFocused(true);
+									break;
+								case e.ACTION_OUTSIDE:
+									r.setFocused(false);
+									break;
 							}
+							return 0;
 						}
-					}
-					return 0;
-				},
-				dispatchTouchEvent : function(event, thisObj) {
-					return 0;
-				}
-			});
-			r.floatWindow.setContentDescription("FloatWindow");
-			r.floatContainer.setOnTouchListener(r.baseTouchListener);
-			r.floatContainer.addOnLayoutChangeListener(new G.View.OnLayoutChangeListener({onLayoutChange : function(view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) {try {
-				var i, w = right - left, h = bottom - top, ow = oldRight - oldLeft, oh = oldBottom - oldTop, e;
-				if (w == ow && h == oh) return;
-				for (i = r.floatStack.length - 1; i >= 0; i--) {
-					e = r.floatStack[i];
-					e.page.trigger("resize", w, h);
-				}
-			} catch(e) {erp(e)}}}));
-			r.thread = java.lang.Thread.currentThread();
-		} catch(e) {erp(e)}})}
+					});
+					r.defaultWindow.setRoundRectRadius(8 * G.dp, 2);
+					r.defaultWindow.setContentDescription("DefaultWindow");
+					r.longClick = new java.lang.Runnable({
+						run: function () {
+							try {
+								if (r.longClicked) r.setFullScreen(false, true);
+								r.longClicked = false;
+							} catch (e) { erp(e) }
+						}
+					});
+					r.defaultDecorLinear = new G.LinearLayout(ctx);
+					r.defaultDecorLinear.setOrientation(G.LinearLayout.VERTICAL);
+					r.defaultDecorLinear.setLayoutParams(new G.FrameLayout.LayoutParams(-1, -1));
+					r.headerView = new G.LinearLayout(ctx);
+					r.headerView.setOrientation(G.LinearLayout.HORIZONTAL);
+					r.headerView.setLayoutParams(new G.LinearLayout.LayoutParams(-1, -2));
+					r.titleView = new G.TextView(ctx);
+					r.titleView.setText("CA");
+					r.titleView.setPadding(5 * G.dp, 5 * G.dp, 5 * G.dp, 5 * G.dp);
+					r.titleView.setSingleLine(true);
+					r.titleView.setLayoutParams(new G.LinearLayout.LayoutParams(-2, -2, 1));
+					r.titleView.setOnTouchListener(new G.View.OnTouchListener({
+						onTouch: function touch(v, e) {
+							try {
+								switch (e.getAction()) {
+									case e.ACTION_MOVE:
+										if (touch.stead) {
+											if (Math.abs(touch.lx - e.getRawX()) + Math.abs(touch.ly - e.getRawY()) < touchSlop) {
+												break;
+											}
+											touch.stead = false;
+										}
+										r.setRect(e.getRawX() + touch.offx, e.getRawY() + touch.offy, -1, -1, true);
+										break;
+									case e.ACTION_DOWN:
+										touch.offx = r.x - (touch.lx = e.getRawX());
+										touch.offy = r.y - (touch.ly = e.getRawY());
+										touch.stead = true;
+										Common.applyStyle(v, "button_reactive_pressed", 2);
+										break;
+									case e.ACTION_UP:
+									case e.ACTION_CANCEL:
+										Common.applyStyle(v, "button_reactive", 2);
+								}
+								return true;
+							} catch (e) { return erp(e), false }
+						}
+					}));
+					r.headerView.addView(r.titleView);
+					r.resizeView = new G.TextView(ctx);
+					r.resizeView.setText("■");
+					r.resizeView.setPadding(5 * G.dp, 5 * G.dp, 5 * G.dp, 5 * G.dp);
+					r.resizeView.setSingleLine(true);
+					r.resizeView.setGravity(G.Gravity.RIGHT);
+					r.resizeView.setLayoutParams(new G.LinearLayout.LayoutParams(-2, -2));
+					r.resizeView.setOnTouchListener(new G.View.OnTouchListener({
+						onTouch: function touch(v, e) {
+							try {
+								switch (e.getAction()) {
+									case e.ACTION_MOVE:
+										if (r.locked) break;
+										if (touch.stead) {
+											if (Math.abs(touch.lx - e.getRawX()) + Math.abs(touch.ly - e.getRawY()) < touchSlop) {
+												break;
+											}
+											r.longClicked = false;
+											touch.stead = false;
+											r.defaultStub.setVisibility(G.View.VISIBLE);
+											r.defaultContainer.setVisibility(G.View.GONE);
+										}
+										break;
+									case e.ACTION_DOWN:
+										touch.offwidth = r.width - (touch.lx = e.getRawX());
+										touch.offheight = r.height + (touch.ly = e.getRawY());
+										touch.offy = r.y - touch.ly;
+										touch.stead = true;
+										v.postDelayed(r.longClick, longPressTimeout);
+										r.longClicked = true;
+										Common.applyStyle(v, "button_reactive_pressed", 2);
+										break;
+									case e.ACTION_UP:
+									case e.ACTION_CANCEL:
+										r.longClicked = false;
+										Common.applyStyle(v, "button_reactive", 2);
+										if (r.locked) break;
+										if (!touch.stead) {
+											r.defaultStub.setVisibility(G.View.GONE);
+											r.defaultContainer.setVisibility(G.View.VISIBLE);
+											r.setRect(-1, e.getRawY() + touch.offy, e.getRawX() + touch.offwidth, touch.offheight - e.getRawY(), true);
+										}
+								}
+								return true;
+							} catch (e) { return erp(e), false }
+						}
+					}));
+					r.headerView.addView(r.resizeView);
+					r.headerView.measure(0, 0);
+					r.minWidth = r.headerView.getMeasuredWidth();
+					r.minHeight = r.headerView.getMeasuredHeight();
+					r.defaultDecorLinear.addView(r.headerView);
+					r.defaultContainer = new G.FrameLayout(ctx);
+					r.defaultContainer.setLayoutParams(new G.LinearLayout.LayoutParams(-1, -1));
+					r.defaultContainer.setOnTouchListener(r.baseTouchListener);
+					r.defaultContainer.addOnLayoutChangeListener(new G.View.OnLayoutChangeListener({
+						onLayoutChange: function (view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) {
+							try {
+								var i, w = right - left, h = bottom - top, ow = oldRight - oldLeft, oh = oldBottom - oldTop, e;
+								if (w == ow && h == oh) return;
+								for (i = r.defaultStack.length - 1; i >= 0; i--) {
+									e = r.defaultStack[i];
+									e.page.trigger("resize", w, h);
+								}
+							} catch (e) { erp(e) }
+						}
+					}));
+					r.defaultDecorLinear.addView(r.defaultContainer);
+					r.defaultStub = new G.TextView(ctx);
+					r.defaultStub.setLayoutParams(new G.LinearLayout.LayoutParams(-1, -1));
+					r.defaultStub.setVisibility(G.View.GONE);
+					r.defaultStub.setGravity(G.Gravity.CENTER);
+					r.defaultStub.setPadding(20 * G.dp, 20 * G.dp, 20 * G.dp, 20 * G.dp);
+					r.defaultStub.setText("拖动右上角方块调整大小\n长按右上角方块隐藏顶栏");
+					r.defaultDecorLinear.addView(r.defaultStub);
+					r.defaultWindow.addView(r.defaultDecorLinear);
+					r.floatWindow = r.floatContainer = ScriptInterface.createFrameLayout({
+						dispatchKeyEvent: function (event, thisObj) {
+							var state = thisObj.getKeyDispatcherState();
+							if (event.getKeyCode() == event.KEYCODE_BACK) {
+								if (!state) return 0;
+								if (event.getAction() == event.ACTION_DOWN && event.getRepeatCount() == 0) {
+									state.startTracking(event, thisObj);
+									return 1;
+								} else if (event.getAction() == event.ACTION_UP) {
+									if (state.isTracking(event) && !event.isCanceled()) {
+										r.back(r.defaultContainer);
+										return 1;
+									}
+								}
+							}
+							return 0;
+						},
+						dispatchTouchEvent: function (event, thisObj) {
+							return 0;
+						}
+					});
+					r.floatWindow.setContentDescription("FloatWindow");
+					r.floatContainer.setOnTouchListener(r.baseTouchListener);
+					r.floatContainer.addOnLayoutChangeListener(new G.View.OnLayoutChangeListener({
+						onLayoutChange: function (view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) {
+							try {
+								var i, w = right - left, h = bottom - top, ow = oldRight - oldLeft, oh = oldBottom - oldTop, e;
+								if (w == ow && h == oh) return;
+								for (i = r.floatStack.length - 1; i >= 0; i--) {
+									e = r.floatStack[i];
+									e.page.trigger("resize", w, h);
+								}
+							} catch (e) { erp(e) }
+						}
+					}));
+					r.thread = java.lang.Thread.currentThread();
+				} catch (e) { erp(e) }
+			})
+		}
 		r.analytics = ScriptInterface.getAnalyticsPlatform();
-		r.checkThread = function() {
+		r.checkThread = function () {
 			var th = java.lang.Thread.currentThread();
 			if (r.thread) {
 				if (r.thread != th) {
@@ -207,7 +235,7 @@ MapScript.loadModule("PopupPage", (function() {
 				}
 			}
 		}
-		r.updateDefault = function() {
+		r.updateDefault = function () {
 			if (this.fullscreen || this.locked) {
 				this.headerView.setVisibility(G.View.GONE);
 			} else {
@@ -220,7 +248,7 @@ MapScript.loadModule("PopupPage", (function() {
 			}
 			this.updateAlpha();
 		}
-		r.setFullScreen = function(isFullScreen, isLocked) {
+		r.setFullScreen = function (isFullScreen, isLocked) {
 			this.locked = Boolean(isLocked);
 			if (this.defaultVisible) {
 				if (isFullScreen) {
@@ -237,23 +265,23 @@ MapScript.loadModule("PopupPage", (function() {
 			}
 			this.trigger("fullscreenChanged", isFullScreen, isLocked);
 		}
-		r.isFullScreen = function() {
+		r.isFullScreen = function () {
 			return this.fullscreen;
 		}
-		r.isLocked = function() {
+		r.isLocked = function () {
 			return this.locked;
 		}
-		r.initRect = function() {
+		r.initRect = function () {
 			var metrics = Common.getMetrics();
 			this.x = metrics[0] * 0.25;
 			this.y = metrics[1] * 0.25;
 			this.width = metrics[0] * 0.5;
 			this.height = metrics[1] * 0.5;
 		}
-		r.getRect = function() {
+		r.getRect = function () {
 			return [this.x, this.y, this.width, this.height];
 		}
-		r.setRect = function(x, y, width, height, fromUser) {
+		r.setRect = function (x, y, width, height, fromUser) {
 			var oldX = this.x, oldY = this.y, oldWidth = this.width, oldHeight = this.height;
 			if (x >= 0) this.x = x;
 			if (y >= 0) this.y = y;
@@ -264,7 +292,7 @@ MapScript.loadModule("PopupPage", (function() {
 				this.trigger("rectUpdate", this.x, this.y, this.width, this.height, oldX, oldY, oldWidth, oldHeight, fromUser);
 			}
 		}
-		r.setFocused = function(focused) {
+		r.setFocused = function (focused) {
 			if (focused && !this.focusable) {
 				this.focusable = true;
 				this.resizeView.setVisibility(G.View.VISIBLE);
@@ -279,12 +307,12 @@ MapScript.loadModule("PopupPage", (function() {
 				this.trigger("blur");
 			}
 		}
-		r.setAlpha = function(focused, unfocused) {
+		r.setAlpha = function (focused, unfocused) {
 			this.focusedAlpha = focused;
 			this.unfocusedAlpha = unfocused;
 			this.updateAlpha();
 		}
-		r.updateAlpha = function() {
+		r.updateAlpha = function () {
 			if (this.focusable) {
 				this.defaultWindow.setAlpha(r.focusedAlpha);
 			} else {
@@ -298,8 +326,8 @@ MapScript.loadModule("PopupPage", (function() {
 		r.disappearingList = [];
 		r.visible = true;
 		r.prototype = {
-			init : function() {},
-			enter : function(noAnimation) {
+			init: function () { },
+			enter: function (noAnimation) {
 				var self = this;
 				if (this.showing) return this;
 				this.showing = true;
@@ -307,21 +335,21 @@ MapScript.loadModule("PopupPage", (function() {
 				r.showPage(this);
 				r.pushPage(this.name, this);
 				if (!noAnimation && this._enterAnimation) {
-					this.currentAnimation = this._enterAnimation(this.mainView, function() {
+					this.currentAnimation = this._enterAnimation(this.mainView, function () {
 						self.currentAnimation = null;
 						r.pageShown(self);
 					});
 				}
 				return this;
 			},
-			exit : function(noAnimation) {
+			exit: function (noAnimation) {
 				var self = this;
 				if (!this.showing) return this;
 				r.popPage(this);
 				this.showing = false;
 				if (!noAnimation && this._exitAnimation && this.visible()) {
 					r.addDisappearing(this);
-					this.currentAnimation = this._exitAnimation(this.mainView, function() {
+					this.currentAnimation = this._exitAnimation(this.mainView, function () {
 						self.currentAnimation = null;
 						self.processHide();
 						r.removeDisappearing(self);
@@ -331,13 +359,13 @@ MapScript.loadModule("PopupPage", (function() {
 				}
 				return this;
 			},
-			dismiss : function() {
+			dismiss: function () {
 				this.exit(true);
 			},
-			resizable : function() {
+			resizable: function () {
 				return this.currentContainer == r.defaultContainer;
 			},
-			visible : function() {
+			visible: function () {
 				if (this.mainView.getVisibility() != G.View.VISIBLE) return false;
 				if (this.currentContainer == r.floatContainer) {
 					return r.floatVisible;
@@ -345,36 +373,36 @@ MapScript.loadModule("PopupPage", (function() {
 					return r.defaultVisible && r.visible;
 				}
 			},
-			processHide : function() {
+			processHide: function () {
 				if (!this.currentContainer) return this;
 				r.hidePage(this);
 				r.trigger("pageHide", this);
 				return this;
 			},
-			requestShow : function() {
+			requestShow: function () {
 				if (r.debugPrint) Log.d("Show " + this);
 				this.mainView.setVisibility(G.View.VISIBLE);
 				return this;
 			},
-			requestHide : function() {
+			requestHide: function () {
 				if (r.debugPrint) Log.d("Hide " + this);
 				this.mainView.setVisibility(G.View.GONE);
 				return this;
 			},
-			getWidth : function() {
+			getWidth: function () {
 				return this.currentContainer.getWidth();
 			},
-			getHeight : function() {
+			getHeight: function () {
 				return this.currentContainer.getHeight();
 			},
-			getMetrics : function() {
+			getMetrics: function () {
 				return [this.getWidth(), this.getHeight()];
 			},
-			toString : function() {
+			toString: function () {
 				return "[Page " + this.name + "/" + this.id + "]";
 			}
 		}
-		r.buildLayoutParams = function(view, x, y, width, height) {
+		r.buildLayoutParams = function (view, x, y, width, height) {
 			var p = view.getLayoutParams() || new G.WindowManager.LayoutParams(), title = view.getContentDescription();
 			p.gravity = G.Gravity.LEFT | G.Gravity.TOP;
 			p.flags |= p.FLAG_NOT_TOUCH_MODAL | p.FLAG_WATCH_OUTSIDE_TOUCH;
@@ -388,7 +416,7 @@ MapScript.loadModule("PopupPage", (function() {
 			if (title) p.setTitle(title);
 			return p;
 		}
-		r.setFocusable = function(view, focusable) {
+		r.setFocusable = function (view, focusable) {
 			var p = view.getLayoutParams() || new G.WindowManager.LayoutParams();
 			if (focusable) {
 				p.flags &= ~p.FLAG_NOT_FOCUSABLE;
@@ -397,45 +425,45 @@ MapScript.loadModule("PopupPage", (function() {
 			}
 			PWM.wm.updateViewLayout(view, p);
 		}
-		r.showView = function(view, x, y, width, height) {
+		r.showView = function (view, x, y, width, height) {
 			try {
 				PWM.wm.addView(view, this.buildLayoutParams(view, x, y, width, height));
 				return true;
-			} catch(e) {
+			} catch (e) {
 				erp(e, true);
 			}
 			return false;
 		};
-		r.hideView = function(view) {
+		r.hideView = function (view) {
 			try {
 				PWM.wm.removeViewImmediate(view);
 				return true;
-			} catch(e) {
+			} catch (e) {
 				erp(e, true);
 			}
 			return false;
 		};
-		r.updateView = function(view, x, y, width, height) {
+		r.updateView = function (view, x, y, width, height) {
 			try {
 				PWM.wm.updateViewLayout(view, this.buildLayoutParams(view, x, y, width, height));
 				return true;
-			} catch(e) {
+			} catch (e) {
 				erp(e, true);
 			}
 			return false;
 		};
-		r.back = function(source) {
+		r.back = function (source) {
 			var stack = source == this.floatContainer ? this.floatStack : this.defaultStack, cancelEvent, stackItem;
 			if (stack.length) {
 				stackItem = stack[stack.length - 1];
 				cancelEvent = stackItem.page.modal;
-				stackItem.page.trigger("back", function() {
+				stackItem.page.trigger("back", function () {
 					cancelEvent = true;
 				});
 				if (!cancelEvent) stackItem.page.exit();
 			}
 		}
-		r.showPage = function(page) {
+		r.showPage = function (page) {
 			this.checkThread();
 			if (page.currentContainer) page.currentContainer.removeView(page.mainView);
 			page.currentContainer = this.visible ? this.defaultContainer : this.floatContainer;
@@ -464,7 +492,7 @@ MapScript.loadModule("PopupPage", (function() {
 				this.setFocused(true);
 			}
 		}
-		r.hidePage = function(page, notRemoveWindow) {
+		r.hidePage = function (page, notRemoveWindow) {
 			var stack = page.currentContainer == this.floatContainer ? this.floatStack : this.defaultStack;
 			this.checkThread();
 			if (!page.currentContainer) Log.throwError(new Error(page + " was removed."));
@@ -490,7 +518,7 @@ MapScript.loadModule("PopupPage", (function() {
 			}
 			page.currentContainer = null;
 		}
-		r.pushPage = function(name, page) {
+		r.pushPage = function (name, page) {
 			var t, stack = page.currentContainer == this.floatContainer ? this.floatStack : this.defaultStack;
 			this.checkThread();
 			if (this.busy) return void Log.d("pushPage(" + name + "," + page + ") cancelled");
@@ -503,15 +531,15 @@ MapScript.loadModule("PopupPage", (function() {
 				}
 			}
 			stack.push(t = {
-				name : name,
-				page : page
+				name: name,
+				page: page
 			});
 			page.trigger("enter");
 			this.analytics.onPageStart(ctx, name);
 			if (this.debugPrint) Log.d(t.page + " entered");
 			this.trigger("pushPage", name, page);
 		}
-		r.popPage = function(page) {
+		r.popPage = function (page) {
 			var t, i, stack = page.currentContainer == this.floatContainer ? this.floatStack : this.defaultStack;
 			this.checkThread();
 			if (this.busy) return void Log.d("popPage(" + page + ") cancelled");
@@ -538,7 +566,7 @@ MapScript.loadModule("PopupPage", (function() {
 			}
 			this.trigger("popPage", page);
 		}
-		r.pageShown = function(page) {
+		r.pageShown = function (page) {
 			var i, stack = page.currentContainer == this.floatContainer ? this.floatStack : this.defaultStack;
 			this.checkThread();
 			if (stack.length > 1) {
@@ -549,13 +577,13 @@ MapScript.loadModule("PopupPage", (function() {
 			}
 			this.trigger("pageShown", page);
 		}
-		r.onPageMissing = function(v) {
+		r.onPageMissing = function (v) {
 			var count = v.getChildCount();
 			if (count > 0 && v.getChildAt(count - 1).getVisibility() == G.View.VISIBLE) return;
 			erp(new Error("Page touch event leaked! Debug:\n" + this.debug()), true);
 			this.dismiss();
 		}
-		r.getTopPage = function() {
+		r.getTopPage = function () {
 			if (this.floatVisible && this.floatStack.length > 0) {
 				return this.floatStack[this.floatStack.length - 1].page;
 			} else if (this.defaultVisible && this.visible && this.defaultStack.length > 0) {
@@ -563,7 +591,7 @@ MapScript.loadModule("PopupPage", (function() {
 			}
 			return null;
 		}
-		r.show = function() {
+		r.show = function () {
 			var i, page;
 			this.checkThread();
 			if (this.visible) return;
@@ -589,7 +617,7 @@ MapScript.loadModule("PopupPage", (function() {
 			this.updateOverlays();
 			this.trigger("show");
 		}
-		r.hide = function() {
+		r.hide = function () {
 			var page;
 			this.checkThread();
 			if (!this.visible) return;
@@ -604,15 +632,15 @@ MapScript.loadModule("PopupPage", (function() {
 			this.updateOverlays();
 			this.trigger("hide");
 		}
-		r.addDisappearing = function(page) {
+		r.addDisappearing = function (page) {
 			var i = this.disappearingList.indexOf(page);
 			if (i < 0) this.disappearingList.push(page);
 		}
-		r.removeDisappearing = function(page) {
+		r.removeDisappearing = function (page) {
 			var i = this.disappearingList.indexOf(page);
 			if (i >= 0) this.disappearingList.splice(i, 1);
 		}
-		r.dismiss = function() {
+		r.dismiss = function () {
 			var i, e;
 			this.checkThread();
 			this.busy = true;
@@ -647,11 +675,11 @@ MapScript.loadModule("PopupPage", (function() {
 					this.floatVisible = false;
 				}
 				this.updateOverlays();
-			} catch(e) {erp(e)}
+			} catch (e) { erp(e) }
 			this.busy = false;
 			this.trigger("dismiss");
 		}
-		r.reset = function() {
+		r.reset = function () {
 			this.dismiss();
 			this.fullscreen = true;
 			this.focusable = true;
@@ -659,56 +687,60 @@ MapScript.loadModule("PopupPage", (function() {
 			this.trigger("reset");
 			this.clearListeners();
 		}
-		r.getCount = function() {
+		r.getCount = function () {
 			return this.defaultStack.length + this.floatStack.length;
 		}
-		r.debug = function() {
+		r.debug = function () {
 			var s = [];
 			s.push("PageManager[visible=" + this.visible + "]");
 			s.push("DefaultWindowPageManager[showing=" + this.defaultVisible + ",fullscreen=" + this.fullscreen + "]");
-			this.defaultStack.forEach(function(e, i) {
+			this.defaultStack.forEach(function (e, i) {
 				s.push(i + ":" + e.name + "[" +
 					(e.page.modal ? "M" : "") +
 					"]" + e.page.mainView);
 			});
 			s.push("FloatWindowPageManager[showing=" + this.floatVisible + ",fullscreen=true]");
-			this.floatStack.forEach(function(e, i) {
+			this.floatStack.forEach(function (e, i) {
 				s.push(i + ":" + e.name + "[" +
 					(e.page.modal ? "M" : "") +
 					"]" + e.page.mainView);
 			});
 			return s.join("\n");
 		}
-		r.getActiveContainer = function() {
+		r.getActiveContainer = function () {
 			return this.floatVisible ? this.floatContainer : this.defaultVisible && this.visible ? this.defaultContainer : null;
 		}
 		r.supportResize = true;
 	} else { //暂不维护
-		r.isFullScreen = function() {
+		r.isFullScreen = function () {
 			return true;
 		}
-		r.isLocked = function() {
+		r.isLocked = function () {
 			return false;
 		}
 		r.prototype = {
-			init : function() {
+			init: function () {
 				var self = this;
 				this.popup = new G.PopupWindow(this.mainView, -1, -1);
-				this.popup.setOnDismissListener(new G.PopupWindow.OnDismissListener({onDismiss : function() {try {
-					r.popPage(self);
-					self.showing = false;
-				} catch(e) {erp(e)}}}));
+				this.popup.setOnDismissListener(new G.PopupWindow.OnDismissListener({
+					onDismiss: function () {
+						try {
+							r.popPage(self);
+							self.showing = false;
+						} catch (e) { erp(e) }
+					}
+				}));
 				if (!this.modal) this.popup.setBackgroundDrawable(new G.ColorDrawable(G.Color.TRANSPARENT));
 				this.popup.setFocusable(true);
 				this.popup.setSoftInputMode(G.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
 				this.popup.setWindowLayoutType(G.supportFloat ? (android.os.Build.VERSION.SDK_INT >= 26 ? G.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : G.WindowManager.LayoutParams.TYPE_PHONE) : G.WindowManager.LayoutParams.TYPE_APPLICATION_PANEL);
 			},
-			enter : function(noAnimation) {
+			enter: function (noAnimation) {
 				var self = this;
 				if (this.showing) this.popup.dismiss();
 				this.popup.showAtLocation(ctx.getWindow().getDecorView(), G.Gravity.LEFT | G.Gravity.TOP, 0, 0);
 				if (!noAnimation && this._enterAnimation) {
-					this._enterAnimation(this.mainView, function() {
+					this._enterAnimation(this.mainView, function () {
 						r.pushPage(self.name, self);
 					});
 				} else {
@@ -717,11 +749,11 @@ MapScript.loadModule("PopupPage", (function() {
 				this.showing = true;
 				return this;
 			},
-			exit : function(noAnimation) {
+			exit: function (noAnimation) {
 				var self = this;
 				if (!this.showing) return this;
 				if (!noAnimation && this._exitAnimation) {
-					this._exitAnimation(this.mainView, function() {
+					this._exitAnimation(this.mainView, function () {
 						self.popup.dismiss();
 					});
 				} else {
@@ -729,53 +761,53 @@ MapScript.loadModule("PopupPage", (function() {
 				}
 				return this;
 			},
-			resizable : function() {
+			resizable: function () {
 				return false;
 			},
-			dismiss : function() {
+			dismiss: function () {
 				return this.exit(true);
 			},
-			requestShow : function() {
+			requestShow: function () {
 				this.mainView.getRootView().setVisibility(G.View.VISIBLE);
 				return this;
 			},
-			requestHide : function() {
+			requestHide: function () {
 				this.mainView.getRootView().setVisibility(G.View.GONE);
 				return this;
 			},
-			getWidth : function() {
+			getWidth: function () {
 				return this.mainView.getWidth();
 			},
-			getHeight : function() {
+			getHeight: function () {
 				return this.mainView.getHeight();
 			},
-			getMetrics : function() {
+			getMetrics: function () {
 				return [this.getWidth(), this.getHeight()];
 			}
 		};
 		r.visible = true;
 		r.stack = [];
-		r.pushPage = function(name, page) {
+		r.pushPage = function (name, page) {
 			var t;
 			if (this.busy) return;
 			if (this.stack.length && this.stack[this.stack.length - 1].visible) {
 				this.stack[this.stack.length - 1].page.trigger("pause");
 			}
 			this.stack.push(t = {
-				name : name,
-				page : page,
-				visible : true
+				name: name,
+				page: page,
+				visible: true
 			});
 			page.trigger("enter");
 			this.trigger("pushPage", name, page);
 			this.trigger("addPopup");
 		}
-		r.popPage = function(page) {
+		r.popPage = function (page) {
 			var i;
 			if (this.busy) return;
 			for (i = this.stack.length - 1; i >= 0; i--) {
 				if (this.stack[i].page != page) continue;
-				this.stack.splice(i, this.stack.length - i).forEach(function(e) {
+				this.stack.splice(i, this.stack.length - i).forEach(function (e) {
 					e.page.trigger("exit");
 				}, this);
 				if (i > 0 && this.visible) {
@@ -786,11 +818,11 @@ MapScript.loadModule("PopupPage", (function() {
 			this.trigger("popPage", page);
 			this.trigger("removePopup");
 		}
-		r.show = function() {
+		r.show = function () {
 			var i, e;
 			if (this.visible) return;
 			if (this.stack.length) this.stack[this.stack.length - 1].page.trigger("resume");
-			for (i = 0; i < this.stack.length ; i++) {
+			for (i = 0; i < this.stack.length; i++) {
 				e = this.stack[i];
 				if (e.visible) continue;
 				e.page.requestShow();
@@ -799,7 +831,7 @@ MapScript.loadModule("PopupPage", (function() {
 			this.visible = true;
 			this.trigger("show");
 		}
-		r.hide = function() {
+		r.hide = function () {
 			var i, e;
 			if (!this.visible) return;
 			if (this.stack.length) this.stack[this.stack.length - 1].page.trigger("pause");
@@ -812,7 +844,7 @@ MapScript.loadModule("PopupPage", (function() {
 			this.visible = false;
 			this.trigger("hide");
 		}
-		r.dismiss = function() {
+		r.dismiss = function () {
 			var i, e;
 			this.busy = true;
 			for (i = this.stack.length - 1; i >= 0; i--) {
@@ -824,18 +856,18 @@ MapScript.loadModule("PopupPage", (function() {
 			this.busy = false;
 			this.trigger("dismiss");
 		}
-		r.reset = function() {
+		r.reset = function () {
 			this.dismiss();
 			this.trigger("reset");
 			this.clearListeners();
 		}
-		r.getCount = function() {
+		r.getCount = function () {
 			return this.stack.length;
 		}
-		r.debug = function() {
+		r.debug = function () {
 			var s = [];
 			s.push("PopupWindowPageManager[visible=" + this.visible + "]");
-			this.stack.forEach(function(e, i) {
+			this.stack.forEach(function (e, i) {
 				s.push(i + ":" + e.name + "[" +
 					(e.visible ? "V" : "") +
 					(e.page.showing ? "S" : "") +
@@ -844,51 +876,55 @@ MapScript.loadModule("PopupPage", (function() {
 			});
 			return s.join("\n");
 		}
-		r.getActiveContainer = function() {
+		r.getActiveContainer = function () {
 			return null;
 		}
 		r.supportResize = false;
 	}
 	r.prototype.show = r.prototype.enter;
 	r.prototype.hide = r.prototype.exit;
-	r.prototype.enterAnimation = function(f) {
+	r.prototype.enterAnimation = function (f) {
 		this._enterAnimation = f;
 		return this;
 	};
-	r.prototype.exitAnimation = function(f) {
+	r.prototype.exitAnimation = function (f) {
 		this._exitAnimation = f;
 		return this;
 	};
 	EventSender.init(r.prototype);
 	r.listener = {};
-	r.isBusy = function() {
+	r.isBusy = function () {
 		return this.busy;
 	};
-	r.showDialog = function(name, layout, width, height, modal) {
+	r.showDialog = function (name, layout, width, height, modal) {
 		var frame, popup, hasMargins = false;
 		frame = new G.FrameLayout(ctx);
 		frame.setBackgroundColor(Common.argbInt(0x80, 0, 0, 0));
-		frame.setOnTouchListener(new G.View.OnTouchListener({onTouch : function touch(v, e) {try {
-			if (e.getAction() == e.ACTION_DOWN && !modal) {
-				if (e.getX() < layout.getLeft() || e.getX() >= layout.getRight() ||
-					e.getY() < layout.getTop() || e.getY() >= layout.getBottom()) {
-					popup.exit();
-				}
+		frame.setOnTouchListener(new G.View.OnTouchListener({
+			onTouch: function touch(v, e) {
+				try {
+					if (e.getAction() == e.ACTION_DOWN && !modal) {
+						if (e.getX() < layout.getLeft() || e.getX() >= layout.getRight() ||
+							e.getY() < layout.getTop() || e.getY() >= layout.getBottom()) {
+							popup.exit();
+						}
+					}
+					return true;
+				} catch (e) { return erp(e), true }
 			}
-			return true;
-		} catch(e) {return erp(e), true}}}));
+		}));
 		layout.setLayoutParams(new G.FrameLayout.LayoutParams(width, height, G.Gravity.CENTER));
 		frame.addView(layout);
 		if (G.style == "Material") layout.setElevation(16 * G.dp);
 		popup = new r(frame, name, modal);
-		popup.enterAnimation(r.dialogEnterAnimation.bind(r, { layout : layout }));
-		popup.on("resume", function() {
+		popup.enterAnimation(r.dialogEnterAnimation.bind(r, { layout: layout }));
+		popup.on("resume", function () {
 			frame.setBackgroundColor(Common.argbInt(0x80, 0, 0, 0));
 		});
-		popup.on("pause", function() {
+		popup.on("pause", function () {
 			frame.setBackground(null);
 		});
-		popup.on("resize", function(event, w, h) {
+		popup.on("resize", function (event, w, h) {
 			var newHasMargins = w > 40 * G.dp && h > 40 * G.dp;
 			if (hasMargins == newHasMargins) return;
 			hasMargins = newHasMargins;
@@ -904,7 +940,7 @@ MapScript.loadModule("PopupPage", (function() {
 		popup.trigger("resize", popup.getWidth(), popup.getHeight());
 		return popup;
 	};
-	r.showSideBar = function(name, layout, direction, offsetAdd, offsetMul, modal) {
+	r.showSideBar = function (name, layout, direction, offsetAdd, offsetMul, modal) {
 		var frame, linear, background, bgdrawable, popup, param;
 		frame = new G.FrameLayout(ctx);
 		background = new G.ImageView(ctx);
@@ -914,15 +950,19 @@ MapScript.loadModule("PopupPage", (function() {
 		linear = new G.LinearLayout(ctx);
 		linear.setWeightSum(1.0);
 		linear.setLayoutParams(new G.FrameLayout.LayoutParams(-1, -1));
-		linear.setOnTouchListener(new G.View.OnTouchListener({onTouch : function touch(v, e) {try {
-			if (e.getAction() == e.ACTION_DOWN && !modal) {
-				if (e.getX() < layout.getLeft() || e.getX() >= layout.getRight() ||
-					e.getY() < layout.getTop() || e.getY() >= layout.getBottom()) {
-					popup.exit();
-				}
+		linear.setOnTouchListener(new G.View.OnTouchListener({
+			onTouch: function touch(v, e) {
+				try {
+					if (e.getAction() == e.ACTION_DOWN && !modal) {
+						if (e.getX() < layout.getLeft() || e.getX() >= layout.getRight() ||
+							e.getY() < layout.getTop() || e.getY() >= layout.getBottom()) {
+							popup.exit();
+						}
+					}
+					return true;
+				} catch (e) { return erp(e), true }
 			}
-			return true;
-		} catch(e) {return erp(e), true}}}));
+		}));
 		if (direction == "left") {
 			linear.setOrientation(G.LinearLayout.HORIZONTAL);
 			linear.setGravity(G.Gravity.LEFT);
@@ -945,16 +985,16 @@ MapScript.loadModule("PopupPage", (function() {
 		if (G.style == "Material") layout.setElevation(16 * G.dp);
 		popup = new r(frame, name, modal);
 		param = {
-			background : background,
-			layout : layout,
-			direction : direction
+			background: background,
+			layout: layout,
+			direction: direction
 		};
 		popup.enterAnimation(r.sideBarEnterAnimation.bind(r, param));
 		popup.exitAnimation(r.sideBarExitAnimation.bind(r, param));
-		popup.on("resume", function() {
+		popup.on("resume", function () {
 			background.setImageDrawable(bgdrawable);
 		});
-		popup.on("pause", function() {
+		popup.on("pause", function () {
 			background.setImageDrawable(null);
 		});
 		popup.dialog = true;
@@ -962,7 +1002,7 @@ MapScript.loadModule("PopupPage", (function() {
 		return popup;
 	};
 	r.overlays = [];
-	r.Overlay = function(view, width, height, gravity, x, y) {
+	r.Overlay = function (view, width, height, gravity, x, y) {
 		this.view = view;
 		this.width = width || -1;
 		this.height = height || -1;
@@ -972,7 +1012,7 @@ MapScript.loadModule("PopupPage", (function() {
 		this.update();
 	}
 	r.Overlay.prototype = {
-		attach : function(container) {
+		attach: function (container) {
 			if (container) {
 				container.addView(this.view, new G.FrameLayout.LayoutParams(this.width, this.height, this.gravity));
 				this.view.setTranslationX(this.x);
@@ -981,16 +1021,16 @@ MapScript.loadModule("PopupPage", (function() {
 			} else {
 				this.popup = new PopupWindow(this.view, this.width, this.height);
 				this.popup.show({
-					x : this.x, y : this.y,
-					width : this.width, height : this.height,
-					gravity : this.gravity,
-					focusable : false,
-					touchable : false
+					x: this.x, y: this.y,
+					width: this.width, height: this.height,
+					gravity: this.gravity,
+					focusable: false,
+					touchable: false
 				});
 				PWM.addFloat(this.popup);
 			}
 		},
-		detach : function() {
+		detach: function () {
 			if (this.popup) {
 				if (this.popup.showing) this.popup.hide();
 				this.popup = null;
@@ -1000,7 +1040,7 @@ MapScript.loadModule("PopupPage", (function() {
 				this.container = null;
 			}
 		},
-		update : function(force) {
+		update: function (force) {
 			var newContainer = r.getActiveContainer();
 			//this.view.bringToFront();
 			if (!force && this.container == newContainer) return;
@@ -1008,26 +1048,26 @@ MapScript.loadModule("PopupPage", (function() {
 			this.attach(newContainer);
 		}
 	}
-	r.addOverlay = function(overlay) {
+	r.addOverlay = function (overlay) {
 		overlay.update(true);
 		r.overlays.push(overlay);
 		return overlay;
 	}
-	r.removeOverlay = function(overlay) {
+	r.removeOverlay = function (overlay) {
 		var i = r.overlays.indexOf(overlay);
 		if (i >= 0) {
 			overlay.detach();
 			r.overlays.splice(i, 1);
 		}
 	}
-	r.updateOverlays = function() {
+	r.updateOverlays = function () {
 		var i;
 		for (i = 0; i < r.overlays.length; i++) {
 			r.overlays[i].update();
 		}
 	}
 	EventSender.init(r);
-	r.fadeInAnimation = function(v, callback) {
+	r.fadeInAnimation = function (v, callback) {
 		var aniSet;
 		aniSet = new G.AnimationSet(true);
 		aniSet.setDuration(300);
@@ -1035,15 +1075,17 @@ MapScript.loadModule("PopupPage", (function() {
 			aniSet.setInterpolator(ctx, G.R.interpolator.fast_out_slow_in);
 		}
 		aniSet.setAnimationListener(new G.Animation.AnimationListener({
-			onAnimationEnd : function(a) {try {
-				if (callback) callback();
-			} catch(e) {erp(e)}},
+			onAnimationEnd: function (a) {
+				try {
+					if (callback) callback();
+				} catch (e) { erp(e) }
+			},
 		}));
 		aniSet.addAnimation(new G.AlphaAnimation(0, 1));
 		aniSet.addAnimation(new G.ScaleAnimation(0.95, 1, 0.95, 1, G.Animation.RELATIVE_TO_SELF, 0.5, G.Animation.RELATIVE_TO_SELF, 0.5));
 		return new r.ViewAnimationController(v, aniSet).start();
 	}
-	r.fadeOutAnimation = function(v, callback) {
+	r.fadeOutAnimation = function (v, callback) {
 		var aniSet;
 		aniSet = new G.AnimationSet(true);
 		aniSet.setDuration(200);
@@ -1052,25 +1094,31 @@ MapScript.loadModule("PopupPage", (function() {
 			aniSet.setInterpolator(ctx, G.R.interpolator.fast_out_slow_in);
 		}
 		aniSet.setAnimationListener(new G.Animation.AnimationListener({
-			onAnimationEnd : function(a) {try {
-				v.post(function() {try {
-					if (callback) callback();
-				} catch(e) {erp(e)}});
-			} catch(e) {erp(e)}},
+			onAnimationEnd: function (a) {
+				try {
+					v.post(function () {
+						try {
+							if (callback) callback();
+						} catch (e) { erp(e) }
+					});
+				} catch (e) { erp(e) }
+			},
 		}));
 		aniSet.addAnimation(new G.AlphaAnimation(1, 0));
 		return new r.ViewAnimationController(v, aniSet).start();
 	}
-	r.dialogEnterAnimation = function(param, v, callback) {
+	r.dialogEnterAnimation = function (param, v, callback) {
 		var alphaAni, scaleAni, layout = param.layout;
 		alphaAni = new G.AlphaAnimation(0, 1);
 		alphaAni.setDuration(200);
 		scaleAni = new G.ScaleAnimation(0.95, 1, 0.95, 1, G.Animation.RELATIVE_TO_SELF, 0.5, G.Animation.RELATIVE_TO_SELF, 0.5);
 		scaleAni.setDuration(200);
 		scaleAni.setAnimationListener(new G.Animation.AnimationListener({
-			onAnimationEnd : function(a) {try {
-				if (callback) callback();
-			} catch(e) {erp(e)}},
+			onAnimationEnd: function (a) {
+				try {
+					if (callback) callback();
+				} catch (e) { erp(e) }
+			},
 		}));
 		if (G.style == "Material") {
 			alphaAni.setInterpolator(ctx, G.R.interpolator.fast_out_slow_in);
@@ -1078,7 +1126,7 @@ MapScript.loadModule("PopupPage", (function() {
 		}
 		return new r.ViewAnimationController(v, alphaAni).addAnimation(layout, scaleAni).start();
 	}
-	r.sideBarEnterAnimation = function(param, v, callback) {
+	r.sideBarEnterAnimation = function (param, v, callback) {
 		var alphaAni, transAni, offsets;
 		var background = param.background, layout = param.layout, direction = param.direction
 		if (direction == "left") {
@@ -1095,9 +1143,11 @@ MapScript.loadModule("PopupPage", (function() {
 		transAni = new G.TranslateAnimation(G.Animation.RELATIVE_TO_SELF, offsets[0], G.Animation.RELATIVE_TO_SELF, offsets[1], G.Animation.RELATIVE_TO_SELF, offsets[2], G.Animation.RELATIVE_TO_SELF, offsets[3]);
 		transAni.setDuration(200);
 		transAni.setAnimationListener(new G.Animation.AnimationListener({
-			onAnimationEnd : function(a) {try {
-				if (callback) callback();
-			} catch(e) {erp(e)}},
+			onAnimationEnd: function (a) {
+				try {
+					if (callback) callback();
+				} catch (e) { erp(e) }
+			},
 		}));
 		if (G.style == "Material") {
 			alphaAni.setInterpolator(ctx, G.R.interpolator.fast_out_slow_in);
@@ -1105,7 +1155,7 @@ MapScript.loadModule("PopupPage", (function() {
 		}
 		return new r.ViewAnimationController(background, alphaAni).addAnimation(layout, transAni).start();
 	}
-	r.sideBarExitAnimation = function(param, v, callback) {
+	r.sideBarExitAnimation = function (param, v, callback) {
 		var alphaAni, transAni, offsets;
 		var background = param.background, layout = param.layout, direction = param.direction
 		if (direction == "left") {
@@ -1122,9 +1172,11 @@ MapScript.loadModule("PopupPage", (function() {
 		transAni = new G.TranslateAnimation(G.Animation.RELATIVE_TO_SELF, offsets[0], G.Animation.RELATIVE_TO_SELF, offsets[1], G.Animation.RELATIVE_TO_SELF, offsets[2], G.Animation.RELATIVE_TO_SELF, offsets[3]);
 		transAni.setDuration(200);
 		transAni.setAnimationListener(new G.Animation.AnimationListener({
-			onAnimationEnd : function(a) {try {
-				if (callback) callback();
-			} catch(e) {erp(e)}},
+			onAnimationEnd: function (a) {
+				try {
+					if (callback) callback();
+				} catch (e) { erp(e) }
+			},
 		}));
 		if (G.style == "Material") {
 			alphaAni.setInterpolator(ctx, G.R.interpolator.fast_out_slow_in);
@@ -1132,27 +1184,27 @@ MapScript.loadModule("PopupPage", (function() {
 		}
 		return new r.ViewAnimationController(background, alphaAni).addAnimation(layout, transAni).start();
 	}
-	r.ViewAnimationController = function(v, ani) {
+	r.ViewAnimationController = function (v, ani) {
 		this.views = [];
 		this.animations = [];
 		if (v || ani) this.addAnimation(v, ani);
 	}
 	r.ViewAnimationController.prototype = {
-		addAnimation : function(v, ani) {
+		addAnimation: function (v, ani) {
 			if (v || ani) {
 				this.views.push(v);
 				this.animations.push(ani);
 			}
 			return this;
 		},
-		start : function() {
+		start: function () {
 			var i;
 			for (i = 0; i < this.views.length; i++) {
 				if (this.views[i] && this.animations[i]) this.views[i].startAnimation(this.animations[i]);
 			}
 			return this;
 		},
-		cancel : function() {
+		cancel: function () {
 			var i;
 			for (i = 0; i < this.views.length; i++) {
 				if (this.views[i]) this.views[i].clearAnimation();

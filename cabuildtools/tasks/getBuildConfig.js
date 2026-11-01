@@ -6,7 +6,7 @@ const path = require("path");
  *   "release" / "snapshot" / 渠道名 —— 老用法，渠道名由 variants 推出来
  *   [variants, channel]              —— 分别指定构建形态（决定核心行为）与对外渠道名
  */
-module.exports = function(context, args) {
+module.exports = function (context, args) {
 	var variants, channel, flavor = "default";
 	if (Array.isArray(args)) {
 		variants = args[0];
@@ -26,7 +26,7 @@ module.exports = function(context, args) {
 	function mergeData(base, over) {
 		if (!isPlainObject(base) || !isPlainObject(over)) return over === undefined ? base : over;
 		var out = Object.assign({}, base);
-		Object.keys(over).forEach(function(key) {
+		Object.keys(over).forEach(function (key) {
 			out[key] = isPlainObject(base[key]) && isPlainObject(over[key]) ? mergeData(base[key], over[key]) : over[key];
 		});
 		return out;
@@ -39,15 +39,15 @@ module.exports = function(context, args) {
 		var data = {};
 		var dataDir = path.join(dir, "data");
 		if (fs.existsSync(dataDir)) {
-			fs.readdirSync(dataDir).filter(function(file) {
+			fs.readdirSync(dataDir).filter(function (file) {
 				return /\.json$/i.test(file);
-			}).sort().forEach(function(file) {
+			}).sort().forEach(function (file) {
 				data[path.basename(file, path.extname(file))] = JSON.parse(fs.readFileSync(path.join(dataDir, file), "utf-8"));
 			});
 		}
-		return { meta : meta, data : data };
+		return { meta: meta, data: data };
 	}
-	var flavors = fs.existsSync(flavorRoot) ? fs.readdirSync(flavorRoot).filter(function(name) {
+	var flavors = fs.existsSync(flavorRoot) ? fs.readdirSync(flavorRoot).filter(function (name) {
 		return fs.existsSync(path.join(flavorRoot, name, "flavor.json"));
 	}).sort() : [];
 	var baseFlavor = readFlavor("default");
@@ -58,10 +58,10 @@ module.exports = function(context, args) {
 	var selected = flavor == "default" ? baseFlavor : readFlavor(flavor);
 	var flavorData = mergeData(baseFlavor.meta, selected.meta);
 	flavorData.data = {};
-	Object.keys(baseFlavor.data).forEach(function(key) {
+	Object.keys(baseFlavor.data).forEach(function (key) {
 		flavorData.data[key] = baseFlavor.data[key];
 	});
-	Object.keys(selected.data).forEach(function(key) {
+	Object.keys(selected.data).forEach(function (key) {
 		flavorData.data[key] = mergeData(baseFlavor.data[key] || {}, selected.data[key]);
 	});
 	config.flavor = flavor;

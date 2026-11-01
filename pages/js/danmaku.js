@@ -77,21 +77,21 @@ var commands = [
 	"/mixer scene <场景名>"
 ];
 var Danmaku = {
-	from : function(node) { // static
+	from: function (node) { // static
 		var o = Object.create(this);
 		o.node = node;
 		o.tick = 0;
 		o.danmaku = [];
 		return o;
 	},
-	run : function(interval) {
+	run: function (interval) {
 		var self = this;
-		this.loopFunc = setInterval(function() {
+		this.loopFunc = setInterval(function () {
 			self.update();
 		}, this.interval = interval);
 		return this;
 	},
-	update : function() {
+	update: function () {
 		this.tick++;
 		var i, a = this.danmaku;
 		for (i = a.length - 1; i >= 0; i--) {
@@ -105,7 +105,7 @@ var Danmaku = {
 			}
 		}
 	},
-	add : function(str, tick, speed, y, size, color, f) {
+	add: function (str, tick, speed, y, size, color, f) {
 		var node = document.createElement("span");
 		node.innerHTML = str;
 		node.style.transitionProperty = "transform";
@@ -123,19 +123,19 @@ var Danmaku = {
 		node.className = "danmaku";
 		this.node.appendChild(node);
 		this.danmaku.push({
-			str : str,
-			tick : tick,
-			recycleTick : tick + (this.node.clientWidth / speed) / this.interval,
-			speed : speed,
-			y : y,
-			node : node,
-			started : false
+			str: str,
+			tick: tick,
+			recycleTick: tick + (this.node.clientWidth / speed) / this.interval,
+			speed: speed,
+			y: y,
+			node: node,
+			started: false
 		});
 		return this;
 	}
 };
 var dan, node;
-window.addEventListener("load", function() {
+window.addEventListener("load", function () {
 	node = document.getElementById("danmaku_area");
 	dan = Danmaku.from(node).run(50);
 	setInterval(randomAddDanmaku, 500);

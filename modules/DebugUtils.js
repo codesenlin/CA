@@ -1,190 +1,200 @@
 MapScript.loadModule("DebugUtils", {
-	showDebugDialog : function self(interface) {G.ui(function() {try {
-		var lastInterface;
-		if (!self.main) {
-			self.LINE_LIMIT = 200;
-			self.history = [];
-			self.lines = [];
-			self.defaultInterface = {
-				getWelcomeText : function() {
-					return "控制台 - 输入exit以退出";
-				},
-				getGlobal : function() {
-					return eval.call(null, "this");
-				},
-				evalExpr : function(expr) {
-					return Loader.evalSpecial(expr, "Console", 0, this.evalScope, null);
-				},
-				evalScope : {
-					print : function(str) {
-						self.print(Common.toString(str));						
-					},
-					println : function(str) {
-						self.print(Common.toString(str));
-						self.print("\n");
-					}
-				},
-				onCommand : function(cmd) {
-					var lc = cmd.toLowerCase();
-					if (lc.startsWith("id ")) {
-						try {
-							DebugUtils.startInteractiveDebug(cmd.slice(3), this.debugStatusListener);
-						} catch(_e) {
-							self.print(_e + "\n" + _e.stack, new G.ForegroundColorSpan(Common.theme.criticalcolor));
+	showDebugDialog: function self(interface) {
+		G.ui(function () {
+			try {
+				var lastInterface;
+				if (!self.main) {
+					self.LINE_LIMIT = 200;
+					self.history = [];
+					self.lines = [];
+					self.defaultInterface = {
+						getWelcomeText: function () {
+							return "控制台 - 输入exit以退出";
+						},
+						getGlobal: function () {
+							return eval.call(null, "this");
+						},
+						evalExpr: function (expr) {
+							return Loader.evalSpecial(expr, "Console", 0, this.evalScope, null);
+						},
+						evalScope: {
+							print: function (str) {
+								self.print(Common.toString(str));
+							},
+							println: function (str) {
+								self.print(Common.toString(str));
+								self.print("\n");
+							}
+						},
+						onCommand: function (cmd) {
+							var lc = cmd.toLowerCase();
+							if (lc.startsWith("id ")) {
+								try {
+									DebugUtils.startInteractiveDebug(cmd.slice(3), this.debugStatusListener);
+								} catch (_e) {
+									self.print(_e + "\n" + _e.stack, new G.ForegroundColorSpan(Common.theme.criticalcolor));
+								}
+							} else {
+								return false;
+							}
+							return true;
+						},
+						setPrinter: function (printer) { },
+						debugStatusListener: function (status, arg1, arg2) {
+							switch (status) {
+								case "connecting":
+									self.print("\n[Interactive Debug] Connecting...");
+									break;
+								case "connected":
+									self.print("\n[Interactive Debug] Connected!");
+									break;
+								case "disconnected":
+									self.print("\n[Interactive Debug] Disconnected!");
+									break;
+								case "remoteExec":
+									self.print("\n[Interactive Debug] Remote:" + arg1);
+									break;
+								case "log":
+									self.print("\n[Interactive Debug] [" + arg1 + "]" + arg2);
+									break;
+								case "error":
+									self.print("\n[Interactive Debug] Error: " + arg1, new G.ForegroundColorSpan(Common.theme.criticalcolor));
+									break;
+							}
 						}
-					} else {
-						return false;
+					};
+					self.vmaker = function (holder) {
+						var text = holder.text = new G.TextView(ctx);
+						text.setLayoutParams(new G.AbsListView.LayoutParams(-1, -2));
+						Common.applyStyle(text, "textview_default", 2);
+						return text;
 					}
-					return true;
-				},
-				setPrinter : function(printer) {},
-				debugStatusListener : function(status, arg1, arg2) {
-					switch(status) {
-						case "connecting":
-						self.print("\n[Interactive Debug] Connecting...");
-						break;
-						case "connected":
-						self.print("\n[Interactive Debug] Connected!");
-						break;
-						case "disconnected":
-						self.print("\n[Interactive Debug] Disconnected!");
-						break;
-						case "remoteExec":
-						self.print("\n[Interactive Debug] Remote:" + arg1);
-						break;
-						case "log":
-						self.print("\n[Interactive Debug] [" + arg1 + "]" + arg2);
-						break;
-						case "error":
-						self.print("\n[Interactive Debug] Error: " + arg1, new G.ForegroundColorSpan(Common.theme.criticalcolor));
-						break;
+					self.vbinder = function (holder, e, i, a) {
+						holder.text.setText(e);
+						holder.text.setPadding(10 * G.dp, i == 0 ? 10 * G.dp : 0, 10 * G.dp, i == a.length - 1 ? 10 * G.dp : 0);
 					}
+					self.cls = function () {
+						self.lines.length = 0;
+						self.history.length = 0;
+						self.lines.push(new G.SpannableStringBuilder());
+						self.print(self.interface.getWelcomeText(), new G.StyleSpan(G.Typeface.BOLD));
+						self.ready("exit");
+					}
+					self.print = function (str, span) {
+						G.ui(function () {
+							try {
+								var t = self.lines[self.lines.length - 1];
+								if (span) {
+									appendSSB(t, str, span);
+								} else {
+									t.append(str);
+								}
+								self.adapter.notifyChange();
+								self.prompt.smoothScrollToPosition(self.lines.length - 1);
+							} catch (e) { erp(e) }
+						})
+					};
+					self.ready = function (cmd) {
+						cmd = String(cmd);
+						self.history[self.lines.length - 1] = cmd;
+						self.lines.push(new G.SpannableStringBuilder());
+						if (self.lines.length > self.LINE_LIMIT) {
+							self.lines.splice(0, self.lines.length - self.LINE_LIMIT - 1);
+							self.history.splice(0, self.history.length - self.LINE_LIMIT - 1);
+						}
+						self.hiscur = -1;
+						self.adapter.notifyChange();
+						self.print(">  ", new G.ForegroundColorSpan(Common.theme.highlightcolor));
+					}
+					self.exec = function (_s) {
+						var _t, _ls = _s.toLowerCase();
+						if (self.interface.onCommand(_s)) {
+							return;
+						} else if (_ls == "exit") {
+							self.popup.exit();
+							return;
+						} else if (_ls == "cls") {
+							self.cls();
+							return;
+						} else if (_ls == "ls") {
+							JSONEdit.trace(self.interface.getGlobal());
+						} else if (_ls.startsWith("ls ")) {
+							try {
+								JSONEdit.trace(self.interface.evalExpr(_s.slice(3)));
+							} catch (_e) {
+								self.print(_e + "\n" + _e.stack, new G.ForegroundColorSpan(Common.theme.criticalcolor));
+							}
+						} else if (_ls.startsWith("cp ")) {
+							try {
+								var _t = MapScript.toSource(self.interface.evalExpr(_s.slice(3)));
+								self.print(_t);
+								Common.setClipboardText(_t);
+							} catch (_e) {
+								self.print(_e + "\n" + _e.stack, new G.ForegroundColorSpan(Common.theme.criticalcolor));
+								Common.setClipboardText(_e + "\n" + _e.stack);
+							}
+						} else if (_ls.startsWith("sn ")) {
+							try {
+								_t = MapScript.toSource(self.interface.evalExpr(_s.slice(3)));
+								self.print(_t);
+							} catch (_e) {
+								self.print(_t = _e + "\n" + _e.stack, new G.ForegroundColorSpan(Common.theme.criticalcolor));
+							}
+							var _file = new java.io.File(ctx.getExternalCacheDir(), "sn.txt");
+							var _fs = new java.io.PrintWriter(new java.io.FileOutputStream(_file));
+							_fs.println(_t);
+							_fs.close();
+							try {
+								AndroidBridge.sendFile(_file);
+							} catch (e) {
+								Common.toast("文件已生成于" + _file.getAbsolutePath());
+							}
+						} else if (_ls.startsWith("exec ")) {
+							try {
+								_t = self.interface.evalExpr(Common.readFile(_s.slice(5), ""));
+								self.print(Log.debug("D", _t, 0).join("\n"));
+							} catch (_e) {
+								self.print(_e + "\n" + _e.stack, new G.ForegroundColorSpan(Common.theme.criticalcolor));
+							}
+						} else if (_ls.startsWith("#")) {
+							Threads.run(function () {
+								try {
+									var _t = self.interface.evalExpr(_s.slice(1));
+									self.print(Log.debug("D", _t, 0).join("\n"));
+								} catch (_e) {
+									self.print(_e + "\n" + _e.stack, new G.ForegroundColorSpan(Common.theme.criticalcolor));
+								}
+								G.ui(function () {
+									try {
+										self.ready(_s);
+									} catch (e) { erp(e) }
+								});
+							});
+							return;
+						} else {
+							try {
+								_t = self.interface.evalExpr(_s);
+								self.print(Log.debug("D", _t, 0).join("\n"));
+							} catch (_e) {
+								self.print(_e + "\n" + _e.stack, new G.ForegroundColorSpan(Common.theme.criticalcolor));
+							}
+						}
+						self.ready(_s);
+					}
+					ConsolePanel.build(self, "common.Console");
 				}
-			};
-			self.vmaker = function(holder) {
-				var text = holder.text = new G.TextView(ctx);
-				text.setLayoutParams(new G.AbsListView.LayoutParams(-1, -2));
-				Common.applyStyle(text, "textview_default", 2);
-				return text;
-			}
-			self.vbinder = function(holder, e, i, a) {
-				holder.text.setText(e);
-				holder.text.setPadding(10 * G.dp, i == 0 ? 10 * G.dp : 0, 10 * G.dp, i == a.length - 1 ? 10 * G.dp : 0);
-			}
-			self.cls = function() {
-				self.lines.length = 0;
-				self.history.length = 0;
-				self.lines.push(new G.SpannableStringBuilder());
-				self.print(self.interface.getWelcomeText(), new G.StyleSpan(G.Typeface.BOLD));
-				self.ready("exit");
-			}
-			self.print = function(str, span) {G.ui(function() {try {
-				var t = self.lines[self.lines.length - 1];
-				if (span) {
-					appendSSB(t, str, span);
-				} else {
-					t.append(str);
-				}
-				self.adapter.notifyChange();
-				self.prompt.smoothScrollToPosition(self.lines.length - 1);
-			} catch(e) {erp(e)}})};
-			self.ready = function(cmd) {
-				cmd = String(cmd);
-				self.history[self.lines.length - 1] = cmd;
-				self.lines.push(new G.SpannableStringBuilder());
-				if (self.lines.length > self.LINE_LIMIT) {
-					self.lines.splice(0, self.lines.length - self.LINE_LIMIT - 1);
-					self.history.splice(0, self.history.length - self.LINE_LIMIT - 1);
-				}
-				self.hiscur = -1;
-				self.adapter.notifyChange();
-				self.print(">  ", new G.ForegroundColorSpan(Common.theme.highlightcolor));
-			}
-			self.exec = function(_s) {
-				var _t, _ls = _s.toLowerCase();
-				if (self.interface.onCommand(_s)) {
-					return;
-				} else if (_ls == "exit") {
-					self.popup.exit();
-					return;
-				} else if (_ls == "cls") {
+				lastInterface = self.interface;
+				self.interface = interface || self.defaultInterface;
+				self.interface.setPrinter(self.print.bind(self));
+				if (self.interface != lastInterface) {
 					self.cls();
-					return;
-				} else if (_ls == "ls") {
-					JSONEdit.trace(self.interface.getGlobal());
-				} else if (_ls.startsWith("ls ")) {
-					try {
-						JSONEdit.trace(self.interface.evalExpr(_s.slice(3)));
-					} catch(_e) {
-						self.print(_e + "\n" + _e.stack, new G.ForegroundColorSpan(Common.theme.criticalcolor));
-					}
-				} else if (_ls.startsWith("cp ")) {
-					try {
-						var _t = MapScript.toSource(self.interface.evalExpr(_s.slice(3)));
-						self.print(_t);
-						Common.setClipboardText(_t);
-					} catch(_e) {
-						self.print(_e + "\n" + _e.stack, new G.ForegroundColorSpan(Common.theme.criticalcolor));
-						Common.setClipboardText(_e + "\n" + _e.stack);
-					}
-				} else if (_ls.startsWith("sn ")) {
-					try {
-						_t = MapScript.toSource(self.interface.evalExpr(_s.slice(3)));
-						self.print(_t);
-					} catch(_e) {
-						self.print(_t = _e + "\n" + _e.stack, new G.ForegroundColorSpan(Common.theme.criticalcolor));
-					}
-					var _file = new java.io.File(ctx.getExternalCacheDir(), "sn.txt");
-					var _fs = new java.io.PrintWriter(new java.io.FileOutputStream(_file));
-					_fs.println(_t);
-					_fs.close();
-					try {
-						AndroidBridge.sendFile(_file);
-					} catch(e) {
-						Common.toast("文件已生成于" + _file.getAbsolutePath());
-					}
-				} else if (_ls.startsWith("exec ")) {
-					try {
-						_t = self.interface.evalExpr(Common.readFile(_s.slice(5), ""));
-						self.print(Log.debug("D", _t, 0).join("\n"));
-					} catch(_e) {
-						self.print(_e + "\n" + _e.stack, new G.ForegroundColorSpan(Common.theme.criticalcolor));
-					}
-				} else if (_ls.startsWith("#")) {
-					Threads.run(function() {
-						try {
-							var _t = self.interface.evalExpr(_s.slice(1));
-							self.print(Log.debug("D", _t, 0).join("\n"));
-						} catch(_e) {
-							self.print(_e + "\n" + _e.stack, new G.ForegroundColorSpan(Common.theme.criticalcolor));
-						}
-						G.ui(function() {try {
-							self.ready(_s);
-						} catch(e) {erp(e)}});
-					});
-					return;
-				} else {
-					try {
-						_t = self.interface.evalExpr(_s);
-						self.print(Log.debug("D", _t, 0).join("\n"));
-					} catch(_e) {
-						self.print(_e + "\n" + _e.stack, new G.ForegroundColorSpan(Common.theme.criticalcolor));
-					}
 				}
-				self.ready(_s);
-			}
-			ConsolePanel.build(self, "common.Console");
-		}
-		lastInterface = self.interface;
-		self.interface = interface || self.defaultInterface;
-		self.interface.setPrinter(self.print.bind(self));
-		if (self.interface != lastInterface) {
-			self.cls();
-		}
-		self.popup.enter();
-	} catch(e) {erp(e)}})},
+				self.popup.enter();
+			} catch (e) { erp(e) }
+		})
+	},
 
-	traceStack : function() {
+	traceStack: function () {
 		var s = [], i;
 		var ts = java.lang.Thread.getAllStackTraces();
 		var it = ts.keySet().iterator();
@@ -200,70 +210,76 @@ MapScript.loadModule("DebugUtils", {
 		}
 		return s.join("\n");
 	},
-	
-	startInteractiveDebug : (function() {
+
+	startInteractiveDebug: (function () {
 		var scope = {
-			KEY : Internal.getKey()
+			KEY: Internal.getKey()
 		};
-		return function(uri, statusListener) {
+		return function (uri, statusListener) {
 			if (MapScript.host != "Android") {
 				Log.throwError(new Error("Your device not support Interactive Debug!"));
 			}
 			if (this.wsclient) Log.throwError(new Error("Channel busy"));
 			statusListener("connecting");
 			this.wsclient = ScriptInterface.createWSClient(uri, {
-				onOpen : function(thisObj, handshake) {try {
-					thisObj.send(JSON.stringify({
-						type : "version",
-						version : CA.version,
-						publishDate : CA.publishDate
-					}));
-					Log.start(function(level, text) {
-						statusListener("log", level, text);
-						thisObj.send(JSON.stringify({
-							type : "println",
-							level : level,
-							text : text
-						}));
-					});
-					statusListener("connected");
-				} catch(e) {erp(e)}},
-				onClose : function(thisObj, code, reason, remote) {try {
-					Log.stop();
-					statusListener("disconnected");
-					DebugUtils.wsclient = null;
-				} catch(e) {erp(e)}},
-				onMessage : function(thisObj, message) {try {
+				onOpen: function (thisObj, handshake) {
 					try {
-						var o = JSON.parse(message);
-						switch (o.type) {
-							case "exec":
-							statusListener("remoteExec", o.cmd);
-							if (o.cmd.startsWith("#")) {
-								G.ui(function() {
-									try {
-										Log.s(Loader.evalSpecial(o.cmd.slice(1), "InteractiveDebugger", 0, scope, null));
-									} catch(e) {
-										Log.e(e);
-									}
-								});
-							} else {
-								try {
-									Log.s(Loader.evalSpecial(o.cmd, "InteractiveDebugger", 0, scope, null));
-								} catch(e) {
-									Log.e(e);
-								}
-							};
-							break;
-							case "ping":
-							thisObj.send(JSON.stringify({type : "pong"}));
-							break;
+						thisObj.send(JSON.stringify({
+							type: "version",
+							version: CA.version,
+							publishDate: CA.publishDate
+						}));
+						Log.start(function (level, text) {
+							statusListener("log", level, text);
+							thisObj.send(JSON.stringify({
+								type: "println",
+								level: level,
+								text: text
+							}));
+						});
+						statusListener("connected");
+					} catch (e) { erp(e) }
+				},
+				onClose: function (thisObj, code, reason, remote) {
+					try {
+						Log.stop();
+						statusListener("disconnected");
+						DebugUtils.wsclient = null;
+					} catch (e) { erp(e) }
+				},
+				onMessage: function (thisObj, message) {
+					try {
+						try {
+							var o = JSON.parse(message);
+							switch (o.type) {
+								case "exec":
+									statusListener("remoteExec", o.cmd);
+									if (o.cmd.startsWith("#")) {
+										G.ui(function () {
+											try {
+												Log.s(Loader.evalSpecial(o.cmd.slice(1), "InteractiveDebugger", 0, scope, null));
+											} catch (e) {
+												Log.e(e);
+											}
+										});
+									} else {
+										try {
+											Log.s(Loader.evalSpecial(o.cmd, "InteractiveDebugger", 0, scope, null));
+										} catch (e) {
+											Log.e(e);
+										}
+									};
+									break;
+								case "ping":
+									thisObj.send(JSON.stringify({ type: "pong" }));
+									break;
+							}
+						} catch (e) {
+							Log.e(e);
 						}
-					} catch(e) {
-						Log.e(e);
-					}
-				} catch(e) {erp(e)}},
-				onError : function(thisObj, err) {
+					} catch (e) { erp(e) }
+				},
+				onError: function (thisObj, err) {
 					erp(err, true);
 					statusListener("error", err);
 				}
@@ -271,142 +287,148 @@ MapScript.loadModule("DebugUtils", {
 			this.wsclient.connect();
 		};
 	})(),
-	stopInteractiveDebug : function() {
+	stopInteractiveDebug: function () {
 		if (this.wsclient && this.wsclient.getReadyState() == org.java_websocket.WebSocket.READYSTATE.OPEN) this.wsclient.close();
 	},
-	debugAction : {
-		name : "自定义动作",
-		description : "点击后会执行指定的代码，可自定义名称与代码",
-		create : function() {
+	debugAction: {
+		name: "自定义动作",
+		description: "点击后会执行指定的代码，可自定义名称与代码",
+		create: function () {
 			return {
-				name : "",
+				name: "",
 				desp: "",
-				expr : "",
-				enabled : true
+				expr: "",
+				enabled: true
 			};
 		},
-		edit : function(data, newCreated, callback) {
+		edit: function (data, newCreated, callback) {
 			DebugUtils.showEditDebugAction(data, newCreated, callback);
 		},
-		getName : function(data) {
+		getName: function (data) {
 			return String(data.name);
 		},
-		getDescription : function(data) {
+		getDescription: function (data) {
 			return String(data.desp);
 		},
-		available : function(data) {
+		available: function (data) {
 			return data.enabled;
 		},
-		execute : function(data) {
+		execute: function (data) {
 			try {
 				eval.call(null, data.expr);
-			} catch(e) {
+			} catch (e) {
 				erp(e, true);
 				Common.toast("无法执行自定义动作:" + data.name + "，错误已保存至错误日志\n" + e);
 			}
 		}
 	},
-	showEditDebugAction : function(data, newCreated, callback) {G.ui(function() {try {
-		var popup, layout, name, desp, expr, enabled;
-		layout = L.ScrollView({
-			style : "message_bg",
-			child : L.LinearLayout({
-				orientation : L.LinearLayout("vertical"),
-				padding : [15 * G.dp, 15 * G.dp, 15 * G.dp, 0],
-				children : [
-					L.TextView({
-						text : newCreated ? "新建自定义动作" : "编辑自定义动作",
-						padding : [0, 0, 0, 10 * G.dp],
-						layout : { width : -1, height : -2 },
-						style : "textview_default",
-						fontSize : 4
-					}),
-					name = L.EditText({
-						text : data.name,
-						hint : "标题",
-						singleLine : true,
-						padding : [0, 0, 0, 0],
-						imeOptions : L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
-						style : "edittext_default",
-						fontSize : 3,
-						layout : { width : -1, height : -2 }
-					}),
-					desp = L.EditText({
-						text : data.desp,
-						hint : "描述（可选）",
-						singleLine : true,
-						padding : [0, 10 * G.dp, 0, 0],
-						imeOptions : L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
-						style : "edittext_default",
-						fontSize : 2,
-						layout : { width : -1, height : -2 }
-					}),
-					expr = L.EditText({
-						text : data.expr,
-						hint : "在此输入代码",
-						padding : [0, 20 * G.dp, 0, 10 * G.dp],
-						imeOptions : L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
-						style : "edittext_default",
-						fontSize : 2,
-						layout : { width : -1, height : -2 }
-					}),
-					enabled = L.CheckBox({
-						text : "启用",
-						checked : Boolean(data.enabled)
-					}),
-					L.TextView({
-						text : "确定",
-						padding : [10 * G.dp, 20 * G.dp, 10 * G.dp, 20 * G.dp],
-						gravity : L.Gravity("center"),
-						layout : { width : -1, height : -2 },
-						style : "button_critical",
-						fontSize : 3,
-						onClick : function() {try {
-							data.name = String(name.text) || "自定义动作";
-							data.desp = String(desp.text);
-							data.enabled = Boolean(enabled.checked);
-							data.expr = String(expr.text);
-							if (callback) callback(data);
-							popup.exit();
-						} catch(e) {erp(e)}}
+	showEditDebugAction: function (data, newCreated, callback) {
+		G.ui(function () {
+			try {
+				var popup, layout, name, desp, expr, enabled;
+				layout = L.ScrollView({
+					style: "message_bg",
+					child: L.LinearLayout({
+						orientation: L.LinearLayout("vertical"),
+						padding: [15 * G.dp, 15 * G.dp, 15 * G.dp, 0],
+						children: [
+							L.TextView({
+								text: newCreated ? "新建自定义动作" : "编辑自定义动作",
+								padding: [0, 0, 0, 10 * G.dp],
+								layout: { width: -1, height: -2 },
+								style: "textview_default",
+								fontSize: 4
+							}),
+							name = L.EditText({
+								text: data.name,
+								hint: "标题",
+								singleLine: true,
+								padding: [0, 0, 0, 0],
+								imeOptions: L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
+								style: "edittext_default",
+								fontSize: 3,
+								layout: { width: -1, height: -2 }
+							}),
+							desp = L.EditText({
+								text: data.desp,
+								hint: "描述（可选）",
+								singleLine: true,
+								padding: [0, 10 * G.dp, 0, 0],
+								imeOptions: L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
+								style: "edittext_default",
+								fontSize: 2,
+								layout: { width: -1, height: -2 }
+							}),
+							expr = L.EditText({
+								text: data.expr,
+								hint: "在此输入代码",
+								padding: [0, 20 * G.dp, 0, 10 * G.dp],
+								imeOptions: L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
+								style: "edittext_default",
+								fontSize: 2,
+								layout: { width: -1, height: -2 }
+							}),
+							enabled = L.CheckBox({
+								text: "启用",
+								checked: Boolean(data.enabled)
+							}),
+							L.TextView({
+								text: "确定",
+								padding: [10 * G.dp, 20 * G.dp, 10 * G.dp, 20 * G.dp],
+								gravity: L.Gravity("center"),
+								layout: { width: -1, height: -2 },
+								style: "button_critical",
+								fontSize: 3,
+								onClick: function () {
+									try {
+										data.name = String(name.text) || "自定义动作";
+										data.desp = String(desp.text);
+										data.enabled = Boolean(enabled.checked);
+										data.expr = String(expr.text);
+										if (callback) callback(data);
+										popup.exit();
+									} catch (e) { erp(e) }
+								}
+							})
+						]
 					})
-				]
-			})
-		});
-		popup = PopupPage.showDialog("debug.actionEdit", layout, -1, -2);
-	} catch(e) {erp(e)}})},
-	debugTile : {
-		name : "自定义快捷开关",
-		description : "点击后会切换指定功能的开启与关闭",
-		create : function() {
+				});
+				popup = PopupPage.showDialog("debug.actionEdit", layout, -1, -2);
+			} catch (e) { erp(e) }
+		})
+	},
+	debugTile: {
+		name: "自定义快捷开关",
+		description: "点击后会切换指定功能的开启与关闭",
+		create: function () {
 			return {
-				label : "",
-				update : "",
-				onClick : ""
+				label: "",
+				update: "",
+				onClick: ""
 			};
 		},
-		edit : function(data, newCreated, callback) {
+		edit: function (data, newCreated, callback) {
 			DebugUtils.showEditDebugTile(data, newCreated, callback);
 		},
-		updateTile : function(data, tile) {
+		updateTile: function (data, tile) {
 			if (data.label) tile.label = data.label;
 			this.evaluateTile("update", data, tile);
 		},
-		onTileClick : function(data, tile) {
+		onTileClick: function (data, tile) {
 			this.evaluateTile("onClick", data, tile);
 		},
-		evaluateTile : function self(type, data, tile) {
+		evaluateTile: function self(type, data, tile) {
 			var tileScope = {
-				label : tile.label,
-				subtitle : tile.subtitle,
-				state : this.stateToString(tile),
-				tile : tile,
-				invertState : this.invertState
+				label: tile.label,
+				subtitle: tile.subtitle,
+				state: this.stateToString(tile),
+				tile: tile,
+				invertState: this.invertState
 			};
-			tileScope.update = function() {
+			tileScope.update = function () {
 				Loader.evalSpecial(data.update, "DebugTile", 0, tileScope, null);
 			};
-			tileScope.onClick = function() {
+			tileScope.onClick = function () {
 				Loader.evalSpecial(data.onClick, "DebugTile", 0, tileScope, null);
 			};
 			try {
@@ -415,7 +437,7 @@ MapScript.loadModule("DebugUtils", {
 				} else {
 					tileScope.update();
 				}
-			} catch(e) {
+			} catch (e) {
 				erp(e, true);
 				Common.toast("快捷开关表达式计算出错，错误已保存至错误日志\n" + e);
 			}
@@ -423,108 +445,114 @@ MapScript.loadModule("DebugUtils", {
 			tile.subtitle = tileScope.subtitle;
 			tile.state = this.parseState(tileScope.state, tile);
 		},
-		stateToString : function(tile) {
+		stateToString: function (tile) {
 			switch (tile.state) {
 				case tile.STATE_ACTIVE:
-				return "active";
+					return "active";
 				case tile.STATE_INACTIVE:
-				return "inactive";
+					return "inactive";
 				case tile.STATE_UNAVAILABLE:
 				default:
-				return "unavailable";
+					return "unavailable";
 			}
 		},
-		parseState : function(state, tile) {
+		parseState: function (state, tile) {
 			switch (state) {
 				case "active":
-				return tile.STATE_ACTIVE;
+					return tile.STATE_ACTIVE;
 				case "inactive":
-				return tile.STATE_INACTIVE;
+					return tile.STATE_INACTIVE;
 				case "unavailable":
-				return tile.STATE_UNAVAILABLE;
+					return tile.STATE_UNAVAILABLE;
 			}
 			return tile.state;
 		},
-		invertState : function() {
+		invertState: function () {
 			switch (this.state) {
 				case "active":
-				this.state = "inactive";
-				break;
+					this.state = "inactive";
+					break;
 				case "inactive":
-				this.state = "active";
-				break;
+					this.state = "active";
+					break;
 				default:
-				this.state = "unavailable";
+					this.state = "unavailable";
 			}
 		}
 	},
-	showEditDebugTile : function(data, newCreated, callback) {G.ui(function() {try {
-		var popup, layout, label, update, onClick;
-		layout = L.ScrollView({
-			style : "message_bg",
-			child : L.LinearLayout({
-				orientation : L.LinearLayout("vertical"),
-				padding : [15 * G.dp, 15 * G.dp, 15 * G.dp, 0],
-				children : [
-					L.TextView({
-						text : newCreated ? "新建自定义快捷开关" : "编辑自定义快捷开关",
-						padding : [0, 0, 0, 10 * G.dp],
-						layout : { width : -1, height : -2 },
-						style : "textview_default",
-						fontSize : 4
-					}),
-					label = L.EditText({
-						text : data.label,
-						hint : "标题(可选)",
-						singleLine : true,
-						padding : [0, 0, 0, 0],
-						imeOptions : L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
-						style : "edittext_default",
-						fontSize : 3,
-						layout : { width : -1, height : -2 }
-					}),
-					update = L.EditText({
-						text : data.update,
-						hint : "在此输入代码，会在更新快捷设置时触发",
-						padding : [0, 20 * G.dp, 0, 10 * G.dp],
-						imeOptions : L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
-						style : "edittext_default",
-						fontSize : 2,
-						layout : { width : -1, height : -2 }
-					}),
-					onClick = L.EditText({
-						text : data.onClick,
-						hint : "在此输入代码，会在点击快捷设置时触发",
-						padding : [0, 20 * G.dp, 0, 10 * G.dp],
-						imeOptions : L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
-						style : "edittext_default",
-						fontSize : 2,
-						layout : { width : -1, height : -2 }
-					}),
-					L.TextView({
-						text : "确定",
-						padding : [10 * G.dp, 20 * G.dp, 10 * G.dp, 20 * G.dp],
-						gravity : L.Gravity("center"),
-						layout : { width : -1, height : -2 },
-						style : "button_critical",
-						fontSize : 3,
-						onClick : function() {try {
-							data.label = String(label.text);
-							data.update = String(update.text);
-							data.onClick = String(onClick.text);
-							if (callback) callback(data);
-							popup.exit();
-						} catch(e) {erp(e)}}
+	showEditDebugTile: function (data, newCreated, callback) {
+		G.ui(function () {
+			try {
+				var popup, layout, label, update, onClick;
+				layout = L.ScrollView({
+					style: "message_bg",
+					child: L.LinearLayout({
+						orientation: L.LinearLayout("vertical"),
+						padding: [15 * G.dp, 15 * G.dp, 15 * G.dp, 0],
+						children: [
+							L.TextView({
+								text: newCreated ? "新建自定义快捷开关" : "编辑自定义快捷开关",
+								padding: [0, 0, 0, 10 * G.dp],
+								layout: { width: -1, height: -2 },
+								style: "textview_default",
+								fontSize: 4
+							}),
+							label = L.EditText({
+								text: data.label,
+								hint: "标题(可选)",
+								singleLine: true,
+								padding: [0, 0, 0, 0],
+								imeOptions: L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
+								style: "edittext_default",
+								fontSize: 3,
+								layout: { width: -1, height: -2 }
+							}),
+							update = L.EditText({
+								text: data.update,
+								hint: "在此输入代码，会在更新快捷设置时触发",
+								padding: [0, 20 * G.dp, 0, 10 * G.dp],
+								imeOptions: L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
+								style: "edittext_default",
+								fontSize: 2,
+								layout: { width: -1, height: -2 }
+							}),
+							onClick = L.EditText({
+								text: data.onClick,
+								hint: "在此输入代码，会在点击快捷设置时触发",
+								padding: [0, 20 * G.dp, 0, 10 * G.dp],
+								imeOptions: L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
+								style: "edittext_default",
+								fontSize: 2,
+								layout: { width: -1, height: -2 }
+							}),
+							L.TextView({
+								text: "确定",
+								padding: [10 * G.dp, 20 * G.dp, 10 * G.dp, 20 * G.dp],
+								gravity: L.Gravity("center"),
+								layout: { width: -1, height: -2 },
+								style: "button_critical",
+								fontSize: 3,
+								onClick: function () {
+									try {
+										data.label = String(label.text);
+										data.update = String(update.text);
+										data.onClick = String(onClick.text);
+										if (callback) callback(data);
+										popup.exit();
+									} catch (e) { erp(e) }
+								}
+							})
+						]
 					})
-				]
-			})
-		});
-		popup = PopupPage.showDialog("debug.tileEdit", layout, -1, -2);
-	} catch(e) {erp(e)}})},
+				});
+				popup = PopupPage.showDialog("debug.tileEdit", layout, -1, -2);
+			} catch (e) { erp(e) }
+		})
+	},
 	/** 调试控制台用：对比 matchString 旧路径（每次传候选数组）与缓存路径
 	 *  用法：DebugUtils.benchMatchString() / benchMatchString(3000, 20)
 	 */
-	benchMatchString : function(n, rounds) {
+	benchMatchString: function (n, rounds) {
 		try {
 			n = n || 1749;
 			rounds = rounds || 10;
@@ -545,27 +573,27 @@ MapScript.loadModule("DebugUtils", {
 			msg = "MatchStringBench n=" + n + " rounds=" + rounds +
 				" direct=" + directMs.toFixed(2) + "ms first=" + firstMs +
 				"ms cached=" + cachedMs.toFixed(2) + "ms";
-			try { android.util.Log.i("Script", msg); } catch(e) {}
+			try { android.util.Log.i("Script", msg); } catch (e) { }
 			return msg;
-		} catch(e) {
+		} catch (e) {
 			return "MatchStringBench error: " + e;
 		}
 	},
 	/** 调试控制台用：对比 Rhino / QuickJS worker / Java 命令名匹配 */
-	benchCommandMatch : function() {
+	benchCommandMatch: function () {
 		try {
 			var snap = CA.IntelliSense.library.command_snap;
 			if (!snap) return "CommandMatchBench: no command_snap";
 			var prefixes = ["", "block", "cmd", "minecraft", "zzz"], out = [], i;
 			var keys = Object.keys(snap);
-			var rhinoMatch = function(p) {
-				return keys.filter(function(e) {
+			var rhinoMatch = function (p) {
+				return keys.filter(function (e) {
 					return e.indexOf(p) >= 0 || String(snap[e]).indexOf(p) >= 0;
 				}).sort();
 			};
 			// 预热：同步快照 / 注册 worker
 			Accel.matchCommandNames(snap, "__warmup__");
-			try { if (typeof QuickAccel !== "undefined") QuickAccel.matchCommandNames(snap, "__warmup__"); } catch(e) {}
+			try { if (typeof QuickAccel !== "undefined") QuickAccel.matchCommandNames(snap, "__warmup__"); } catch (e) { }
 			for (i = 0; i < prefixes.length; i++) {
 				var p = prefixes[i], t;
 				t = Date.now(); var r = rhinoMatch(p); var rhinoMs = Date.now() - t;
@@ -575,21 +603,21 @@ MapScript.loadModule("DebugUtils", {
 					if (typeof QuickAccel !== "undefined") {
 						t = Date.now(); q = QuickAccel.matchCommandNames(snap, p); qMs = Date.now() - t;
 					}
-				} catch(e) {}
+				} catch (e) { }
 				out.push("[" + p + "] rhino=" + rhinoMs + "ms java=" + javaMs + "ms" +
 					(qMs == null ? "" : " quick=" + qMs + "ms") +
 					" r=" + r.length + " j=" + (j ? j.length : "null") +
 					" same=" + (j && q ? (j.length === q.length && j[0] === q[0] && j[j.length - 1] === q[q.length - 1]) : "?"));
 			}
 			out = "CommandMatchBench n=" + keys.length + " " + out.join(" | ");
-			try { android.util.Log.i("Script", out); } catch(e) {}
+			try { android.util.Log.i("Script", out); } catch (e) { }
 			return out;
-		} catch(e) {
+		} catch (e) {
 			return "CommandMatchBench error: " + e;
 		}
 	},
 	/** 调试控制台用：同一份 ID 表对比旧 JS 循环 / CA.filterIDList / Accel.filter */
-	benchIDListCompare : function() {
+	benchIDListCompare: function () {
 		try {
 			var lib = CA.IntelliSense.library, names = [], prefixes = ["", "minecraft:", "block", "item_1", "zzz"];
 			var i, j, e, l, t, old, built, out = [];
@@ -601,7 +629,7 @@ MapScript.loadModule("DebugUtils", {
 			}
 			built = CA.buildIDList(names);
 			texts = built.texts;
-			old = function(s) {
+			old = function (s) {
 				var arr = [], k;
 				for (k = 0; k < texts.length; k++) {
 					if (texts[k].indexOf(s) >= 0) arr.push(k);
@@ -615,14 +643,14 @@ MapScript.loadModule("DebugUtils", {
 				out.push("[" + prefixes[i] + "] old=" + oldMs + "ms new=" + newMs + "ms java=" + javaMs + "ms");
 			}
 			out = "IDListCompare n=" + texts.length + " accel=" + Accel.available() + " " + out.join(" | ");
-			try { android.util.Log.i("Script", out); } catch(e) {}
+			try { android.util.Log.i("Script", out); } catch (e) { }
 			return out;
-		} catch(e) {
+		} catch (e) {
 			return "IDListCompare error: " + e;
 		}
 	},
 	/** 调试控制台用：验证无 jar 时 QuickAccel 回退（classify/classifyArray/filterTexts/命令匹配） */
-	benchQuickAccel : function() {
+	benchQuickAccel: function () {
 		try {
 			var keys = ["stone", "stone_brick", "dirt"], descs = ["方块", "", "泥土"];
 			var enumArr = ["stone", "stone_brick", "dirt"];
@@ -631,21 +659,21 @@ MapScript.loadModule("DebugUtils", {
 			ca = Accel.classifyArray(enumArr, "stone");
 			Accel.setFilterTexts(["stone", "dirt", "grass"]);
 			mask = Accel.filterTexts("st");
-			cmds = Accel.matchCommandNames({cmd : "命令说明", help : "帮助"}, "cmd");
+			cmds = Accel.matchCommandNames({ cmd: "命令说明", help: "帮助" }, "cmd");
 			var out = "QuickFallback avail=" + Accel.available() +
 				" classify=" + JSON.stringify(flags) +
 				" array=" + JSON.stringify(ca) +
 				" filter=" + JSON.stringify(mask) +
 				" cmd=" + JSON.stringify(cmds) +
 				" " + (Date.now() - t) + "ms";
-			try { android.util.Log.i("Script", out); } catch(e) {}
+			try { android.util.Log.i("Script", out); } catch (e) { }
 			return out;
-		} catch(e) {
+		} catch (e) {
 			return "QuickFallback error: " + e;
 		}
 	},
 	/** 调试控制台用：大数据量对比 Rhino JS 与 QuickAccel worker（classify/classifyArray/filterTexts/命令匹配） */
-	benchQuickAccelLarge : function(rounds) {
+	benchQuickAccelLarge: function (rounds) {
 		rounds = rounds || 20;
 		try {
 			var i, keys = [], descs = [], arr = [], texts = [], snap = {};
@@ -677,7 +705,7 @@ MapScript.loadModule("DebugUtils", {
 						flags.push(2); length = Math.max(length, p.length);
 					} else flags.push(0);
 				}
-				return { flags : flags, length : length, canFinish : canFinish };
+				return { flags: flags, length: length, canFinish: canFinish };
 			}
 			function jsFilterTexts(a, ps) {
 				var out = [], i, p = String(ps);
@@ -693,7 +721,7 @@ MapScript.loadModule("DebugUtils", {
 			function measure(fn) {
 				var t0 = Date.now(), n, r;
 				for (n = 0; n < rounds; n++) r = fn();
-				return { ms : Date.now() - t0, result : r };
+				return { ms: Date.now() - t0, result: r };
 			}
 			var prefix = "key_1";
 			// 预热 worker 数据缓存，不计入计时
@@ -703,14 +731,22 @@ MapScript.loadModule("DebugUtils", {
 			QuickAccel.matchCommandNames(snap, prefix);
 
 			var cases = [
-				{ name : "classify", js : function() { return jsClassify(keys, descs, prefix); },
-				  quick : function() { return QuickAccel.classify(keys, descs, prefix); } },
-				{ name : "classifyArray", js : function() { return jsClassifyArray(arr, prefix); },
-				  quick : function() { return QuickAccel.classifyArray(arr, prefix); } },
-				{ name : "filterTexts", js : function() { return jsFilterTexts(texts, prefix); },
-				  quick : function() { return QuickAccel.filterTexts(texts, prefix); } },
-				{ name : "commands", js : function() { return jsCommands(snap, "cmd_1"); },
-				  quick : function() { return QuickAccel.matchCommandNames(snap, "cmd_1"); } }
+				{
+					name: "classify", js: function () { return jsClassify(keys, descs, prefix); },
+					quick: function () { return QuickAccel.classify(keys, descs, prefix); }
+				},
+				{
+					name: "classifyArray", js: function () { return jsClassifyArray(arr, prefix); },
+					quick: function () { return QuickAccel.classifyArray(arr, prefix); }
+				},
+				{
+					name: "filterTexts", js: function () { return jsFilterTexts(texts, prefix); },
+					quick: function () { return QuickAccel.filterTexts(texts, prefix); }
+				},
+				{
+					name: "commands", js: function () { return jsCommands(snap, "cmd_1"); },
+					quick: function () { return QuickAccel.matchCommandNames(snap, "cmd_1"); }
+				}
 			];
 			var out = [], c, jsM, qM, same, jsS, qS, dbg = [];
 			for (i = 0; i < cases.length; i++) {
@@ -727,14 +763,14 @@ MapScript.loadModule("DebugUtils", {
 			var summary = out.join(" | ");
 			if (dbg.length) summary += " DEBUG " + dbg.join(" ; ");
 			out = "QuickLarge n=1749/4434/3000 " + summary;
-			try { android.util.Log.i("Script", out); } catch(e) {}
+			try { android.util.Log.i("Script", out); } catch (e) { }
 			return out;
-		} catch(e) {
+		} catch (e) {
 			return "QuickLarge error: " + e;
 		}
 	},
 	/** 调试控制台用：测量 filter 结果写进 SimpleListAdapter 的成本 */
-	benchIDListAdapter : function() {
+	benchIDListAdapter: function () {
 		try {
 			var lib = CA.IntelliSense.library, names = [], prefixes = ["minecraft:", "block", "item_1", "zzz"];
 			var i, j, e, l, t, arr, built, results = [];
@@ -744,9 +780,9 @@ MapScript.loadModule("DebugUtils", {
 				for (j = 0; j < l.length; j++) names.push(l[j]);
 			}
 			built = CA.buildIDList(names);
-			var adpt = SimpleListAdapter.getController(new SimpleListAdapter([], function(holder) {
+			var adpt = SimpleListAdapter.getController(new SimpleListAdapter([], function (holder) {
 				return new G.TextView(ctx);
-			}, function() {}, null, true));
+			}, function () { }, null, true));
 			for (i = 0; i < prefixes.length; i++) {
 				arr = CA.filterIDList(built.texts, prefixes[i]);
 				t = Date.now();
@@ -754,16 +790,16 @@ MapScript.loadModule("DebugUtils", {
 				results.push("[" + prefixes[i] + "]=" + arr.length + "/" + (Date.now() - t) + "ms");
 			}
 			results = "IDListAdapterBench n=" + built.ids.length + " " + results.join(", ");
-			try { android.util.Log.i("Script", results); } catch(e) {}
+			try { android.util.Log.i("Script", results); } catch (e) { }
 			return results;
-		} catch(e) {
+		} catch (e) {
 			return "IDListAdapterBench error: " + e;
 		}
 	},
 	/** 调试控制台用：用当前 ID 表跑 buildIDList / filterIDList 并打日志
 	 *  控制台输入 DebugUtils.benchIDList() 即可；rounds 参数保留给以后重复计时
 	 */
-	benchIDList : function(rounds) {
+	benchIDList: function (rounds) {
 		try {
 			var lib = CA.IntelliSense.library, names = [], prefixes = ["", "minecraft:", "block", "item_1", "zzz"];
 			var i, j, e, l, t, arr, results = [], built, buildMs, total = 0;
@@ -782,13 +818,13 @@ MapScript.loadModule("DebugUtils", {
 				total += arr.length;
 			}
 			results = "IDListBench n=" + built.ids.length + " build=" + buildMs + "ms filter: " + results.join(", ");
-			try { android.util.Log.i("Script", results); } catch(e) {}
+			try { android.util.Log.i("Script", results); } catch (e) { }
 			return results;
-		} catch(e) {
+		} catch (e) {
 			return "IDListBench error: " + e;
 		}
 	},
-	updateDebugAction : function() {
+	updateDebugAction: function () {
 		if (CA.settings.enableDebugAction) {
 			CA.Actions["debug.action"] = this.debugAction;
 			AndroidBridge.Tiles["debug.tile"] = this.debugTile;
@@ -797,7 +833,9 @@ MapScript.loadModule("DebugUtils", {
 			delete AndroidBridge.Tiles["debug.tile"];
 		}
 	},
-	initialize : function() {try {
-		this.updateDebugAction();
-	} catch(e) {erp(e)}}
+	initialize: function () {
+		try {
+			this.updateDebugAction();
+		} catch (e) { erp(e) }
+	}
 });

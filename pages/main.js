@@ -82,7 +82,7 @@ addFilePath(pages, process.cwd(), '/');
 
 server.listen({
 	port: 8888
-}, function() {
+}, function () {
 	var addr = server.address();
 	console.log('Server Running on ' + os.hostname() + ':' + addr.port);
 });

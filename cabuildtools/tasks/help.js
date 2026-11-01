@@ -12,20 +12,20 @@ const path = require("path");
  */
 
 const TASK_DESC = {
-	buildRelease : "构建正式版脚本 + 安装器 .lib（渠道参数可换渠道）",
-	buildSnapshot : "构建快照版脚本 + 安装器 .lib",
-	shellBuildRelease : "打包正式版 APK（含签名、对齐）",
-	shellBuildDebug : "打包调试版 APK（debuggable，走 R8）",
-	shellBuildReleaseHotfix : "生成热更新包（core.js + 签名）",
-	buildCLib : "构建内置命令库（caclib）",
-	publishRelease : "发布正式版到配置的发布端",
-	publishSnapshot : "发布快照版",
-	publishHotfix : "发布热更新包",
-	publishCLib : "发布内置命令库",
-	generateImport : "生成 import 用的 android.jar 索引",
-	clean : "清理 build 目录",
-	delay : "延时若干毫秒（调试流水线用）",
-	shellPrepareDebug : "准备调试版壳子资源"
+	buildRelease: "构建正式版脚本 + 安装器 .lib（渠道参数可换渠道）",
+	buildSnapshot: "构建快照版脚本 + 安装器 .lib",
+	shellBuildRelease: "打包正式版 APK（含签名、对齐）",
+	shellBuildDebug: "打包调试版 APK（debuggable，走 R8）",
+	shellBuildReleaseHotfix: "生成热更新包（core.js + 签名）",
+	buildCLib: "构建内置命令库（caclib）",
+	publishRelease: "发布正式版到配置的发布端",
+	publishSnapshot: "发布快照版",
+	publishHotfix: "发布热更新包",
+	publishCLib: "发布内置命令库",
+	generateImport: "生成 import 用的 android.jar 索引",
+	clean: "清理 build 目录",
+	delay: "延时若干毫秒（调试流水线用）",
+	shellPrepareDebug: "准备调试版壳子资源"
 };
 
 const CHANNEL_DESC = [
@@ -48,10 +48,10 @@ const OUTPUT_DESC = [
 function listCliTasks() {
 	const dir = __dirname;
 	const names = fs.readdirSync(dir)
-		.filter(function(f) { return f.endsWith(".js") && f !== "index.js" && f !== "help.js"; })
-		.map(function(f) { return path.basename(f, ".js"); })
+		.filter(function (f) { return f.endsWith(".js") && f !== "index.js" && f !== "help.js"; })
+		.map(function (f) { return path.basename(f, ".js"); })
 		.sort();
-	return names.filter(function(name) {
+	return names.filter(function (name) {
 		try {
 			const task = require(path.join(dir, name + ".js"));
 			return task && task.input === "cli";
@@ -84,10 +84,10 @@ function pad(text, width) {
 	return text;
 }
 
-module.exports = function() {
+module.exports = function () {
 	const cliTasks = listCliTasks();
-	const described = cliTasks.filter(function(name) { return TASK_DESC[name]; });
-	const others = cliTasks.filter(function(name) { return !TASK_DESC[name]; });
+	const described = cliTasks.filter(function (name) { return TASK_DESC[name]; });
+	const others = cliTasks.filter(function (name) { return !TASK_DESC[name]; });
 	const scripts = readScripts();
 	const lines = [];
 
@@ -100,19 +100,19 @@ module.exports = function() {
 	lines.push("  不带任务时打印本帮助");
 	lines.push("");
 	lines.push("常用任务");
-	described.forEach(function(name) {
+	described.forEach(function (name) {
 		lines.push("  " + pad(name, 26) + TASK_DESC[name]);
 	});
 	if (others.length) {
 		lines.push("");
 		lines.push("其他 CLI 任务");
-		others.forEach(function(name) { lines.push("  " + name); });
+		others.forEach(function (name) { lines.push("  " + name); });
 	}
 	lines.push("");
 	lines.push("渠道参数（可选，加在任务后面）");
 	lines.push("  不写渠道参数就是默认渠道 stable；写了就按该渠道出包");
 	lines.push("");
-	CHANNEL_DESC.forEach(function(row) {
+	CHANNEL_DESC.forEach(function (row) {
 		lines.push("  " + pad(row[0], 12) + row[1]);
 	});
 	lines.push("  例：node ./cabuildtools/main.js buildRelease -beta");
@@ -121,20 +121,20 @@ module.exports = function() {
 	lines.push("风味参数（可选，加在任务后面；不影响渠道）");
 	lines.push("  不写就是 default 风味；风味只改变脚本内容（默认主题/欢迎语/启动文字）和产物名");
 	lines.push("");
-	FLAVOR_DESC.forEach(function(row) {
+	FLAVOR_DESC.forEach(function (row) {
 		lines.push("  " + pad(row[0], 16) + row[1]);
 	});
 	lines.push("  例：node ./cabuildtools/main.js buildRelease -huangyxHUTAO");
 	lines.push("      npm run build -- -huangyxHUTAO");
 	lines.push("");
 	lines.push("npm 脚本");
-	Object.keys(scripts).forEach(function(name) {
+	Object.keys(scripts).forEach(function (name) {
 		if (name === "postinstall") return;
 		lines.push("  " + pad("npm run " + name, 26) + scripts[name]);
 	});
 	lines.push("");
 	lines.push("产物");
-	OUTPUT_DESC.forEach(function(row) {
+	OUTPUT_DESC.forEach(function (row) {
 		lines.push("  " + pad(row[0], 20) + row[1]);
 	});
 	lines.push("");

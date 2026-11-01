@@ -1,17 +1,17 @@
 MapScript.loadModule("NeteaseAdapter", {
-	onCreate : function() {
+	onCreate: function () {
 		MapScript.loadModule("getMinecraftVersion", this.getMinecraftVersion);
 	},
-	getMinecraftVersion : function(force) {
+	getMinecraftVersion: function (force) {
 		if (!force && NeteaseAdapter.mcVersion) return NeteaseAdapter.mcVersion;
 		try {
 			return NeteaseAdapter.mcVersion = NeteaseAdapter.getCoreVersion();
-		} catch(e) {
+		} catch (e) {
 			Log.e(e);
 			return NeteaseAdapter.mcVersion = "*";
 		}
 	},
-	getCoreVersion : function() {
+	getCoreVersion: function () {
 		if (MapScript.host == "BlockLauncher") return ModPE.getMinecraftVersion();
 		if (CA.settings.mcPublisher && CA.settings.mcPackName) {
 			this.multiVersions = false;
@@ -20,22 +20,22 @@ MapScript.loadModule("NeteaseAdapter", {
 			this.autoSelect = false;
 			try {
 				return this.getVersionByPar(CA.settings.mcPackName, CA.settings.mcPublisher);
-			} catch(e) {erp(e, true)}
+			} catch (e) { erp(e, true) }
 			CA.settings.mcPackName = CA.settings.mcPublisher = null;
 		}
 		var i, result = [], t;
 		for (i = 0; i < this.packNames.length; i++) {
 			if (MCAdapter.existPackage(this.packNames[i])) {
 				t = {
-					package : this.packNames[i],
-					publisher : this.packages[this.packNames[i]].publisher
+					package: this.packNames[i],
+					publisher: this.packages[this.packNames[i]].publisher
 				};
 				t.version = String(this.getVersionByPar(t.package, t.publisher)).split(".");
 				result.push(t);
 			}
 		}
 		if (result.length > 1) {
-			result.sort(function(a, b) {
+			result.sort(function (a, b) {
 				return NeteaseAdapter.compareVersion(b.version, a.version);
 			});
 		}
@@ -51,21 +51,21 @@ MapScript.loadModule("NeteaseAdapter", {
 			return "*";
 		}
 	},
-	getVersionByPar : function(packName, publisher) {
-		switch(publisher) {
+	getVersionByPar: function (packName, publisher) {
+		switch (publisher) {
 			case "Mojang":
-			return this.getMojangVersion(packName);
+				return this.getMojangVersion(packName);
 			case "Netease":
-			return this.getNeteaseVersion(packName);
+				return this.getNeteaseVersion(packName);
 			case "Custom":
-			return packName;
+				return packName;
 		}
 		return "*";
 	},
-	getMojangVersion : function(packageName) {
+	getMojangVersion: function (packageName) {
 		return String(ctx.getPackageManager().getPackageInfo(packageName, 0).versionName);
 	},
-	getNeteaseVersion : function(packageName) {
+	getNeteaseVersion: function (packageName) {
 		var c = ctx.getPackageManager().getPackageInfo(packageName, 0).versionCode;
 		this.supportWS = c >= 840035545 && c < 840094571;
 		if (c >= 840227362) { // 2.7.5.227362
@@ -128,9 +128,9 @@ MapScript.loadModule("NeteaseAdapter", {
 			return "1.1.3.52"; // 未确认
 		}
 	},
-	askPackage : function(callback, canCustomize) {
+	askPackage: function (callback, canCustomize) {
 		var self = this;
-		Common.showProgressDialog(function(o) {
+		Common.showProgressDialog(function (o) {
 			o.setText("正在加载列表……");
 			var pm = ctx.getPackageManager();
 			var lp = pm.getInstalledPackages(0).toArray();
@@ -147,10 +147,10 @@ MapScript.loadModule("NeteaseAdapter", {
 						}
 					}
 					if (f) continue;
-				} catch(e) {Log.e(e)}
+				} catch (e) { Log.e(e) }
 				t = {
-					text : pm.getApplicationLabel(lp[i].applicationInfo),
-					result : lp[i].packageName
+					text: pm.getApplicationLabel(lp[i].applicationInfo),
+					result: lp[i].packageName
 				};
 				if (t.result in self.packages) {
 					t.description = self.packages[t.result].desc + " - " + lp[i].versionName;
@@ -165,30 +165,30 @@ MapScript.loadModule("NeteaseAdapter", {
 			}
 			if (canCustomize) {
 				r.unshift({
-					text : "自动选择",
-					description : NeteaseAdapter.autoSelect ? "启用中" : "未启用",
-					auto : true
+					text: "自动选择",
+					description: NeteaseAdapter.autoSelect ? "启用中" : "未启用",
+					auto: true
 				});
 				r.push({
-					text : "自定义",
-					description : NeteaseAdapter.mcPublisher == "Custom" ? "正在使用版本: " + NeteaseAdapter.mcVersion : "未启用",
-					custom : true
+					text: "自定义",
+					description: NeteaseAdapter.mcPublisher == "Custom" ? "正在使用版本: " + NeteaseAdapter.mcVersion : "未启用",
+					custom: true
 				});
 			}
 			if (o.cancelled) return;
 			if (r.length > 0) {
-				Common.showListChooser(r, function(id) {
+				Common.showListChooser(r, function (id) {
 					var res = r[id];
 					if (res.auto) {
 						callback(null, null);
 					} else if (res.custom) {
-						NeteaseAdapter.askCustomVersion(function(v) {
+						NeteaseAdapter.askCustomVersion(function (v) {
 							callback(v, "Custom");
 						});
 					} else if (res.publisher) {
 						callback(String(res.result), res.publisher);
 					} else {
-						NeteaseAdapter.askPublisher(function(pub) {
+						NeteaseAdapter.askPublisher(function (pub) {
 							callback(String(res.result), pub);
 						});
 						Common.toast("请选择对应的发行商");
@@ -199,134 +199,134 @@ MapScript.loadModule("NeteaseAdapter", {
 			}
 		}, true);
 	},
-	askPublisher : function(callback) {
+	askPublisher: function (callback) {
 		var r = [{
-			text : "Minecraft",
-			description : "国际版",
-			result : "Mojang"
+			text: "Minecraft",
+			description: "国际版",
+			result: "Mojang"
 		}, {
-			text : "我的世界",
-			description : "网易版",
-			result : "Netease"
+			text: "我的世界",
+			description: "网易版",
+			result: "Netease"
 		}, {
-			text : "其他版本",
-			result : "unknown"
+			text: "其他版本",
+			result: "unknown"
 		}];
-		Common.showListChooser(r, function(id) {
+		Common.showListChooser(r, function (id) {
 			callback(r[id].result);
 		});
 	},
-	switchVersion : function(callback) {
+	switchVersion: function (callback) {
 		if (MapScript.host == "BlockLauncher") {
 			Common.toast("您正在使用启动器加载本JS，因此不能切换版本");
 			return;
 		}
-		this.askPackage(function(name, publisher) {
+		this.askPackage(function (name, publisher) {
 			CA.settings.mcPackName = name;
 			CA.settings.mcPublisher = publisher;
 			NeteaseAdapter.mcVersion = null;
 			callback();
 		}, true);
 	},
-	askCustomVersion : function(callback) {
+	askCustomVersion: function (callback) {
 		Common.showInputDialog({
-			title : "自定义版本",
-			callback : function(s) {
+			title: "自定义版本",
+			callback: function (s) {
 				callback(s);
 			},
-			singleLine : true,
-			defaultValue : getMinecraftVersion()
+			singleLine: true,
+			defaultValue: getMinecraftVersion()
 		});
 	},
-	compareVersion : function(a, b) {
+	compareVersion: function (a, b) {
 		return Accel.compareVersionArray(a, b);   // 有 jar 走 Java，没有走等价 JS
 	},
-	packNames : Loader.fromFile("../data/packnames.json"),
-	packages : {
-		"com.mojang.minecraftpe" : {
-			desc : "国际版",
-			publisher : "Mojang"
+	packNames: Loader.fromFile("../data/packnames.json"),
+	packages: {
+		"com.mojang.minecraftpe": {
+			desc: "国际版",
+			publisher: "Mojang"
 		},
-		"com.netease.x19" : {
-			desc : "网易-官方版",
-			publisher : "Netease"
+		"com.netease.x19": {
+			desc: "网易-官方版",
+			publisher: "Netease"
 		},
-		"com.netease.mc.aligames" : {
-			desc : "网易-阿里游戏版",
-			publisher : "Netease"
+		"com.netease.mc.aligames": {
+			desc: "网易-阿里游戏版",
+			publisher: "Netease"
 		},
-		"com.netease.mc.bili" : {
-			desc : "网易-Bilibili游戏版",
-			publisher : "Netease"
+		"com.netease.mc.bili": {
+			desc: "网易-Bilibili游戏版",
+			publisher: "Netease"
 		},
-		"com.netease.mc.baidu" : {
-			desc : "网易-百度手机助手版",
-			publisher : "Netease"
+		"com.netease.mc.baidu": {
+			desc: "网易-百度手机助手版",
+			publisher: "Netease"
 		},
-		"com.tencent.tmgp.wdsj666" : {
-			desc : "网易-腾讯应用宝版",
-			publisher : "Netease"
+		"com.tencent.tmgp.wdsj666": {
+			desc: "网易-腾讯应用宝版",
+			publisher: "Netease"
 		},
-		"com.netease.mc.m4399" : {
-			desc : "网易-4399游戏盒版",
-			publisher : "Netease"
+		"com.netease.mc.m4399": {
+			desc: "网易-4399游戏盒版",
+			publisher: "Netease"
 		},
-		"com.netease.mc.wdsj.yyxx.yyh" : {
-			desc : "网易-应用汇版",
-			publisher : "Netease"
+		"com.netease.mc.wdsj.yyxx.yyh": {
+			desc: "网易-应用汇版",
+			publisher: "Netease"
 		},
-		"com.netease.mc.qihoo" : {
-			desc : "网易-360手机助手版",
-			publisher : "Netease"
+		"com.netease.mc.qihoo": {
+			desc: "网易-360手机助手版",
+			publisher: "Netease"
 		},
-		"com.netease.wdsj.yyxx.mzw" : {
-			desc : "网易-拇指玩版",
-			publisher : "Netease"
+		"com.netease.wdsj.yyxx.mzw": {
+			desc: "网易-拇指玩版",
+			publisher: "Netease"
 		},
-		"com.netease.wdsj.yyxx.downjoy" : {
-			desc : "网易-当乐版",
-			publisher : "Netease"
+		"com.netease.wdsj.yyxx.downjoy": {
+			desc: "网易-当乐版",
+			publisher: "Netease"
 		},
-		"com.netease.wdsj.yyxx.sougou" : {
-			desc : "网易-搜狗应用商店版",
-			publisher : "Netease"
+		"com.netease.wdsj.yyxx.sougou": {
+			desc: "网易-搜狗应用商店版",
+			publisher: "Netease"
 		},
-		"com.netease.mc.mi" : {
-			desc : "网易-小米应用商店版",
-			publisher : "Netease"
+		"com.netease.mc.mi": {
+			desc: "网易-小米应用商店版",
+			publisher: "Netease"
 		},
-		"com.netease.mc.huawei" : {
-			desc : "网易-华为应用商店版",
-			publisher : "Netease"
+		"com.netease.mc.huawei": {
+			desc: "网易-华为应用商店版",
+			publisher: "Netease"
 		},
-		"com.netease.mc.vivo" : {
-			desc : "网易-vivo应用商店版",
-			publisher : "Netease"
+		"com.netease.mc.vivo": {
+			desc: "网易-vivo应用商店版",
+			publisher: "Netease"
 		},
-		"com.netease.mc.nearme.gamecenter" : {
-			desc : "网易-OPPO应用商店版",
-			publisher : "Netease"
+		"com.netease.mc.nearme.gamecenter": {
+			desc: "网易-OPPO应用商店版",
+			publisher: "Netease"
 		},
-		"com.netease.mc.lenovo" : {
-			desc : "网易-乐商店版",
-			publisher : "Netease"
+		"com.netease.mc.lenovo": {
+			desc: "网易-乐商店版",
+			publisher: "Netease"
 		},
-		"com.netease.mc.coolpad" : {
-			desc : "网易-酷派应用商店版",
-			publisher : "Netease"
+		"com.netease.mc.coolpad": {
+			desc: "网易-酷派应用商店版",
+			publisher: "Netease"
 		},
-		"com.netease.mc.am" : {
-			desc : "网易-金立应用商店版",
-			publisher : "Netease"
+		"com.netease.mc.am": {
+			desc: "网易-金立应用商店版",
+			publisher: "Netease"
 		},
-		"com.netease.mctest" : {
-			desc : "网易-测试版",
-			publisher : "Netease"
+		"com.netease.mctest": {
+			desc: "网易-测试版",
+			publisher: "Netease"
 		},
 		//待补，在此感谢@风铃物语 与 @绿叶 的帮助
-		"com.zhekasmirnov.innercore" : {
-			desc : "Inner Core",
-			publisher : "innercore"
+		"com.zhekasmirnov.innercore": {
+			desc: "Inner Core",
+			publisher: "innercore"
 		}
 	}
 });

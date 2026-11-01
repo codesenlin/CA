@@ -4,7 +4,7 @@ function getShortName(name) {
 	var i = name.lastIndexOf(".");
 	return i >= 0 ? name.slice(i + 1) : name;
 }
-module.exports = function(context, args) {
+module.exports = function (context, args) {
 	var r = args[0], param = args[1];
 	return jszip.loadAsync(fs.readFileSync(param.path)).then(zf => {
 		zf.forEach((path, entry) => {

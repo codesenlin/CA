@@ -28,55 +28,55 @@ function tokenize(s) {
 		switch (ch = s.charAt(i)) {
 			case "\"":
 			case "'":
-			fl = 0;
-			token = {
-				start : i,
-				type : ch,
-				kind : "string"
-			};
-			while (++i < s.length) {
-				ch2 = s.charAt(i);
-				if (ch2 == "\\") {
-					i++;
-					continue;
-				}
-				if (ch2 == ch) {
-					token.end = i + 1;
-					r.push(token);
-					break;
-				}
-			}
-			break;
-			case "/":
-			token = {
-				start : i,
-				kind : "comment"
-			};
-			ch2 = s.charAt(++i);
-			token.type = ch2;
-			if (ch2 == "/") {
-				while (++i < s.length) {
-					ch2 = s.charAt(i);
-					if (ch2 == "\r" || ch2 == "\n") {
-						token.end = i;
-						r.push(token);
-						break;
-					}
-				}
-			} else if (ch2 == "*") {
 				fl = 0;
+				token = {
+					start: i,
+					type: ch,
+					kind: "string"
+				};
 				while (++i < s.length) {
 					ch2 = s.charAt(i);
-					if (fl == 1 && ch2 == "/") {
+					if (ch2 == "\\") {
+						i++;
+						continue;
+					}
+					if (ch2 == ch) {
 						token.end = i + 1;
 						r.push(token);
 						break;
 					}
-					fl = ch2 == "*" ? 1 : 0;
 				}
-			} else {
-				continue;
-			}
+				break;
+			case "/":
+				token = {
+					start: i,
+					kind: "comment"
+				};
+				ch2 = s.charAt(++i);
+				token.type = ch2;
+				if (ch2 == "/") {
+					while (++i < s.length) {
+						ch2 = s.charAt(i);
+						if (ch2 == "\r" || ch2 == "\n") {
+							token.end = i;
+							r.push(token);
+							break;
+						}
+					}
+				} else if (ch2 == "*") {
+					fl = 0;
+					while (++i < s.length) {
+						ch2 = s.charAt(i);
+						if (fl == 1 && ch2 == "/") {
+							token.end = i + 1;
+							r.push(token);
+							break;
+						}
+						fl = ch2 == "*" ? 1 : 0;
+					}
+				} else {
+					continue;
+				}
 		}
 		i++;
 	}

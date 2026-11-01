@@ -3,7 +3,10 @@
 	"author": "ProjectXero",
 	"description": "本命令库包含了只有启用WebSocket服务器并成功连接才能远程执行的命令\n\n部分与吉祥物相关的命令需要订阅事件AgentCommand才能看到返回的内容",
 	"uuid": "17e3d453-acc9-48a2-9806-f516235ceccd",
-	"version": [1, 0],
+	"version": [
+		1,
+		0
+	],
 	"require": [
 		"acf728c5-dd5d-4a38-b43d-7c4f18149fbd"
 	],

@@ -88,12 +88,12 @@ function declaredDeps(cwd) {
 
 	function add(pkg, workspace) {
 		if (!pkg) return;
-		["dependencies", "devDependencies", "optionalDependencies"].forEach(function(section) {
+		["dependencies", "devDependencies", "optionalDependencies"].forEach(function (section) {
 			const deps = pkg[section];
 			if (!deps) return;
-			Object.keys(deps).forEach(function(name) {
+			Object.keys(deps).forEach(function (name) {
 				// 同一包可能被多个 workspace 声明，保留第一个
-				if (!out.has(name)) out.set(name, { section : section, workspace : workspace, range : deps[name] });
+				if (!out.has(name)) out.set(name, { section: section, workspace: workspace, range: deps[name] });
 			});
 		});
 	}
@@ -101,7 +101,7 @@ function declaredDeps(cwd) {
 	add(root, null);
 	let workspaces = root.workspaces;
 	if (workspaces && !Array.isArray(workspaces)) workspaces = workspaces.packages;
-	(workspaces || []).forEach(function(pattern) {
+	(workspaces || []).forEach(function (pattern) {
 		if (/[*?]/.test(pattern)) return; // 复杂 workspace 通配不展开，够用就行
 		add(readJson(path.join(cwd, pattern, "package.json")), pattern);
 	});
@@ -109,19 +109,19 @@ function declaredDeps(cwd) {
 }
 
 function npm(args, cwd, options) {
-	const opts = Object.assign({ cwd : cwd, encoding : "utf-8" }, options || {});
+	const opts = Object.assign({ cwd: cwd, encoding: "utf-8" }, options || {});
 	return spawnSync(NPM, args, opts);
 }
 
 function npmInherit(args, cwd) {
-	const r = spawnSync(NPM, args, { cwd : cwd, stdio : "inherit" });
+	const r = spawnSync(NPM, args, { cwd: cwd, stdio: "inherit" });
 	if (r.error) fail(r.error.message);
 	return r.status;
 }
 
 /** npm outdated --json；没有可更新的返回 {} */
 function outdated(cwd) {
-	const r = npm(["outdated", "--json"], cwd, { stdio : ["ignore", "pipe", "pipe"] });
+	const r = npm(["outdated", "--json"], cwd, { stdio: ["ignore", "pipe", "pipe"] });
 	const text = (r.stdout || "").trim();
 	if (!text) return {};
 	try {
@@ -140,7 +140,7 @@ function outdated(cwd) {
 
 /** 包管理器层面的问题（缺失/版本不匹配），用于 check 附带检查 */
 function npmProblems(cwd) {
-	const r = npm(["ls", "--depth=0", "--json"], cwd, { stdio : ["ignore", "pipe", "pipe"] });
+	const r = npm(["ls", "--depth=0", "--json"], cwd, { stdio: ["ignore", "pipe", "pipe"] });
 	const text = (r.stdout || "").trim();
 	if (!text) return [];
 	let data;
@@ -154,7 +154,7 @@ function npmProblems(cwd) {
 
 function splitVersion(v) {
 	// 1.2.3 / 1.2.3-beta.1 / 1.2 → [1,2,3]
-	return String(v || "0").split("-")[0].split(".").map(function(n) {
+	return String(v || "0").split("-")[0].split(".").map(function (n) {
 		return parseInt(n, 10) || 0;
 	});
 }
@@ -175,28 +175,28 @@ function collect(cwd) {
 	const out = outdated(cwd);
 	const declared = declaredDeps(cwd);
 	const direct = [], transitive = [];
-	Object.keys(out).sort().forEach(function(name) {
+	Object.keys(out).sort().forEach(function (name) {
 		const info = out[name];
 		const row = {
-			name : name,
-			current : info.current || "",
-			wanted : info.wanted || "",
-			latest : info.latest || "",
+			name: name,
+			current: info.current || "",
+			wanted: info.wanted || "",
+			latest: info.latest || "",
 			// npm 的 type 字段不一定有，自己判断
-			kind : info.current ? deltaKind(info.current, info.latest) : "未安装",
-			outOfRange : isOutOfRange(info),
-			declared : declared.has(name)
+			kind: info.current ? deltaKind(info.current, info.latest) : "未安装",
+			outOfRange: isOutOfRange(info),
+			declared: declared.has(name)
 		};
 		(row.declared ? direct : transitive).push(row);
 	});
-	return { direct : direct, transitive : transitive, problems : npmProblems(cwd), declared : declared };
+	return { direct: direct, transitive: transitive, problems: npmProblems(cwd), declared: declared };
 }
 
 function printRows(rows) {
 	if (!rows.length) return;
 	const widths = [30, 12, 12, 12];
 	console.log("  " + pad("包名", widths[0]) + pad("当前", widths[1]) + pad("范围允许", widths[2]) + pad("最新", widths[3]) + "类型");
-	rows.forEach(function(row) {
+	rows.forEach(function (row) {
 		console.log("  " + pad(row.name, widths[0]) + pad(row.current || "-", widths[1]) + pad(row.wanted || "-", widths[2]) + pad(row.latest || "-", widths[3]) + row.kind + (row.outOfRange ? "（超出范围）" : ""));
 	});
 }
@@ -207,9 +207,9 @@ function check(flags) {
 
 	if (flags.json) {
 		console.log(JSON.stringify({
-			direct : data.direct,
-			transitive : data.transitive,
-			problems : data.problems
+			direct: data.direct,
+			transitive: data.transitive,
+			problems: data.problems
 		}, null, 2));
 		return total || data.problems.length ? 1 : 0;
 	}
@@ -223,8 +223,8 @@ function check(flags) {
 	}
 	if (data.direct.length) {
 		console.log("");
-		console.log("直接依赖（" + data.direct.filter(function(r) { return !r.outOfRange; }).length + " 个范围内 + " +
-			data.direct.filter(function(r) { return r.outOfRange; }).length + " 个跨范围）");
+		console.log("直接依赖（" + data.direct.filter(function (r) { return !r.outOfRange; }).length + " 个范围内 + " +
+			data.direct.filter(function (r) { return r.outOfRange; }).length + " 个跨范围）");
 		printRows(data.direct);
 	}
 	if (data.transitive.length) {
@@ -235,10 +235,10 @@ function check(flags) {
 	if (data.problems.length) {
 		console.log("");
 		console.log("包管理器报告的问题：");
-		data.problems.forEach(function(p) { console.log("  - " + p); });
+		data.problems.forEach(function (p) { console.log("  - " + p); });
 	}
 	console.log("");
-	console.log("升级：npm run upgrade" + (data.direct.some(function(r) { return r.outOfRange; }) ? " -- --latest（有跨大版本）" : ""));
+	console.log("升级：npm run upgrade" + (data.direct.some(function (r) { return r.outOfRange; }) ? " -- --latest（有跨大版本）" : ""));
 	console.log("");
 	if (flags.noError) return 0;
 	return total || data.problems.length ? 1 : 0;
@@ -268,18 +268,18 @@ function update(flags) {
 	if (flags.latest) {
 		const after = outdated(flags.cwd);
 		const declared = declaredDeps(flags.cwd);
-		latestTargets = Object.keys(after).filter(function(name) {
+		latestTargets = Object.keys(after).filter(function (name) {
 			return declared.has(name) && isOutOfRange(after[name]);
 		}).sort();
 		if (latestTargets.length) {
 			const groups = new Map();
-			latestTargets.forEach(function(name) {
+			latestTargets.forEach(function (name) {
 				const info = declared.get(name);
 				const key = (info.workspace || "") + "|" + info.section;
-				if (!groups.has(key)) groups.set(key, { workspace : info.workspace, section : info.section, names : [] });
+				if (!groups.has(key)) groups.set(key, { workspace: info.workspace, section: info.section, names: [] });
 				groups.get(key).names.push(name + "@latest");
 			});
-			groups.forEach(function(group) {
+			groups.forEach(function (group) {
 				const args = ["install"];
 				if (group.workspace) args.push("-w", group.workspace);
 				if (group.section === "devDependencies") args.push("--save-dev");
@@ -333,7 +333,7 @@ function update(flags) {
 	} else {
 		console.log("  仍可更新：" + (after.direct.length + after.transitive.length) + " 个");
 		if (after.direct.length) printRows(after.direct);
-		if (after.direct.some(function(r) { return r.outOfRange; })) {
+		if (after.direct.some(function (r) { return r.outOfRange; })) {
 			console.log("  跨大版本的用 npm run upgrade -- --latest");
 		}
 	}
@@ -343,14 +343,14 @@ function update(flags) {
 
 function parseFlags(argv) {
 	const flags = {
-		command : "check",
-		cwd : ROOT,
-		json : false,
-		noError : false,
-		latest : false,
-		dryRun : false,
-		noTest : false,
-		verify : false
+		command: "check",
+		cwd: ROOT,
+		json: false,
+		noError: false,
+		latest: false,
+		dryRun: false,
+		noTest: false,
+		verify: false
 	};
 	for (let i = 0; i < argv.length; i++) {
 		const a = argv[i];

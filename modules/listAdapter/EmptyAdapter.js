@@ -1,4 +1,4 @@
-MapScript.loadModule("EmptyAdapter", (function() {
+MapScript.loadModule("EmptyAdapter", (function () {
 	var k = [], v = [];
 	function build() {
 		var text = new G.TextView(ctx);
@@ -22,19 +22,19 @@ MapScript.loadModule("EmptyAdapter", (function() {
 		view.setLayoutParams(view.getLayoutParams());
 	}
 	return new G.ListAdapter({
-		getCount : function() {
+		getCount: function () {
 			return 1;
 		},
-		getItem : function(pos) {
+		getItem: function (pos) {
 			return null;
 		},
-		getItemId : function(pos) {
+		getItemId: function (pos) {
 			return pos;
 		},
-		getItemViewType : function(pos) {
+		getItemViewType: function (pos) {
 			return 0;
 		},
-		getView : function(pos, convert, parent) {
+		getView: function (pos, convert, parent) {
 			try {
 				var i = k.indexOf(parent);
 				if (i < 0) {
@@ -45,29 +45,29 @@ MapScript.loadModule("EmptyAdapter", (function() {
 				}
 				//resize(convert, parent);
 				return convert;
-			} catch(e) {
+			} catch (e) {
 				var a = new G.TextView(ctx);
 				a.setText(e + "\n" + e.stack);
 				erp(e);
 				return a;
 			}
 		},
-		getViewTypeCount : function() {
+		getViewTypeCount: function () {
 			return 1;
 		},
-		hasStableIds : function() {
+		hasStableIds: function () {
 			return true;
 		},
-		isEmpty : function() {
+		isEmpty: function () {
 			return false;
 		},
-		areAllItemsEnabled : function() {
+		areAllItemsEnabled: function () {
 			return true;
 		},
-		isEnabled : function(pos) {
+		isEnabled: function (pos) {
 			return true;
 		},
-		registerDataSetObserver : function(p) {},
-		unregisterDataSetObserver : function(p) {}
+		registerDataSetObserver: function (p) { },
+		unregisterDataSetObserver: function (p) { }
 	});
 })());

@@ -14,31 +14,31 @@ function loadPublishConfig(base) {
 	throw new Error("找不到发布配置：" + base + "（.js / .json / .txt 均可）");
 }
 var localInterface = {
-	enableAsyncUpload : true,
-	upload : function(context, args) {
+	enableAsyncUpload: true,
+	upload: function (context, args) {
 		return context.execute("fileCopy", {
-			src : args.localPath,
-			dest : this.destRoot + "/" + args.remotePath
+			src: args.localPath,
+			dest: this.destRoot + "/" + args.remotePath
 		});
 	},
-	close : function() {}
+	close: function () { }
 };
 var sftpInterface = {
-	enableAsyncUpload : true,
-	upload : function(context, args) {
+	enableAsyncUpload: true,
+	upload: function (context, args) {
 		return context.execute("sftpPut", {
-			session : this,
-			localPath : args.localPath,
-			remotePath : this.remoteRoot + "/" + args.remotePath
+			session: this,
+			localPath: args.localPath,
+			remotePath: this.remoteRoot + "/" + args.remotePath
 		});
 	},
-	close : function(context) {
+	close: function (context) {
 		return context.execute("sftpDisconnect", {
-			session : this
+			session: this
 		});
 	}
 }
-module.exports = function(context, args) {
+module.exports = function (context, args) {
 	var publishCfg;
 	context.publishConfig = loadPublishConfig("./config/publish");
 	if (args) {
@@ -50,14 +50,14 @@ module.exports = function(context, args) {
 	}
 	if (publishCfg.method == "local") {
 		return Promise.resolve()
-			.then(function(v) {
+			.then(function (v) {
 				var o = Object.create(localInterface);
 				o.destRoot = publishCfg.destPath;
 				return o;
 			});
 	} else if (publishCfg.method == "sftp") {
 		return context.execute("sftpConnect", publishCfg.sshConfig)
-			.then(function(v) {
+			.then(function (v) {
 				var o = Object.create(sftpInterface);
 				o.sftp = v.sftp;
 				o.connection = v.connection;

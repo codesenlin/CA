@@ -1,84 +1,84 @@
 MapScript.loadModule("ISegment", {
-	alignStringEnd : function(s, len, char) {
+	alignStringEnd: function (s, len, char) {
 		var i, t = "";
 		for (i = len - s.length; i > 0; i--) {
 			t += char;
 		}
 		return t + s;
 	},
-	isStringEOS : function(strStream) {
+	isStringEOS: function (strStream) {
 		return strStream.cur >= strStream.str.length;
 	},
-	readStreamStr : function(strStream) {
+	readStreamStr: function (strStream) {
 		return strStream.str.charAt(strStream.cur++);
 	},
-	peekStreamStr : function(strStream) {
+	peekStreamStr: function (strStream) {
 		return strStream.str.charAt(strStream.cur);
 	},
-	readStreamAll : function(strStream) {
+	readStreamAll: function (strStream) {
 		var oldcur = strStream.cur;
 		strStream.cur = strStream.str.length;
 		return strStream.str.slice(oldcur);
 	},
-	peekStreamAll : function(strStream) {
+	peekStreamAll: function (strStream) {
 		return strStream.str.slice(strStream.cur);
 	},
-	readLenientString : function(strStream, options) {
+	readLenientString: function (strStream, options) {
 		var c, state = 0, r = [], hex, hexn, endchars = options.endChars || "";
 		while (strStream.cur < strStream.str.length) {
 			c = strStream.str.charAt(strStream.cur++);
 			switch (state) {
 				case 0:
-				if (c == "\\") {
-					state = 1;
-				} else if (endchars.indexOf(c) >= 0) {
-					return r.join("");
-				} else {
-					r.push(c);
-				}
-				break;
+					if (c == "\\") {
+						state = 1;
+					} else if (endchars.indexOf(c) >= 0) {
+						return r.join("");
+					} else {
+						r.push(c);
+					}
+					break;
 				case 1:
-				if (c == "0") {
-					r.push("\0");
-				} else if (c == "n") {
-					r.push("\n");
-				} else if (c == "r") {
-					r.push("\r");
-				} else if (c == "v") {
-					r.push("\v");
-				} else if (c == "t") {
-					r.push("\t");
-				} else if (c == "b") {
-					r.push("\b");
-				} else if (c == "f") {
-					r.push("\f");
-				} else if (c == "x") {
-					state = 2;
-					hex = 0; hexn = 2;
+					if (c == "0") {
+						r.push("\0");
+					} else if (c == "n") {
+						r.push("\n");
+					} else if (c == "r") {
+						r.push("\r");
+					} else if (c == "v") {
+						r.push("\v");
+					} else if (c == "t") {
+						r.push("\t");
+					} else if (c == "b") {
+						r.push("\b");
+					} else if (c == "f") {
+						r.push("\f");
+					} else if (c == "x") {
+						state = 2;
+						hex = 0; hexn = 2;
+						break;
+					} else if (c == "u") {
+						state = 3;
+						hex = 0; hexn = 4;
+						break;
+					} else {
+						r.push(c);
+					}
+					state = 0;
 					break;
-				} else if (c == "u") {
-					state = 3;
-					hex = 0; hexn = 4;
-					break;
-				} else {
-					r.push(c);
-				}
-				state = 0;
-				break;
 				case 2:
 				case 3:
-				hex = hex * 16 + parseInt(c, 16);
-				hexn--;
-				if (hexn <= 0) {
-					r.push(String.fromCharCode(hex));
-					state = 0;
-				}
-				break;
+					hex = hex * 16 + parseInt(c, 16);
+					hexn--;
+					if (hexn <= 0) {
+						r.push(String.fromCharCode(hex));
+						state = 0;
+					}
+					break;
 			}
 		}
 		return r.join("");
 	},
-	writeLenientString : function(s, options) {
+	writeLenientString: function (s, options) {
 		var i = 0, c, r = [], skipchars = options.skipChars || "";
 		while (i < s.length) {
 			c = s.charAt(i++);
@@ -106,9 +106,9 @@ MapScript.loadModule("ISegment", {
 		}
 		return r.join("");
 	},
-	readLenientStringArray : function(strStream, options) {
+	readLenientStringArray: function (strStream, options) {
 		var i, r = [], opt = {
-			endChars : options.splitChars + options.endChars
+			endChars: options.splitChars + options.endChars
 		};
 		while (strStream.cur < strStream.str.length) {
 			r.push(this.readLenientString(strStream, opt));
@@ -118,20 +118,20 @@ MapScript.loadModule("ISegment", {
 		}
 		return r;
 	},
-	writeLenientStringArray : function(arr, options) {
+	writeLenientStringArray: function (arr, options) {
 		var self = this, opt = {
-			skipChars : options.splitChar + options.skipChars
+			skipChars: options.splitChar + options.skipChars
 		};
-		return arr.map(function(e) {
+		return arr.map(function (e) {
 			return self.writeLenientString(e, opt);
 		}).join(options.splitChar);
 	},
-	kvSort : function(k, v, f) {
+	kvSort: function (k, v, f) {
 		var i, e, arr = new Array(Math.max(k.length, v.length));
 		for (i = 0; i < arr.length; i++) {
 			arr[i] = [k[i], v[i]];
 		}
-		arr.sort(function(a, b) {
+		arr.sort(function (a, b) {
 			return f(a[0], b[0]);
 		});
 		for (i = 0; i < arr.length; i++) {
@@ -141,71 +141,71 @@ MapScript.loadModule("ISegment", {
 		}
 	},
 
-	parseUnit : function(str) {
+	parseUnit: function (str) {
 		var p = str.search(/[^\d\s\.]/), num;
 		if (p >= 0) {
 			num = parseFloat(str.slice(0, p));
 			if (!isFinite(num)) return null;
 			return {
-				number : num,
-				unit : str.slice(p).replace(/\s*$/, "")
+				number: num,
+				unit: str.slice(p).replace(/\s*$/, "")
 			};
 		} else {
 			num = parseFloat(str);
 			return {
-				number : num,
-				unit : null
+				number: num,
+				unit: null
 			};
 		}
 	},
-	rawJson : function self(o, variableMap) {
+	rawJson: function self(o, variableMap) {
 		if (!self.coverSpan) {
-			self.coverSpan = function(src, span) {
+			self.coverSpan = function (src, span) {
 				if (span) src.setSpan(span, 0, src.length(), G.Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
 			}
-			self.parseColor = function(v) {
+			self.parseColor = function (v) {
 				if (v in Common.theme) {
 					return Common.theme[v];
 				} else {
 					return G.Color.parseColor(v)
 				}
 			}
-			self.parseTextSize = function(v) {
+			self.parseTextSize = function (v) {
 				var size = ISegment.parseUnit(String(v));
 				if (size) {
 					switch (size.unit) {
 						case "px":
-						return new G.AbsoluteSizeSpan(size.number);
+							return new G.AbsoluteSizeSpan(size.number);
 						case "dp":
-						return new G.AbsoluteSizeSpan(size.number, true);
+							return new G.AbsoluteSizeSpan(size.number, true);
 						case "ts":
-						return new G.AbsoluteSizeSpan(Common.theme.textsize[size.number] * G.sp);
+							return new G.AbsoluteSizeSpan(Common.theme.textsize[size.number] * G.sp);
 						case "%":
-						return new G.RelativeSizeSpan(size.number / 100);
+							return new G.RelativeSizeSpan(size.number / 100);
 						case null:
-						return new G.RelativeSizeSpan(size.number);
+							return new G.RelativeSizeSpan(size.number);
 						default:
-						return null;
+							return null;
 					}
 				} else {
 					return null;
 				}
 			}
-			self.parseAlign = function(v) {
+			self.parseAlign = function (v) {
 				switch (v) {
 					case "normal":
 					case "left":
-					return G.Layout.Alignment.ALIGN_NORMAL;
+						return G.Layout.Alignment.ALIGN_NORMAL;
 					case "opposite":
 					case "right":
-					return G.Layout.Alignment.ALIGN_OPPOSITE;
+						return G.Layout.Alignment.ALIGN_OPPOSITE;
 					case "center":
-					return G.Layout.Alignment.ALIGN_CENTER;
+						return G.Layout.Alignment.ALIGN_CENTER;
 					default:
-					return null;
+						return null;
 				}
 			}
-			self.parseHtml = function(v) {
+			self.parseHtml = function (v) {
 				if (android.os.Build.VERSION.SDK_INT >= 24) {
 					return G.Html.fromHtml(v, 0); // FROM_HTML_MODE_LEGACY
 				} else {

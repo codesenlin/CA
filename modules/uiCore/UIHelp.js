@@ -1,6 +1,6 @@
 MapScript.loadModule("UIHelp", {
 	/** 设置/列表项通用 vmaker：标题 + 描述两行（holder.title / holder.desp） */
-	settingItem : function(holder) {
+	settingItem: function (holder) {
 		var view = new G.LinearLayout(ctx);
 		view.setOrientation(G.LinearLayout.VERTICAL);
 		view.setPadding(15 * G.dp, 10 * G.dp, 15 * G.dp, 10 * G.dp);

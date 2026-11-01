@@ -7,13 +7,13 @@ MapScript.loadModule("LPlugins", {
 		}
 	},
 	SimpleAdapter(baseView, callback, array) {
-		const template = L.Template(baseView), event = EventSender.init({listener : {}});
-		const adapter = new SimpleListAdapter(array || [], function(holder) {
+		const template = L.Template(baseView), event = EventSender.init({ listener: {} });
+		const adapter = new SimpleListAdapter(array || [], function (holder) {
 			event.trigger("beforeCreate", holder, template);
 			const r = template.create(holder);
 			event.trigger("afterCreate", holder, r, template);
 			return r;
-		}, function(holder, e, i, a) {
+		}, function (holder, e, i, a) {
 			event.trigger("beforeBind", holder, e, i, a, template);
 			template.bind(holder, e);
 			event.trigger("afterBind", holder, e, i, a, template);
