@@ -4,16 +4,29 @@ const process = require("process");
 const fs = require("fs");
 const pathUtils = require("path");
 var Tasks = {};  // 任务由 initTasks() 从 ./tasks/ 目录加载（旧的 tasks.js 已删除）
+
+// CLI / 流水线共用的任务日志格式，避免 execute 与 procArgs 各写一份
+function logTaskStart(task) {
+	if (task != "help") console.log("Process " + task);
+}
+function logTaskSuccess(task, startTime) {
+	if (task == "help") return;
+	console.log("Success " + task + (startTime ? " in " + ((Date.now() - startTime) / 1000).toFixed(2) + "s" : ""));
+}
+function logTaskFailure(task, reason) {
+	console.log("Failed  " + task);
+	if (reason !== undefined) console.log(reason);
+}
 var Build = {
 	execute : function(task, args) {
-	// help 只是打印用法，不需要 Process/Success 这类流水线日志
-	if (task != "help") console.log("Process " + task);
+		// help 只是打印用法，不需要 Process/Success 这类流水线日志
+		logTaskStart(task);
 		return executeTask(task, args)
 			.then(result => {
-				console.log("Success " + task);
+				logTaskSuccess(task);
 				return result;
 			}, reason => {
-				console.log("Failed  " + task + " : " + reason);
+				logTaskFailure(task, reason);
 				throw reason;
 			});
 	},
@@ -42,17 +55,16 @@ function procArgs() {
 		taskArgs.push(args[i]);
 	}
 	// help 只是打印用法，不需要 Process/Success 这类流水线日志
-	if (task != "help") console.log("Process " + task);
+	logTaskStart(task);
 	try {
 		if (!(task in Tasks)) throw new Error("Task not found: " + task);
 		if (Tasks[task].input != "cli") throw new Error("Task is not available in CLI: " + task);
 		executeTask(task, taskArgs)
 			.then(result => {
-				if (task != "help") console.log("Success " + task + " in " + ((Date.now() - time) / 1000).toFixed(2) + "s");
+				logTaskSuccess(task, time);
 				return result;
 			}, reason => {
-				console.log("Failed  " + task);
-				console.log(reason);
+				logTaskFailure(task, reason);
 				process.exit(1);
 			});
 	} catch(e) {

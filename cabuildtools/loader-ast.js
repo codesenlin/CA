@@ -450,6 +450,7 @@ function processLoaderComments(source, filePath, parentDef) {
     
     // 用于标记是否为测试专用文件
     let isTestOnly = false;
+    const fileDir = path.dirname(filePath);
     
     const sandbox = {
         source: source,
@@ -460,8 +461,22 @@ function processLoaderComments(source, filePath, parentDef) {
         undefine: function(key) {},
         isDefined: function(key) { return false; },
         getDef: function(key) { return undefined; },
-        load: function(p) { return load(path.resolve(path.dirname(filePath), p), {}); },
-        require: function(m) { return require(m); },
+        fs: fs,
+        path: path,
+        // LOADER 注释里的 load 与旧版一致：JS/JSON 走 loader，其他文件按原始文本读
+        load: function(p) {
+            const abs = path.resolve(fileDir, p);
+            const ext = path.extname(abs).toLowerCase();
+            if (ext === ".js" || ext === ".json" || ext === ".jsonc") return load(abs, {});
+            return fs.readFileSync(abs, "utf-8");
+        },
+        // 旧 loader 的 require 相对当前文件解析（verify.js 的 encrypt.js 依赖这个）
+        require: function(m) {
+            if (typeof m === "string" && (m.indexOf("./") === 0 || m.indexOf("../") === 0)) {
+                return require(path.resolve(fileDir, m));
+            }
+            return require(m);
+        },
         TestOnly: function() {  // 标记文件为测试专用
             isTestOnly = true;
         }

@@ -37,7 +37,8 @@ JSON 不能写注释，实际现状是：
 
 ### 1.4 构建机制
 
-`cabuildtools/loader.js:78` 用正则把 `Loader.fromFile("xxx")` **在构建期内联成字面量**：
+`cabuildtools/loader-ast.js` 用 AST 把 `Loader.fromFile("xxx")` **在构建期内联成字面量**
+（另外兼容 `.json` 文本里的同名调用）：
 
 ```js
 .map(e => e.replace(/Loader.fromFile\((".+")\)/g, ...))

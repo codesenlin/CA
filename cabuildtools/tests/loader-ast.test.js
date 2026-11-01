@@ -28,13 +28,13 @@ const tests = {
     testBasicLoad() {
         console.log("测试 1: 基本加载...");
         loader.reset();
-        
+
         const main = createTestFile("test_basic.js", `
             var result = Loader.fromFile("./test_module.js");
             console.log(result.name);
         `);
         const module = createTestFile("test_module.js", `({ name: "hello" })`);
-        
+
         try {
             const result = loader.load(main, {});
             assert(result.includes('"hello"'), "应该内联模块内容");
@@ -49,13 +49,13 @@ const tests = {
     testAlias() {
         console.log("测试 2: 别名赋值...");
         loader.reset();
-        
+
         const main = createTestFile("test_alias.js", `
             var L = Loader;
             var result = L.fromFile("./test_mod.js");
         `);
         const module = createTestFile("test_mod.js", `({ type: "alias" })`);
-        
+
         try {
             const result = loader.load(main, {});
             assert(result.includes('"alias"'), "应该识别别名调用");
@@ -69,7 +69,7 @@ const tests = {
     testRelativePath() {
         console.log("测试 3: 相对路径...");
         loader.reset();
-        
+
         const main = createTestFile("test_relative.js", `
             var a = Loader.fromFile("./mod_a.js");
         `);
@@ -79,11 +79,11 @@ const tests = {
             exports.b = b;
         `);
         const modB = createTestFile("mod_b.js", `({ value: 2 })`);
-        
+
         try {
             const result = loader.load(main, {});
             // 检查是否内联了 mod_b.js 的内容 (value: 2)
-            assert(result.includes('value:') && result.includes('2'), 
+            assert(result.includes('value:') && result.includes('2'),
                 "应该解析嵌套相对路径");
             console.log("  ✓ 通过");
         } finally {
@@ -95,7 +95,7 @@ const tests = {
     testJsonc() {
         console.log("测试 4: JSONC (带注释的 JSON)...");
         loader.reset();
-        
+
         const main = createTestFile("test_jsonc_main.js", `
             var config = Loader.fromFile("./config.json");
         `);
@@ -106,7 +106,7 @@ const tests = {
                注释 */
             "value": 123
         }`);
-        
+
         try {
             const result = loader.load(main, {});
             // valueToNode 生成的属性名可能不加引号
@@ -122,7 +122,7 @@ const tests = {
     testCircularDependency() {
         console.log("测试 5: 循环依赖检测...");
         loader.reset();
-        
+
         const main = createTestFile("test_circular_main.js", `
             var a = Loader.fromFile("./circular_a.js");
         `);
@@ -132,7 +132,7 @@ const tests = {
         const modB = createTestFile("circular_b.js", `
             var a = Loader.fromFile("./circular_a.js");
         `);
-        
+
         try {
             try {
                 loader.load(main, {});
@@ -150,13 +150,13 @@ const tests = {
     testSyntax() {
         console.log("测试 6: 生成代码语法验证...");
         loader.reset();
-        
+
         const main = createTestFile("test_syntax.js", `
             var a = Loader.fromFile("./mod_syntax.js");
             function test() { return a; }
         `);
         const module = createTestFile("mod_syntax.js", `({ data: [1, 2, 3] })`);
-        
+
         try {
             const result = loader.load(main, {});
             // 验证生成的代码可以正常解析
@@ -167,22 +167,48 @@ const tests = {
         }
     },
 
-    // 测试 7: 完整项目编译
+    // 测试 7: LOADER 注释兼容（fs / load 原始文件 / 相对 require）
+    testLoaderCommentCompat() {
+        console.log("测试 7: LOADER 注释兼容...");
+        loader.reset();
+
+        const out = path.join(__dirname, "loader-test-out.txt");
+        const main = createTestFile("test_loader_comment.js", `
+/*LOADER
+fs.writeFileSync(${JSON.stringify(out)}, String(load("./loader-raw.txt")) + ":" + require("./loader-mod.js").value);
+*/
+var loaded = true;
+`);
+        const raw = createTestFile("loader-raw.txt", "hello");
+        const mod = createTestFile("loader-mod.js", "module.exports = { value: 42 };");
+
+        try {
+            const result = loader.load(main, {});
+            assert(result.includes("var loaded = true"), "LOADER 注释外代码应保留");
+            const written = fs.readFileSync(out, "utf-8");
+            assert(written === "hello:42", "LOADER 注释内的 fs/load/require 应可用");
+            console.log("  ✓ 通过 (fs/load/require 与旧 loader 兼容)");
+        } finally {
+            cleanupTestFiles([main, raw, mod, out]);
+        }
+    },
+
+    // 测试 8: 完整项目编译
     testFullProject() {
         console.log("测试 7: 完整项目编译...");
         loader.reset();
-        
+
         const mainPath = path.join(__dirname, "../../main.js");
-        
+
         try {
             const result = loader.load(mainPath, {});
-            
+
             // 验证基本指标
             assert(result.length > 1000000, "生成的代码应该大于 1MB");
-            
+
             // 验证语法
             parser.parse(result, { sourceType: "script" });
-            
+
             const stats = loader.getStats();
             console.log(`  ✓ 通过 (编译了 ${stats.totalFiles} 个文件)`);
         } catch (e) {

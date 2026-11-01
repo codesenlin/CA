@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const process = require("process");
 const crypto = require("crypto");
-const loader = require("./loader");
+const loader = require("./loader-ast");
 const js2lib = require("./js2lib");
 const js2signlib = require("./js2signlib");
 
@@ -88,11 +88,17 @@ function resolveLib(info, config) {
 	return lib;
 }
 
+/** clib 的 .json 源是纯数据文件，旧 loader 直接读原文；AST loader 只处理 JS/JSONC 模块 */
+function loadClibSource(sourcePath) {
+	if (/\.json$/i.test(sourcePath)) return fs.readFileSync(sourcePath, "utf-8");
+	return loader.load(sourcePath);
+}
+
 function compileLibIfNeeded(info, config, lockfile) {
 	var source;
 	if (!lockfile[info.id] || lockfile[info.id].version != info.version) { // 文件改变了
 		console.log("Compiling " + info.name);
-		source = Buffer.from(loader.load(info.sourcePath));
+		source = Buffer.from(loadClibSource(info.sourcePath));
 		if (config.signKey) {
 			js2signlib(source, config.signKey, info.outputPath);
 		} else {

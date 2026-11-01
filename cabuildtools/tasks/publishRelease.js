@@ -1,9 +1,9 @@
-module.exports = function(context, args) {
-	return context.execute("preparePublish")
-		.then(context.pipe("publishFile", {
-			localPath : "./build/outputs/release/update.json",
-			remotePath : "update.json"
-		}))
-		.then(context.pipe("endPublish"));
+const publish = require("../publish");
+
+module.exports = function(context) {
+	return publish.files(context, [{
+		localPath : "./build/outputs/release/update.json",
+		remotePath : "update.json"
+	}]);
 }
 module.exports.input = "cli";

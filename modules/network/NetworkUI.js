@@ -149,6 +149,171 @@ MapScript.loadModule("NetworkUI", {
 		dialog.async(task);
 		return dialog;
 	},
+	/**
+	 * 反馈话题详情页外壳：标题栏/列表等 children + popup + 可选关闭按钮。
+	 * opts: { popupKey?, closeButton? }
+	 */
+	issueDetailPage : function(self, children, opts) {
+		opts = opts || {};
+		var linear = L.LinearLayout({
+			orientation : L.LinearLayout("vertical"),
+			padding : [0, 15 * G.dp, 0, 0],
+			style : "message_bg",
+			children : children
+		});
+		self.popup = new PopupPage(linear, opts.popupKey || "feedback.IssueDetail");
+		if (opts.closeButton) linear.addView(NetworkUI.closeButton(self.popup));
+		self.popup.on("exit", function() {
+			if (self.callback) self.callback();
+		});
+		PWM.registerResetFlag(self, "popup");
+		return self.popup;
+	},
+	/**
+	 * 反馈话题详情页的标题栏：可选返回按钮 + 标题 + 操作菜单。
+	 * self 需提供 title/contextMenu，返回头部 LinearLayout。
+	 */
+	issueDetailHeader : function(self, hasBack) {
+		var children = [];
+		if (hasBack) {
+			children.push(L.TextView({
+				text : "< 返回",
+				padding : [10 * G.dp, 10 * G.dp, 10 * G.dp, 10 * G.dp],
+				layout : { width : -2, height : -2 },
+				style : "button_critical",
+				fontSize : 2,
+				onClick : function() {try {
+					self.popup.exit();
+				} catch(e) {erp(e)}}
+			}));
+		}
+		children.push(self.title = L.TextView({
+			singleLine : true,
+			ellipsize : G.TextUtils.TruncateAt.END,
+			gravity : L.Gravity("left|center"),
+			padding : [10 * G.dp, 0, 10 * G.dp, 0],
+			style : "textview_default",
+			fontSize : 4,
+			layout : { width : 0, height : -2, weight : 1.0 }
+		}));
+		children.push(L.TextView({
+			text : "▼",
+			padding : [10 * G.dp, 0, 10 * G.dp, 0],
+			gravity : L.Gravity("center"),
+			style : "button_highlight",
+			fontSize : 3,
+			layout : { width : -2, height : -2 }
+		}));
+		return L.LinearLayout({
+			orientation : L.LinearLayout("horizontal"),
+			padding : [15 * G.dp, 0, 15 * G.dp, 10 * G.dp],
+			gravity : L.Gravity("center"),
+			onClick : function() {try {
+				Common.showOperateDialog(self.contextMenu);
+			} catch(e) {erp(e)}},
+			children : children
+		});
+	},
+	/**
+	 * 评论输入条：输入框 + 发送按钮。
+	 * opts: { hint?, onSend(text, input) }，返回 { view, input }。
+	 */
+	commentBar : function(opts) {
+		opts = opts || {};
+		var inputOpts = {
+			layout : { width : 0, height : -2, weight : 1.0 },
+			padding : [10 * G.dp, 10 * G.dp, 0, 10 * G.dp],
+			imeOptions : L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
+			style : "edittext_default",
+			fontSize : 3
+		};
+		if (opts.hint) {
+			inputOpts.hint = opts.hint;
+			inputOpts.focusableInTouchMode = true;
+		}
+		var input = L.EditText(inputOpts);
+		var view = L.LinearLayout({
+			layout : { width : -1, height : -2 },
+			orientation : L.LinearLayout("horizontal"),
+			style : "bar_float",
+			children : [
+				input,
+				L.TextView({
+					layout : { width : -2, height : -1 },
+					gravity : L.Gravity("center"),
+					text : "发送",
+					padding : [10 * G.dp, 10 * G.dp, 10 * G.dp, 10 * G.dp],
+					style : "button_reactive_auto",
+					fontSize : 3,
+					onClick : function() {try {
+						var s = String(input.text);
+						if (!s) return Common.toast("内容不可为空！");
+						opts.onSend(s, input);
+					} catch(e) {erp(e)}}
+				})
+			]
+		});
+		return { view : view, input : input };
+	},
+	/**
+	 * 编辑/新建话题对话框：标题 + 正文 + 确定。
+	 * opts: { popupName, dialogTitle, titleHint, contentText?, contentHint,
+	 *         contentField, data, onSubmit, onDismiss }
+	 */
+	editIssueDialog : function(opts) {G.ui(function() {try {
+		var title, content, popup, data = opts.data || {}, field = opts.contentField || "content";
+		popup = PopupPage.showDialog(opts.popupName, L.ScrollView({
+			style : "message_bg",
+			child : L.LinearLayout({
+				orientation : L.LinearLayout("vertical"),
+				padding : [15 * G.dp, 15 * G.dp, 15 * G.dp, 0],
+				children : [
+					L.TextView({
+						text : opts.dialogTitle,
+						padding : [0, 0, 0, 10 * G.dp],
+						layout : { width : -1, height : -2 },
+						style : "textview_default",
+						fontSize : 4
+					}),
+					title = L.EditText({
+						text : data.title,
+						hint : opts.titleHint,
+						singleLine : true,
+						padding : [0, 0, 0, 0],
+						imeOptions : L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
+						style : "edittext_default",
+						fontSize : 3,
+						layout : { width : -1, height : -2 }
+					}),
+					content = L.EditText({
+						text : opts.contentText,
+						hint : opts.contentHint,
+						padding : [0, 20 * G.dp, 0, 0],
+						imeOptions : L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
+						style : "edittext_default",
+						fontSize : 2,
+						layout : { width : -1, height : -2 }
+					}),
+					L.TextView({
+						text : "确定",
+						padding : [10 * G.dp, 20 * G.dp, 10 * G.dp, 20 * G.dp],
+						gravity : L.Gravity("center"),
+						layout : { width : -1, height : -2 },
+						style : "button_critical",
+						fontSize : 3,
+						onClick : function() {try {
+							data.title = String(title.text);
+							data[field] = String(content.text);
+							if (!data.title) return Common.toast("标题不能为空！");
+							if (opts.onSubmit) opts.onSubmit(data);
+							popup.exit();
+						} catch(e) {erp(e)}}
+					})
+				]
+			})
+		}), -1, -2);
+		if (opts.onDismiss) popup.on("exit", opts.onDismiss);
+	} catch(e) {erp(e)}})},
 	/** 网络列表项通用 vmaker：标题 + 描述两行 */
 	listItem : function(holder) {
 		var layout = new G.LinearLayout(ctx),

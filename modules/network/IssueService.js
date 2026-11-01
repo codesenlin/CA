@@ -330,6 +330,17 @@ MapScript.loadModule("IssueService", {
 				holder.text2.setText("最近更新于 " + Updater.toChineseDate(Date.parse(e.update_time)));
 			}
 			self.arrayAdpt = SimpleListAdapter.getController(new SimpleListAdapter(self.issues = [], self.vmaker, self.vbinder));
+			self.talkBar = NetworkUI.commentBar({
+				onSend : function(s) {
+					self.addComment(s, function() {
+						G.ui(function() {try {
+							self.talkbox.text = "";
+						} catch(e) {erp(e)}});
+					});
+				}
+			});
+			self.talk = self.talkBar.view;
+			self.talkbox = self.talkBar.input;
 			self.popup = new PopupPage(L.LinearLayout({
 				orientation : L.LinearLayout("vertical"),
 				padding : [15 * G.dp, 15 * G.dp, 15 * G.dp, 0],
@@ -697,48 +708,8 @@ MapScript.loadModule("IssueService", {
 			}
 			self.arrayAdpt = SimpleListAdapter.getController(new SimpleListAdapter(self.comments = [], self.vmaker, self.vbinder));
 
-			self.popup = new PopupPage(L.LinearLayout({
-				orientation : L.LinearLayout("vertical"),
-				padding : [0, 15 * G.dp, 0, 0],
-				style : "message_bg",
-				children : [
-					L.LinearLayout({
-						orientation : L.LinearLayout("horizontal"),
-						padding : [15 * G.dp, 0, 15 * G.dp, 10 * G.dp],
-						gravity : L.Gravity("center"),
-						onClick : function() {try {
-							Common.showOperateDialog(self.contextMenu);
-						} catch(e) {erp(e)}},
-						children : [
-							L.TextView({
-								text : "< 返回",
-								padding : [10 * G.dp, 10 * G.dp, 10 * G.dp, 10 * G.dp],
-								layoutWidth : -2, layoutHeight : -2,
-								style : "button_critical",
-								fontSize : 2,
-								onClick : function() {try {
-									self.popup.exit();
-								} catch(e) {erp(e)}}
-							}),
-							self.title = L.TextView({
-								singleLine : true,
-								ellipsize : G.TextUtils.TruncateAt.END,
-								gravity : L.Gravity("left|center"),
-								padding : [10 * G.dp, 0, 10 * G.dp, 0],
-								style : "textview_default",
-								fontSize : 4,
-								layout : { width : 0, height : -2, weight : 1.0 },
-							}),
-							L.TextView({
-								text : "▼",
-								padding : [10 * G.dp, 0, 10 * G.dp, 0],
-								gravity : L.Gravity("center"),
-								style : "button_highlight",
-								fontSize : 3,
-								layout : { width : -2, height : -2 },
-							})
-						]
-					}),
+			NetworkUI.issueDetailPage(self, [
+					NetworkUI.issueDetailHeader(self, true),
 					self.list = L.ListView({
 						dividerHeight : 0,
 						layout : { width : -1, height : 0, weight : 1.0 },
@@ -786,44 +757,8 @@ MapScript.loadModule("IssueService", {
 							// do nothing
 						} catch(e) {erp(e)}}
 					}),
-					self.talk = L.LinearLayout({
-						layout : { width : -1, height : -2 },
-						orientation : L.LinearLayout("horizontal"),
-						style : "bar_float",
-						children : [
-							self.talkbox = L.EditText({
-								layout : { width : 0, height : -2, weight : 1.0 },
-								padding : [10 * G.dp, 10 * G.dp, 0, 10 * G.dp],
-								imeOptions : L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
-								style : "edittext_default",
-								fontSize : 3
-							}),
-							L.TextView({
-								layout : { width : -2, height : -1 },
-								gravity : L.Gravity("center"),
-								text : "发送",
-								padding : [10 * G.dp, 10 * G.dp, 10 * G.dp, 10 * G.dp],
-								style : "button_reactive_auto",
-								fontSize : 3,
-								onClick : function() {try {
-									var s = String(self.talkbox.text);
-									if (!s) return Common.toast("内容不可为空！");
-									self.addComment(s, function() {
-										G.ui(function() {try {
-											self.talkbox.text = "";
-										} catch(e) {erp(e)}});
-									});
-								} catch(e) {erp(e)}}
-							})
-						]
-					})
-				]
-			}), "feedback.IssueDetail");
-			self.popup.on("exit", function() {
-				if (self.callback) self.callback();
-			});
-
-			PWM.registerResetFlag(self, "popup");
+					self.talk,
+			]);
 		}
 		self.issue = issue;
 		self.callback = callback;
@@ -846,60 +781,19 @@ MapScript.loadModule("IssueService", {
 			} catch(e) {erp(e)}});
 		});
 	},
-	showEditIssue : function self(type, o, callback, onDismiss) {G.ui(function() {try {
-		var title, body, popup;
-		popup = PopupPage.showDialog("issue.EditIssueContent", L.ScrollView({
-			style : "message_bg",
-			child : L.LinearLayout({
-				orientation : L.LinearLayout("vertical"),
-				padding : [15 * G.dp, 15 * G.dp, 15 * G.dp, 0],
-				children : [
-					L.TextView({
-						text : (o.newIssue ? "新建" : "编辑") + (type == "discuss" ? "讨论" : "反馈") + "话题",
-						padding : [0, 0, 0, 10 * G.dp],
-						layout : { width : -1, height : -2 },
-						style : "textview_default",
-						fontSize : 4
-					}),
-					title = L.EditText({
-						text : o.title,
-						hint : type == "discuss" ? "讨论标题" : "在此处用一句话描述反馈的问题或建议",
-						singleLine : true,
-						padding : [0, 0, 0, 0],
-						imeOptions : L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
-						style : "edittext_default",
-						fontSize : 3,
-						layout : { width : -1, height : -2 }
-					}),
-					content = L.EditText({
-						text : o.content,
-						hint : type == "discuss" ? "讨论内容" : "在这里补充说明发生问题时的现象、复现步骤与报错信息。如果是建议，请在这里说明提出建议的原因",
-						padding : [0, 20 * G.dp, 0, 0],
-						imeOptions : L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
-						style : "edittext_default",
-						fontSize : 2,
-						layout : { width : -1, height : -2 }
-					}),
-					L.TextView({
-						text : "确定",
-						padding : [10 * G.dp, 20 * G.dp, 10 * G.dp, 20 * G.dp],
-						gravity : L.Gravity("center"),
-						layout : { width : -1, height : -2 },
-						style : "button_critical",
-						fontSize : 3,
-						onClick : function() {try {
-							o.title = String(title.text);
-							o.content = String(content.text);
-							if (!o.title) return Common.toast("标题不能为空！");
-							if (callback) callback(o);
-							popup.exit();
-						} catch(e) {erp(e)}}
-					})
-				]
-			})
-		}), -1, -2);
-		if (onDismiss) popup.on("exit", onDismiss);
-	} catch(e) {erp(e)}})},
+	showEditIssue : function self(type, o, callback, onDismiss) {
+		NetworkUI.editIssueDialog({
+			popupName : "issue.EditIssueContent",
+			dialogTitle : (o.newIssue ? "新建" : "编辑") + (type == "discuss" ? "讨论" : "反馈") + "话题",
+			titleHint : type == "discuss" ? "讨论标题" : "在此处用一句话描述反馈的问题或建议",
+			contentText : o.content,
+			contentHint : type == "discuss" ? "讨论内容" : "在这里补充说明发生问题时的现象、复现步骤与报错信息。如果是建议，请在这里说明提出建议的原因",
+			contentField : "content",
+			data : o,
+			onSubmit : callback,
+			onDismiss : onDismiss
+		});
+	},
 	showIssueAgreement : function(callback) {
 		Common.showConfirmDialog({
 			title : "反馈使用说明", 

@@ -1,7 +1,7 @@
 # 去重后续计划
 
 第三轮去重已收尾（release `main.js` 534,928 → 518,124 字节，约 -3.1%）。
-下面两项评估过但**暂不处理**，留作后续计划。
+下面继续记录尚未处理/已处理的项。
 
 ## P1：登录 / 评论 / 反馈输入表单
 
@@ -14,6 +14,16 @@
 
 重复内容：`L.ScrollView + L.LinearLayout + L.TextView/L.EditText` 的弹窗表单、
 按钮组、进度对话框和登录回调，约 **100 行**。
+
+已完成（本轮）：
+
+- `NetworkUI.commentBar`：评论输入条（GiteeFeedback / IssueService 共用）
+- `NetworkUI.editIssueDialog`：编辑/新建话题对话框（GiteeFeedback / IssueService 共用）
+- `IssueService.showEditIssue`、`GiteeFeedback.showEditIssue`、两处评论条已迁移
+- `IssueService` / `GiteeFeedback` 的话题详情页已收敛到 `issueDetailHeader` +
+  `issueDetailPage`
+- 剩余：`GiteeFeedback.showLogin`、`UserManager` 的登录/注册/找回密码/改密表单，
+  这些涉及线上账号流程，迁移后需要真机手动验证
 
 计划做法：
 
@@ -59,12 +69,15 @@
   gzip、时间戳、签名）的唯一实现；`libtool.js`、`js2lib.js`、`js2signlib.js`
   共用，去掉三份重复实现
 
+已完成（本轮）：
+
+- ✅ `clibspawn` 切到 `loader-ast`，删除旧 `loader.js`（94 行）；
+  AST loader 补齐 LOADER 注释里的 `fs` / 原始文件 `load` / 相对 `require` 兼容，
+  `.json` clib 源按原文读取
+- 新增 loader 测试覆盖 LOADER 注释兼容；`clibspawn` 用临时签名密钥跑通全部 5 个库
+
 后续可做：
 
-- **`loader.js`（94 行）与 `loader-ast.js` 双实现**：`loader.js` 目前只被
-  `clibspawn.js` 使用，其余构建任务都走 AST loader。计划把 `clibspawn` 切到
-  `loader-ast` 后删除旧 loader；风险是 clib 打包产物可能与旧 loader 有差异，
-  需要对比 `buildCLib` 产物
 - `main.js` 中 `Build.execute` 与 `procArgs` 的 Process/Success 日志重复
   （约 10 行，收益低）
 - `publish*` 各任务里 sftp/文件写入样板（量小，暂不处理）
@@ -93,4 +106,8 @@ findNodeAtOffset(root, offset, true)
 - `ListAdapterBase`：observer/errorView + `create()` 公共方法
 - `ConsolePanel`：DebugUtils / WSServer 控制台
 - `NetworkUI`：列表页外壳、列表项 vmaker、关闭按钮、状态菜单、进度对话框、分页流程
+- `NetworkUI.commentBar` / `editIssueDialog`：网络评论输入条与编辑话题表单
+- `NetworkUI.issueDetailHeader` / `issueDetailPage`：GiteeFeedback / IssueService
+  话题详情标题栏与页面外壳（返回、标题、菜单、列表挂载、关闭）
+- `cabuildtools/main.js`：Process/Success/Failed 日志收敛到 logTaskStart/Success/Failure
 - `UIHelp.settingItem`：CA.js / Common.js 的设置项 vmaker
