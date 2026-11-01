@@ -9,67 +9,37 @@ MapScript.loadModule("MultipleListAdapter", (function() {
 			holders[i] = [];
 		}
 		controller = new MultipleListAdapter.Controller(src, holders, dso, types, vtypes, getType, params);
-		return new G.ListAdapter({
-			getCount : function() {
-				return src.length;
-			},
-			getItem : function(pos) {
-				if (pos == -1) return controller;
-				return src[pos];
-			},
-			getItemId : function(pos) {
-				return pos;
-			},
+		var adapter = ListAdapterBase.create({
+			array : src,
+			controller : controller,
+			dso : dso,
 			getItemViewType : function(pos) {
-				var i = vtypes.indexOf(String(getType(src[pos], pos, src, params)));
-				return i;
-			},
-			getView : function(pos, convert, parent) {
-				var holder, vtype;
-				try {
-					vtype = getType(src[pos], pos, src, params);
-					if (!convert || !(convert.getTag() in holders[vtype])) {
-						holder = {};
-						convert = types[vtype].maker(holder, params);
-						holder.self = convert;
-						convert.setTag(holders[vtype].length.toString());
-						holders[vtype].push(holder);
-					}
-					holder = holders[vtype][convert.getTag()];
-					holder.pos = parseInt(pos);
-					types[vtype].binder(holder, src[pos], parseInt(pos), src, params);
-					return convert;
-				} catch(e) {
-					var a = new G.TextView(ctx);
-					a.setText(e + "\n" + e.stack);
-					erp(e);
-					return a;
-				}
+			return vtypes.indexOf(String(getType(src[pos], pos, src, params)));
 			},
 			getViewTypeCount : function() {
-				return vtypes.length;
-			},
-			hasStableIds : function() {
-				return false;
-			},
-			isEmpty : function() {
-				return src.length === 0;
-			},
-			areAllItemsEnabled : function() {
-				return true;
-			},
-			isEnabled : function(pos) {
-				return pos >= 0 && pos < src.length;
-			},
-			registerDataSetObserver : function(p) {
-				if (dso.indexOf(p) >= 0) return;
-				dso.push(p);
-			},
-			unregisterDataSetObserver : function(p) {
-				var i = dso.indexOf(p);
-				if (p >= 0) dso.splice(i, 1);
+			return vtypes.length;
 			}
 		});
+		adapter.getView = function(pos, convert, parent) {
+			var holder, vtype;
+			try {
+				vtype = getType(src[pos], pos, src, params);
+				if (!convert || !(convert.getTag() in holders[vtype])) {
+					holder = {};
+					convert = types[vtype].maker(holder, params);
+					holder.self = convert;
+					convert.setTag(holders[vtype].length.toString());
+					holders[vtype].push(holder);
+				}
+				holder = holders[vtype][convert.getTag()];
+				holder.pos = parseInt(pos);
+				types[vtype].binder(holder, src[pos], parseInt(pos), src, params);
+				return convert;
+			} catch(e) {
+				return ListAdapterBase.errorView(e);
+			}
+		};
+		return new G.ListAdapter(adapter);
 	}
 	r.Controller = function(array, holders, dso, types, vtypes, getType, params) {
 		this.array = array;

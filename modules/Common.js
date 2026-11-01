@@ -510,23 +510,7 @@ MapScript.loadModule("Common", {
 	showListChooser : function self(l, callback, optional, onDismiss) {G.ui(function() {try {
 		var frame, list, popup;
 		if (!self.vmaker) {
-			self.vmaker = function(holder) {
-				var view = new G.LinearLayout(ctx);
-				view.setOrientation(G.LinearLayout.VERTICAL);
-				view.setPadding(15 * G.dp, 10 * G.dp, 15 * G.dp, 10 * G.dp);
-				view.setLayoutParams(new G.AbsListView.LayoutParams(-1, -2));
-				var title = holder.title = new G.TextView(ctx);
-				title.setGravity(G.Gravity.CENTER | G.Gravity.LEFT);
-				title.setLayoutParams(new G.LinearLayout.LayoutParams(-1, -2));
-				Common.applyStyle(title, "textview_default", 2);
-				view.addView(title);
-				var desp = holder.desp = new G.TextView(ctx);
-				desp.setPadding(0, 3 * G.dp, 0, 0);
-				desp.setLayoutParams(new G.LinearLayout.LayoutParams(-1, -2));
-				Common.applyStyle(desp, "textview_prompt", 1);
-				view.addView(desp);
-				return view;
-			}
+						self.vmaker = UIHelp.settingItem;
 			self.vbinder = function(holder, e) {
 				if (e instanceof Object) {
 					holder.title.setText(Common.toString(e.text));
@@ -1310,22 +1294,7 @@ MapScript.loadModule("Common", {
 	showSortDialog : function self(o) {G.ui(function() {try {
 		var params, layout, list, right, up, down, exit, popup;
 		if (!self.vmaker) {
-			self.vmaker = function(holder) {
-				var view = new G.LinearLayout(ctx);
-				view.setOrientation(G.LinearLayout.VERTICAL);
-				view.setPadding(15 * G.dp, 10 * G.dp, 15 * G.dp, 10 * G.dp);
-				view.setLayoutParams(new G.AbsListView.LayoutParams(-1, -2));
-				var title = holder.title = new G.TextView(ctx);
-				title.setGravity(G.Gravity.CENTER | G.Gravity.LEFT);
-				title.setLayoutParams(new G.LinearLayout.LayoutParams(-1, -2));
-				view.addView(title);
-				var desp = holder.desp = new G.TextView(ctx);
-				desp.setPadding(0, 3 * G.dp, 0, 0);
-				desp.setLayoutParams(new G.LinearLayout.LayoutParams(-1, -2));
-				Common.applyStyle(desp, "textview_prompt", 1);
-				view.addView(desp);
-				return view;
-			}
+			self.vmaker = UIHelp.settingItem;
 			self.vbinder = function(holder, e, i, a, params) {
 				var title = params.getTitle(e), desp = params.getDescription(e);
 				holder.title.setText(Common.toString(title));

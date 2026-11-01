@@ -122,7 +122,7 @@
 { "method": "sftp", "remoteRoot": "/var/www/ca/", "sshConfig": { "host": "…", "username": "…" } }
 ```
 
-`preparePublish` 读取顺序：`.json` → `.js`（兼容旧配置）→ `.txt`（caclib 子树那种格式）。
+`preparePublish` 读取顺序：`.json` → `.js`（兼容旧配置）→ `.txt`（旧格式兼容；caclib 的元数据已转为 JSON）。
 
 ---
 
@@ -181,9 +181,9 @@ Build Tools、JDK。
 
 `caclib/` 是作者的 clib 子树（在线拓展包源工程），它自己还有一套元数据：
 
-- `caclib/config.txt`：clib 发布源设置（uuid / outputUrl / signKey 等）
-- `caclib/config/publish.txt`：发布方式
-- `caclib/src/*/library.txt`：每个命令库的 id / 名称 / 版本 / 入口
+- `caclib/config.json`：clib 发布源设置（uuid / outputUrl / signKey 等）
+- `caclib/config/publish.json`：发布方式
+- `caclib/src/*/library.json`：每个命令库的 id / 名称 / 版本 / 入口
 
-那套是 `@key value` 的 txt 格式，由 `cabuildtools/clibspawn.js` 读取，
-**不要**和 `config/` 下的构建配置混在一起。
+那套原来是 `@key value` 的 txt 格式，已统一转成 JSON，由 `cabuildtools/clibspawn.js`
+读取，**不要**和 `config/` 下的构建配置混在一起。

@@ -8,54 +8,19 @@ MapScript.loadModule("RhinoListAdapter", (function() {
 			});
 		}
 		controller = new RhinoListAdapter.Controller(src, views, dso, vmaker, params, preload);
-		return new G.ListAdapter({
-			getCount : function() {
-				return src.length;
-			},
-			getItem : function(pos) {
-				if (pos == -1) return controller;
-				return src[pos];
-			},
-			getItemId : function(pos) {
-				return pos;
-			},
-			getItemViewType : function(pos) {
-				return 0;
-			},
-			getView : function(pos, convert, parent) {
-				try {
-					return views[pos] ? views[pos] : (views[pos] = vmaker(src[pos], parseInt(pos), src, params));
-				} catch(e) {
-					var a = new G.TextView(ctx);
-					a.setText(e + "\n" + e.stack);
-					erp(e);
-					return a;
-				}
-			},
-			getViewTypeCount : function() {
-				return 1;
-			},
-			hasStableIds : function() {
-				return false;
-			},
-			isEmpty : function() {
-				return src.length === 0;
-			},
-			areAllItemsEnabled : function() {
-				return true;
-			},
-			isEnabled : function(pos) {
-				return pos >= 0 && pos < src.length;
-			},
-			registerDataSetObserver : function(p) {
-				if (dso.indexOf(p) >= 0) return;
-				dso.push(p);
-			},
-			unregisterDataSetObserver : function(p) {
-				var i = dso.indexOf(p);
-				if (p >= 0) dso.splice(i, 1);
-			}
+		var adapter = ListAdapterBase.create({
+			array : src,
+			controller : controller,
+			dso : dso
 		});
+		adapter.getView = function(pos, convert, parent) {
+			try {
+				return views[pos] ? views[pos] : (views[pos] = vmaker(src[pos], parseInt(pos), src, params));
+			} catch(e) {
+				return ListAdapterBase.errorView(e);
+			}
+		};
+		return new G.ListAdapter(adapter);
 	}
 	r.Controller = function(src, views, dso, vmaker, params, preload) {
 		this.src = src;

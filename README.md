@@ -35,7 +35,7 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
   由 `clibspawn` 打包发布，**不参与 App 构建**
 - `caaccel/` — Java 加速库源码（配合 `modules/Accel.js`）
 - `docs/` — 开发文档：分支约定、构建配置、数据外置方案、`data/` 各文件说明、
-  选择器补全的返回值结构等
+  风味构建（`flavor-build.md`）、去重后续计划（`dedupe-plan.md`）、选择器补全的返回值结构等
 - `community-clib/` — 社区拓展包源：`src/` 放原始包，`build.js` 解包重签后生成
   `info.json` / 索引 / `packs/*.lib` / `verify.key`，GitHub 上直接对外提供（见该目录 README）
 - `build/` — 构建产物（不入版本库）
@@ -72,9 +72,10 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
    | `shell.json` | 壳子打包相关路径（一般不用改，自动探测） |
    | `import.json` | `generateImport` 用的 android.jar（自动探测） |
 
-   `caclib/` 里还有 clib 自己的元数据：`config.txt`（发布源设置）、`config/publish.txt`
-   （发布方式）、`src/*/library.txt`（每个命令库的 id/名称/版本/entry）。
-   `caclib/` 是作者的 git subtree，**保持原样**；`clibspawn.js` 已适配 `.txt` 格式（同时也兼容 `.js`）。
+   `caclib/` 里还有 clib 自己的元数据：`config.json`（发布源设置）、`config/publish.json`
+   （发布方式）、`src/*/library.json`（每个命令库的 id/名称/版本/entry）。
+   `caclib/` 是作者的 git subtree；本仓库把它的元数据从 `@key txt` 统一转成了 JSON，
+   `clibspawn.js` 读取 JSON（兼容旧的 `.js` 回退）。
 
    > 注意：`caclib/signature/`（clib 签名私钥）和 `caclib/outputs/` 不入库，所以 `clibspawn`
    > 在全新检出的仓库里跑不起来，需要自己准备私钥后才会生成产物。

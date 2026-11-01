@@ -62,13 +62,11 @@ MapScript.loadModule("MoreListAdapter", (function() {
 			},
 			registerDataSetObserver : function(p) {
 				baseAdapter.registerDataSetObserver(p);
-				if (dso.indexOf(p) >= 0) return;
-				dso.push(p);
+				ListAdapterBase.register(dso, p);
 			},
 			unregisterDataSetObserver : function(p) {
 				baseAdapter.unregisterDataSetObserver(p);
-				var i = dso.indexOf(p);
-				if (p >= 0) dso.splice(i, 1);
+				ListAdapterBase.unregister(dso, p);
 			}
 		});
 	}, latestSession = 0;

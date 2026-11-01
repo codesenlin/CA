@@ -55,13 +55,11 @@ MapScript.loadModule("FilterListAdapter", (function() {
 				},
 				registerDataSetObserver : function(p) {
 					self._wrap.registerDataSetObserver(p);
-					if (self._dso.indexOf(p) >= 0) return;
-					self._dso.push(p);
+					ListAdapterBase.register(self._dso, p);
 				},
 				unregisterDataSetObserver : function(p) {
 					self._wrap.unregisterDataSetObserver(p);
-					var i = self._dso.indexOf(p);
-					if (p >= 0) self._dso.splice(i, 1);
+					ListAdapterBase.unregister(self._dso, p);
 				}
 			});
 		},

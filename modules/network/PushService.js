@@ -217,9 +217,7 @@ MapScript.loadModule("PushService", {
 				return self.base.concat(self.offline);
 			};
 			self.getArray = function(callback) {
-				var progress = Common.showProgressDialog();
-				progress.setText("正在加载……");
-				progress.async(function() {
+				NetworkUI.progress("正在加载……", function() {
 					var tags = PushService.tags;
 					if (!tags) {
 						try {
@@ -244,23 +242,7 @@ MapScript.loadModule("PushService", {
 					self.reload();
 				}
 			}];
-			self.vmaker = function(holder) {
-				var layout = new G.LinearLayout(ctx),
-					text1 = holder.text1 = new G.TextView(ctx),
-					text2 = holder.text2 = new G.TextView(ctx);
-				layout.setLayoutParams(new G.AbsListView.LayoutParams(-1, -2));
-				layout.setOrientation(G.LinearLayout.VERTICAL);
-				layout.setPadding(15 * G.dp, 15 * G.dp, 15 * G.dp, 15 * G.dp);
-				text1.setLayoutParams(new G.LinearLayout.LayoutParams(-1, -2));
-				text1.setEllipsize(G.TextUtils.TruncateAt.END);
-				text1.setSingleLine(true);
-				layout.addView(text1);
-				text2.setPadding(0, 5 * G.dp, 0, 0);
-				text2.setLayoutParams(new G.LinearLayout.LayoutParams(-1, -2));
-				Common.applyStyle(text2, "textview_prompt", 1);
-				layout.addView(text2);
-				return layout;
-			}
+			self.vmaker = NetworkUI.listItem;
 			self.vbinder = function(holder, e, i, a) {
 				holder.text1.setText(e.name);
 				Common.applyStyle(holder.text1, "item_default", 3);
@@ -272,9 +254,7 @@ MapScript.loadModule("PushService", {
 				self.loading = true;
 				self.posts.length = 0;
 				self.adpt.notifyChange();
-				var progress = Common.showProgressDialog();
-				progress.setText("正在加载……");
-				progress.async(function() {
+				NetworkUI.progress("正在加载……", function() {
 					var first, data;
 					try {
 						first = PushService.getPosts(0, PushService.perPage, "forward", "desc");
@@ -298,32 +278,20 @@ MapScript.loadModule("PushService", {
 				});
 			}
 			self.appendPage = function(sync) {
-				if (!sync) {
-					var progress = Common.showProgressDialog();
-					progress.setText("正在加载……");
-					progress.async(function() {
-						self.appendPage(true);
-					});
-				} else {
-					if (self.loading) return Common.toast("正在加载中……");
-					self.loading = true;
-					var i, page;
-					try {
-						page = PushService.getPosts(self.postData.next, PushService.perPage, "backward", "desc");
+				NetworkUI.appendPage(self, sync, {
+					failText : "推送信息列表加载失败",
+					fetch : function() {
+						var page = PushService.getPosts(self.postData.next, PushService.perPage, "backward", "desc");
 						self.postData.pages.push(page);
 						if (page.length == PushService.perPage) {
 							self.postData.next = parseInt(page[page.length - 1].id) - 1;
 						} else self.postData.next = -1;
-					} catch(e) {Log.e(e)}
-					if (!page) {
-						self.loading = false;
-						return Common.toast("推送信息列表加载失败");
-					}
-					G.ui(function() {try {
+						return page;
+					},
+					apply : function(page) {
 						self.addPageData(page);
-						self.loading = false;
-					} catch(e) {erp(e)}});
-				}
+					}
+				});
 			}
 			self.addPageData = function(page) {
 				var off = self.posts.length, i;
@@ -332,80 +300,14 @@ MapScript.loadModule("PushService", {
 					self.posts[i + off] = page[i];
 				}
 				self.adpt.notifyChange();
-				if (self.postData.next >= 0) self.more.setText("显示下" + PushService.perPage + "个推送信息……");
-				if (self.postData.next >= 0 && !self.moreVisible) {
-					self.moreVisible = true;
-					self.list.addFooterView(self.more);
-				} else if (self.postData.next < 0 && self.moreVisible) {
-					self.moreVisible = false;
-					self.list.removeFooterView(self.more);
-				}
+				NetworkUI.updateMore(self, self.postData.next >= 0, self.postData.next >= 0 ? "显示下" + PushService.perPage + "个推送信息……" : null);
 			}
 			self.adpt = SimpleListAdapter.getController(new SimpleListAdapter(self.posts = [], self.vmaker, self.vbinder));
 
-			self.linear = new G.LinearLayout(ctx);
-			self.linear.setOrientation(G.LinearLayout.VERTICAL);
-			self.linear.setPadding(15 * G.dp, 15 * G.dp, 15 * G.dp, 0);
-			Common.applyStyle(self.linear, "message_bg");
-
-			self.header = new G.LinearLayout(ctx);
-			self.header.setOrientation(G.LinearLayout.HORIZONTAL);
-			self.header.setPadding(0, 0, 0, 10 * G.dp);
-			self.header.setOnClickListener(new G.View.OnClickListener({onClick : function(v) {try {
-				Common.showOperateDialog(self.contextMenu);
-				return true;
-			} catch(e) {erp(e)}}}));
-
-			self.title = new G.TextView(ctx);
-			self.title.setText("推送信息");
-			self.title.setGravity(G.Gravity.LEFT | G.Gravity.CENTER);
-			self.title.setPadding(10 * G.dp, 0, 10 * G.dp, 0);
-			Common.applyStyle(self.title, "textview_default", 4);
-			self.header.addView(self.title, new G.LinearLayout.LayoutParams(0, -2, 1.0));
-
-			self.menu = new G.TextView(ctx);
-			self.menu.setText("▼");
-			self.menu.setPadding(10 * G.dp, 0, 10 * G.dp, 0);
-			self.menu.setGravity(G.Gravity.CENTER);
-			Common.applyStyle(self.menu, "button_highlight", 3);
-			self.header.addView(self.menu, new G.LinearLayout.LayoutParams(-2, -1));
-			self.linear.addView(self.header, new G.LinearLayout.LayoutParams(-1, -2));
-			
-			self.more = new G.TextView(ctx);
-			self.more.setGravity(G.Gravity.CENTER);
-			self.more.setPadding(15 * G.dp, 15 * G.dp, 15 * G.dp, 15 * G.dp);
-			self.more.setLayoutParams(new G.AbsListView.LayoutParams(-1, -2));
-			Common.applyStyle(self.more, "textview_prompt", 2);
-
-			self.list = new G.ListView(ctx);
-			self.list.setAdapter(self.adpt.self);
-			self.list.setOnItemClickListener(new G.AdapterView.OnItemClickListener({onItemClick : function(parent, view, pos, id) {try {
-				if (view == self.more) {
-					self.appendPage();
-					return;
-				}
-				var data = parent.getAdapter().getItem(pos), intent;
-				intent = PushService.getIntent(data);
+			NetworkUI.createListPage(self, "推送信息", function(parent, data) {
+				var intent = PushService.getIntent(data);
 				if (intent) AndroidBridge.startActivity(intent);
-			} catch(e) {erp(e)}}}));
-			self.linear.addView(self.list, new G.LinearLayout.LayoutParams(-1, 0, 1.0));
-
-			self.exit = new G.TextView(ctx);
-			self.exit.setText("关闭");
-			self.exit.setGravity(G.Gravity.CENTER);
-			self.exit.setPadding(10 * G.dp, 20 * G.dp, 10 * G.dp, 20 * G.dp);
-			Common.applyStyle(self.exit, "button_critical", 3);
-			self.exit.setOnClickListener(new G.View.OnClickListener({onClick : function(v) {try {
-				self.popup.exit();
-			} catch(e) {erp(e)}}}));
-			self.linear.addView(self.exit, new G.LinearLayout.LayoutParams(-1, -2));
-
-			self.popup = new PopupPage(self.linear, "feedback.Issues");
-			self.popup.on("exit", function() {
-				if (self.callback) self.callback();
 			});
-
-			PWM.registerResetFlag(self, "linear");
 		}
 		self.callback = callback;
 		self.popup.enter();

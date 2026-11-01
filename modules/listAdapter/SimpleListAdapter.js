@@ -3,65 +3,30 @@ MapScript.loadModule("SimpleListAdapter", (function() {
 		//arr是列表数组，maker(holder, params)生成基础view，binder(holder, element, index, array, params)修改view使其实现指定的界面，readOnly表示是否会从外部修改这个数组
 		var src = readOnly ? arr : arr.slice(), holders = [], dso = [], controller;
 		controller = new SimpleListAdapter.Controller(src, holders, dso, maker, binder, params, readOnly ? null : arr);
-		return new G.ListAdapter({
-			getCount : function() {
-				return src.length;
-			},
-			getItem : function(pos) {
-				if (pos == -1) return controller;
-				return src[pos];
-			},
-			getItemId : function(pos) {
-				return pos;
-			},
-			getItemViewType : function(pos) {
-				return 0;
-			},
-			getView : function(pos, convert, parent) {
-				var holder;
-				try {
-					if (!convert || !(convert.getTag() in holders)) {
-						holder = {};
-						convert = maker(holder, params);
-						holder.self = convert;
-						convert.setTag(holders.length.toString());
-						holders.push(holder);
-					}
-					holder = holders[convert.getTag()];
-					holder.pos = parseInt(pos);
-					binder(holder, src[pos], parseInt(pos), src, params);
-					return convert;
-				} catch(e) {
-					var a = new G.TextView(ctx);
-					a.setText(e + "\n" + e.stack);
-					erp(e);
-					return a;
-				}
-			},
-			getViewTypeCount : function() {
-				return 1;
-			},
-			hasStableIds : function() {
-				return false;
-			},
-			isEmpty : function() {
-				return src.length === 0;
-			},
-			areAllItemsEnabled : function() {
-				return true;
-			},
-			isEnabled : function(pos) {
-				return pos >= 0 && pos < src.length;
-			},
-			registerDataSetObserver : function(p) {
-				if (dso.indexOf(p) >= 0) return;
-				dso.push(p);
-			},
-			unregisterDataSetObserver : function(p) {
-				var i = dso.indexOf(p);
-				if (p >= 0) dso.splice(i, 1);
-			}
+		var adapter = ListAdapterBase.create({
+			array : src,
+			controller : controller,
+			dso : dso
 		});
+		adapter.getView = function(pos, convert, parent) {
+			var holder;
+			try {
+				if (!convert || !(convert.getTag() in holders)) {
+					holder = {};
+					convert = maker(holder, params);
+					holder.self = convert;
+					convert.setTag(holders.length.toString());
+					holders.push(holder);
+				}
+				holder = holders[convert.getTag()];
+				holder.pos = parseInt(pos);
+				binder(holder, src[pos], parseInt(pos), src, params);
+				return convert;
+			} catch(e) {
+				return ListAdapterBase.errorView(e);
+			}
+		};
+		return new G.ListAdapter(adapter);
 	}
 	r.Controller = function(array, holders, dso, maker, binder, params, sync) {
 		this.array = array;

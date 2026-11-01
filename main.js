@@ -647,6 +647,8 @@ Loader.fromFile("modules/Accel.js")
 // JSON 补全引擎（jsonPro 参数用）：体积大，放在 CA.js 之前单独加载
 Loader.fromFile("modules/JSONLanguageService.js")
 
+Loader.fromFile("modules/uiCore/UIHelp.js")
+
 Loader.fromFile("modules/CA.js")
 
 Loader.fromFile("modules/uiCore/PopupWindow.js")
@@ -666,6 +668,8 @@ Loader.fromFile("modules/sense/FCString.js")
 
 Loader.fromFile("modules/Tutorial.js")
 
+Loader.fromFile("modules/listAdapter/ListAdapterBase.js")
+
 Loader.fromFile("modules/listAdapter/EmptyAdapter.js")
 
 Loader.fromFile("modules/listAdapter/RhinoListAdapter.js")
@@ -679,6 +683,10 @@ Loader.fromFile("modules/listAdapter/MultipleListAdapter.js")
 Loader.fromFile("modules/listAdapter/ExpandableListAdapter.js")
 
 Loader.fromFile("modules/listAdapter/MoreListAdapter.js")
+
+Loader.fromFile("modules/uiCore/ConsolePanel.js")
+
+Loader.fromFile("modules/network/NetworkUI.js")
 
 Loader.fromFile("modules/network/NetworkUtils.js")
 

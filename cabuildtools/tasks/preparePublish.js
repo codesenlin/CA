@@ -4,7 +4,7 @@ const readConfig = require("../readconfig");
 
 /**
  * 读发布配置：优先 .json，其次 .js（兼容老配置），最后兼容老的 .txt（readConfig 解析）。
- * CA 根目录用 config/publish.json，caclib 子树里那份 config/publish.txt 也能读。
+ * CA 根目录用 config/publish.json，caclib 子树里那份 config/publish.json 也能读。
  */
 function loadPublishConfig(base) {
 	var stem = base.replace(/\.(js|json|txt)$/, "");

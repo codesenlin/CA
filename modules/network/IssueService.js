@@ -246,9 +246,7 @@ MapScript.loadModule("IssueService", {
 					title : "",
 					content : ""
 				}, function callback(newIssue) {
-					var progress = Common.showProgressDialog();
-					progress.setText("正在创建……");
-					progress.async(function() {
+					NetworkUI.progress("正在创建……", function() {
 						try {
 							realThis.createIssue(newIssue.title, newIssue.content);
 						} catch(e) {
@@ -289,9 +287,7 @@ MapScript.loadModule("IssueService", {
 				return issues;
 			}
 			self.refreshIssue = function(pos) {
-				var progress = Common.showProgressDialog();
-				progress.setText("正在刷新列表……");
-				progress.async(function() {
+				NetworkUI.progress("正在刷新列表……", function() {
 					var oldIssue = self.issues[pos], newIssue;
 					try {
 						newIssue = realThis.getIssue(oldIssue.token); // getIssue不会返回token
@@ -430,17 +426,7 @@ MapScript.loadModule("IssueService", {
 							listView.adapter = this._adapter;
 						}
 					}),
-					L.TextView({
-						text : "关闭",
-						padding : [10 * G.dp, 20 * G.dp, 10 * G.dp, 20 * G.dp],
-						gravity : L.Gravity("center"),
-						layout : { width : -1, height : -2 },
-						style : "button_critical",
-						fontSize : 3,
-						onClick : function() {try {
-							self.popup.exit();
-						} catch(e) {erp(e)}}
-					})
+					NetworkUI.closeButton(self.popup)
 				]
 			}), "issue.Issues");
 			self.popup.on("exit", function() {
@@ -471,9 +457,7 @@ MapScript.loadModule("IssueService", {
 						title : issue.title,
 						content : issue.content
 					}, function(newIssue) {
-						var progress = Common.showProgressDialog();
-						progress.setText("正在加载……");
-						progress.async(function() {
+						NetworkUI.progress("正在加载……", function() {
 							try {
 								realThis.setContent(issue.token, newIssue.title, newIssue.content);
 							} catch(e) {
@@ -523,9 +507,7 @@ MapScript.loadModule("IssueService", {
 			}, {
 				text : "查看详情",
 				onclick : function() {
-					var progress = Common.showProgressDialog();
-					progress.setText("正在加载……");
-					progress.async(function() {
+					NetworkUI.progress("正在加载……", function() {
 						var issue, creatorName;
 						try {
 							issue = realThis.getIssue(self.issue.token);
@@ -567,9 +549,7 @@ MapScript.loadModule("IssueService", {
 				issue_archived : "被归档"
 			};
 			self.addComment = function(text, callback) {
-				var progress = Common.showProgressDialog();
-				progress.setText("正在发送……");
-				progress.async(function() {
+				NetworkUI.progress("正在发送……", function() {
 					var commentId;
 					try {
 						commentId = realThis.addComment(self.issue.token, text);
@@ -582,9 +562,7 @@ MapScript.loadModule("IssueService", {
 				});
 			}
 			self.setState = function(state) {
-				var progress = Common.showProgressDialog();
-				progress.setText("正在标记……");
-				progress.async(function() {
+				NetworkUI.progress("正在标记……", function() {
 					try {
 						if (realThis.privilegedMode) {
 							realThis.internal.UserManager.executeAdminAction("Issue.setState", {
@@ -630,9 +608,7 @@ MapScript.loadModule("IssueService", {
 				return true;
 			}
 			self.reloadIssue = function() {
-				var progress = Common.showProgressDialog();
-				progress.setText("正在加载……");
-				progress.async(function() {
+				NetworkUI.progress("正在加载……", function() {
 					var token = self.issue.token;
 					try {
 						self.issue = realThis.getIssue(token); // getIssue不会返回token
@@ -856,9 +832,7 @@ MapScript.loadModule("IssueService", {
 	} catch(e) {erp(e)}})},
 	showIssueDetailByToken : function(token, callback) {
 		var realThis = this;
-		var progress = Common.showProgressDialog();
-		progress.setText("正在加载……");
-		progress.async(function() {
+		NetworkUI.progress("正在加载……", function() {
 			var issue;
 			try {
 				issue = realThis.getIssue(token); // getIssue不会返回token

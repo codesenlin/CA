@@ -214,42 +214,8 @@ MapScript.loadModule("GiteeFeedback", {
 				onclick : function(v, tag) {
 					self.reload();
 				}
-			}, {
-				text : "仅显示未处理",
-				hidden : function() {
-					return self.issueState == "open";
-				},
-				onclick : function(v, tag) {
-					self.issueState = "open";
-					self.reload();
-				}
-			}, {
-				text : "显示所有",
-				hidden : function() {
-					return self.issueState == "all";
-				},
-				onclick : function(v, tag) {
-					self.issueState = "all";
-					self.reload();
-				}				
-			}];
-			self.vmaker = function(holder) {
-				var layout = new G.LinearLayout(ctx),
-					text1 = holder.text1 = new G.TextView(ctx),
-					text2 = holder.text2 = new G.TextView(ctx);
-				layout.setLayoutParams(new G.AbsListView.LayoutParams(-1, -2));
-				layout.setOrientation(G.LinearLayout.VERTICAL);
-				layout.setPadding(15 * G.dp, 15 * G.dp, 15 * G.dp, 15 * G.dp);
-				text1.setLayoutParams(new G.LinearLayout.LayoutParams(-1, -2));
-				text1.setEllipsize(G.TextUtils.TruncateAt.END);
-				text1.setSingleLine(true);
-				layout.addView(text1);
-				text2.setPadding(0, 5 * G.dp, 0, 0);
-				text2.setLayoutParams(new G.LinearLayout.LayoutParams(-1, -2));
-				Common.applyStyle(text2, "textview_prompt", 1);
-				layout.addView(text2);
-				return layout;
-			}
+			}].concat(NetworkUI.issueStateMenu(self));
+			self.vmaker = NetworkUI.listItem;
 			self.vbinder = function(holder, e, i, a) {
 				holder.text1.setText(e.state == "open" ? e.title : "[已处理]" + e.title);
 				Common.applyStyle(holder.text1, e.state == "open" ? "item_default" : "item_disabled", 3);
@@ -260,9 +226,7 @@ MapScript.loadModule("GiteeFeedback", {
 				self.loading = true;
 				self.issues.length = 0;
 				self.adpt.notifyChange();
-				var progress = Common.showProgressDialog();
-				progress.setText("正在加载……");
-				progress.async(function() {
+				NetworkUI.progress("正在加载……", function() {
 					var data;
 					try {
 						data = {
@@ -277,17 +241,10 @@ MapScript.loadModule("GiteeFeedback", {
 				});
 			}
 			self.appendPage = function(sync) {
-				if (!sync) {
-					var progress = Common.showProgressDialog();
-					progress.setText("正在加载……");
-					progress.async(function() {
-						self.appendPage(true);
-					});
-				} else {
-					if (self.loading) return Common.toast("正在加载中……");
-					self.loading = true;
-					var i, off = self.issues.length, page;
-					try {
+				NetworkUI.appendPage(self, sync, {
+					failText : "Issue列表加载失败",
+					fetch : function() {
+						var page;
 						if (self.issueData.next < self.issueData.pages.length) {
 							page = self.issueData.pages[self.issueData.next];
 						} else {
@@ -301,94 +258,23 @@ MapScript.loadModule("GiteeFeedback", {
 							}
 							if (self.issueData.pages[self.issueData.next].length == 0) self.issueData.next = NaN;
 						} else self.issueData.next = NaN;
-					} catch(e) {Log.e(e)}
-					if (!page) {
-						self.loading = false;
-						return Common.toast("Issue列表加载失败");
-					}
-					G.ui(function() {try {
+						return page;
+					},
+					apply : function(page) {
+						var i, off = self.issues.length;
 						self.issues.length += page.length;
-						for (i = 0; i < page.length; i++) {
-							self.issues[i + off] = page[i];
-						}
+						for (i = 0; i < page.length; i++) self.issues[i + off] = page[i];
 						self.adpt.notifyChange();
-						if (self.issueData.next) self.more.setText("显示下" + GiteeFeedback.perPage + "个Issues……");
-						if (self.issueData.next && !self.moreVisible) {
-							self.moreVisible = true;
-							self.list.addFooterView(self.more);
-						} else if (!self.issueData.next && self.moreVisible) {
-							self.moreVisible = false;
-							self.list.removeFooterView(self.more);
-						}
-						self.loading = false;
-					} catch(e) {erp(e)}});
-				}
+						NetworkUI.updateMore(self, self.issueData.next, self.issueData.next ? "显示下" + GiteeFeedback.perPage + "个Issues……" : null);
+					}
+				});
 			}
 			self.adpt = SimpleListAdapter.getController(new SimpleListAdapter(self.issues = [], self.vmaker, self.vbinder));
 			self.issueState = "all";
 
-			self.linear = new G.LinearLayout(ctx);
-			self.linear.setOrientation(G.LinearLayout.VERTICAL);
-			self.linear.setPadding(15 * G.dp, 15 * G.dp, 15 * G.dp, 0);
-			Common.applyStyle(self.linear, "message_bg");
-
-			self.header = new G.LinearLayout(ctx);
-			self.header.setOrientation(G.LinearLayout.HORIZONTAL);
-			self.header.setPadding(0, 0, 0, 10 * G.dp);
-			self.header.setOnClickListener(new G.View.OnClickListener({onClick : function(v) {try {
-				Common.showOperateDialog(self.contextMenu);
-				return true;
-			} catch(e) {erp(e)}}}));
-
-			self.title = new G.TextView(ctx);
-			self.title.setText("Issues");
-			self.title.setGravity(G.Gravity.LEFT | G.Gravity.CENTER);
-			self.title.setPadding(10 * G.dp, 0, 10 * G.dp, 0);
-			Common.applyStyle(self.title, "textview_default", 4);
-			self.header.addView(self.title, new G.LinearLayout.LayoutParams(0, -2, 1.0));
-
-			self.menu = new G.TextView(ctx);
-			self.menu.setText("▼");
-			self.menu.setPadding(10 * G.dp, 0, 10 * G.dp, 0);
-			self.menu.setGravity(G.Gravity.CENTER);
-			Common.applyStyle(self.menu, "button_highlight", 3);
-			self.header.addView(self.menu, new G.LinearLayout.LayoutParams(-2, -1));
-			self.linear.addView(self.header, new G.LinearLayout.LayoutParams(-1, -2));
-			
-			self.more = new G.TextView(ctx);
-			self.more.setGravity(G.Gravity.CENTER);
-			self.more.setPadding(15 * G.dp, 15 * G.dp, 15 * G.dp, 15 * G.dp);
-			self.more.setLayoutParams(new G.AbsListView.LayoutParams(-1, -2));
-			Common.applyStyle(self.more, "textview_prompt", 2);
-
-			self.list = new G.ListView(ctx);
-			self.list.setAdapter(self.adpt.self);
-			self.list.setOnItemClickListener(new G.AdapterView.OnItemClickListener({onItemClick : function(parent, view, pos, id) {try {
-				if (view == self.more) {
-					self.appendPage();
-					return;
-				}
-				var data = parent.getAdapter().getItem(pos);
+			NetworkUI.createListPage(self, "Issues", function(parent, data) {
 				GiteeFeedback.showIssueDetail(data.number);
-			} catch(e) {erp(e)}}}));
-			self.linear.addView(self.list, new G.LinearLayout.LayoutParams(-1, 0, 1.0));
-
-			self.exit = new G.TextView(ctx);
-			self.exit.setText("关闭");
-			self.exit.setGravity(G.Gravity.CENTER);
-			self.exit.setPadding(10 * G.dp, 20 * G.dp, 10 * G.dp, 20 * G.dp);
-			Common.applyStyle(self.exit, "button_critical", 3);
-			self.exit.setOnClickListener(new G.View.OnClickListener({onClick : function(v) {try {
-				self.popup.exit();
-			} catch(e) {erp(e)}}}));
-			self.linear.addView(self.exit, new G.LinearLayout.LayoutParams(-1, -2));
-
-			self.popup = new PopupPage(self.linear, "feedback.Issues");
-			self.popup.on("exit", function() {
-				if (self.callback) self.callback();
 			});
-
-			PWM.registerResetFlag(self, "linear");
 		}
 		self.callback = callback;
 		self.popup.enter();
@@ -448,9 +334,7 @@ MapScript.loadModule("GiteeFeedback", {
 				self.loading = true;
 				self.comments.length = 0;
 				self.adpt.notifyChange();
-				var progress = Common.showProgressDialog();
-				progress.setText("正在加载……");
-				progress.async(function() {
+				NetworkUI.progress("正在加载……", function() {
 					var data;
 					try {
 						data = {
@@ -470,125 +354,44 @@ MapScript.loadModule("GiteeFeedback", {
 				});
 			}
 			self.appendPage = function(sync) {
-				if (!sync) {
-					var progress = Common.showProgressDialog();
-					progress.setText("正在加载……");
-					progress.async(function() {
-						self.appendPage(true);
-					});
-				} else {
-					if (self.loading) return Common.toast("正在加载中……");
-					self.loading = true;
-					var i, off = self.comments.length, page;
-					try {
-						page = GiteeFeedback.getIssueComments(self.currentNumber, self.commentData.next);
-					} catch(e) {Log.e(e)}
-					if (!page) {
-						self.loading = false;
-						return Common.toast("评论列表加载失败");
-					}
-					G.ui(function() {try {
+				NetworkUI.appendPage(self, sync, {
+					failText : "评论列表加载失败",
+					fetch : function() {
+						return GiteeFeedback.getIssueComments(self.currentNumber, self.commentData.next);
+					},
+					apply : function(page) {
+						var i, off = self.comments.length;
 						self.comments.length += page.length;
 						if (self.viewOrder == "desc") {
 							page.reverse();
-							if (self.commentData.next > 1) {
-								self.commentData.next--;
-							} else {
-								self.commentData.next = NaN;
-							}
+							if (self.commentData.next > 1) self.commentData.next--;
+							else self.commentData.next = NaN;
 						} else {
-							if (self.commentData.next < self.commentData.totalPages) {
-								self.commentData.next++;
-							} else {
-								self.commentData.next = NaN;
-							}
+							if (self.commentData.next < self.commentData.totalPages) self.commentData.next++;
+							else self.commentData.next = NaN;
 						}
 						for (i = 0; i < page.length; i++) {
 							page[i].fromThis = page[i].user.id == GiteeFeedback.myUserId;
 							self.comments[i + off] = page[i];
 						}
 						self.adpt.notifyChange();
-						if (self.commentData.next) self.more.setText("显示剩下" + (self.commentData.totalPages - self.commentData.next + 1) + "页……");
-						if (self.commentData.next && !self.moreVisible) {
-							self.moreVisible = true;
-							self.list.addFooterView(self.more);
-						} else if (!self.commentData.next && self.moreVisible) {
-							self.moreVisible = false;
-							self.list.removeFooterView(self.more);
-						}
-						self.loading = false;
-					} catch(e) {erp(e)}});
-				}
+						NetworkUI.updateMore(self, self.commentData.next, self.commentData.next ? "显示剩下" + (self.commentData.totalPages - self.commentData.next + 1) + "页……" : null);
+					}
+				});
 			}
 			self.adpt = SimpleListAdapter.getController(new SimpleListAdapter(self.comments = [], self.vmaker, self.vbinder));
 			self.viewOrder = "asc";
 
-			self.linear = new G.LinearLayout(ctx);
-			self.linear.setOrientation(G.LinearLayout.VERTICAL);
-			self.linear.setPadding(15 * G.dp, 15 * G.dp, 15 * G.dp, 0);
-			Common.applyStyle(self.linear, "message_bg");
-
-			self.header = new G.LinearLayout(ctx);
-			self.header.setOrientation(G.LinearLayout.HORIZONTAL);
-			self.header.setPadding(0, 0, 0, 10 * G.dp);
-			self.header.setOnClickListener(new G.View.OnClickListener({onClick : function(v) {try {
-				Common.showOperateDialog(self.contextMenu);
-				return true;
-			} catch(e) {erp(e)}}}));
-
-			self.title = new G.TextView(ctx);
-			self.title.setGravity(G.Gravity.LEFT | G.Gravity.CENTER);
-			self.title.setPadding(10 * G.dp, 0, 10 * G.dp, 0);
-			Common.applyStyle(self.title, "textview_default", 4);
-			self.header.addView(self.title, new G.LinearLayout.LayoutParams(0, -2, 1.0));
-
-			self.menu = new G.TextView(ctx);
-			self.menu.setText("▼");
-			self.menu.setPadding(10 * G.dp, 0, 10 * G.dp, 0);
-			self.menu.setGravity(G.Gravity.CENTER);
-			Common.applyStyle(self.menu, "button_highlight", 3);
-			self.header.addView(self.menu, new G.LinearLayout.LayoutParams(-2, -1));
-			self.linear.addView(self.header, new G.LinearLayout.LayoutParams(-1, -2));
-			
 			self.issueBody = new G.TextView(ctx);
 			self.issueBody.setPadding(15 * G.dp, 15 * G.dp, 15 * G.dp, 15 * G.dp);
 			self.issueBody.setLayoutParams(new G.AbsListView.LayoutParams(-1, -2));
 			Common.applyStyle(self.issueBody, "textview_default", 2);
-			
-			self.more = new G.TextView(ctx);
-			self.more.setGravity(G.Gravity.CENTER);
-			self.more.setPadding(15 * G.dp, 15 * G.dp, 15 * G.dp, 15 * G.dp);
-			self.more.setLayoutParams(new G.AbsListView.LayoutParams(-1, -2));
-			Common.applyStyle(self.more, "textview_prompt", 2);
 
-			self.list = new G.ListView(ctx);
-			self.list.setAdapter(self.adpt.self);
-			self.list.addHeaderView(self.issueBody);
-			self.list.setDividerHeight(0);
-			self.list.setOnItemClickListener(new G.AdapterView.OnItemClickListener({onItemClick : function(parent, view, pos, id) {try {
-				if (view == self.more) {
-					self.appendPage();
-					return;
-				}
-			} catch(e) {erp(e)}}}));
-			self.linear.addView(self.list, new G.LinearLayout.LayoutParams(-1, 0, 1.0));
-
-			self.exit = new G.TextView(ctx);
-			self.exit.setText("关闭");
-			self.exit.setGravity(G.Gravity.CENTER);
-			self.exit.setPadding(10 * G.dp, 20 * G.dp, 10 * G.dp, 20 * G.dp);
-			Common.applyStyle(self.exit, "button_critical", 3);
-			self.exit.setOnClickListener(new G.View.OnClickListener({onClick : function(v) {try {
-				self.popup.exit();
-			} catch(e) {erp(e)}}}));
-			self.linear.addView(self.exit, new G.LinearLayout.LayoutParams(-1, -2));
-
-			self.popup = new PopupPage(self.linear, "feedback.IssueDetail");
-			self.popup.on("exit", function() {
-				if (self.callback) self.callback();
+			NetworkUI.createListPage(self, "", function() {}, {
+				headerView : self.issueBody,
+				dividerHeight : 0,
+				popupKey : "feedback.IssueDetail"
 			});
-
-			PWM.registerResetFlag(self, "linear");
 		}
 		self.currentNumber = number;
 		self.callback = callback;
@@ -610,25 +413,7 @@ MapScript.loadModule("GiteeFeedback", {
 						self.reload();
 					});
 				}
-			}, {
-				text : "仅显示未处理",
-				hidden : function() {
-					return self.issueState == "open";
-				},
-				onclick : function(v, tag) {
-					self.issueState = "open";
-					self.reload();
-				}
-			}, {
-				text : "显示所有",
-				hidden : function() {
-					return self.issueState == "all";
-				},
-				onclick : function(v, tag) {
-					self.issueState = "all";
-					self.reload();
-				}
-			}, {
+			}].concat(NetworkUI.issueStateMenu(self), [{
 				text : "查看所有反馈",
 				onclick : function(v, tag) {
 					GiteeFeedback.showIssues();
@@ -644,24 +429,8 @@ MapScript.loadModule("GiteeFeedback", {
 				onclick : function(v, tag) {
 					GiteeFeedback.showAgreement();
 				}
-			}];
-			self.vmaker = function(holder) {
-				var layout = new G.LinearLayout(ctx),
-					text1 = holder.text1 = new G.TextView(ctx),
-					text2 = holder.text2 = new G.TextView(ctx);
-				layout.setLayoutParams(new G.AbsListView.LayoutParams(-1, -2));
-				layout.setOrientation(G.LinearLayout.VERTICAL);
-				layout.setPadding(15 * G.dp, 15 * G.dp, 15 * G.dp, 15 * G.dp);
-				text1.setLayoutParams(new G.LinearLayout.LayoutParams(-1, -2));
-				text1.setEllipsize(G.TextUtils.TruncateAt.END);
-				text1.setSingleLine(true);
-				layout.addView(text1);
-				text2.setPadding(0, 5 * G.dp, 0, 0);
-				text2.setLayoutParams(new G.LinearLayout.LayoutParams(-1, -2));
-				Common.applyStyle(text2, "textview_prompt", 1);
-				layout.addView(text2);
-				return layout;
-			}
+			}]);
+			self.vmaker = NetworkUI.listItem;
 			self.vbinder = function(holder, e, i, a) {
 				holder.text1.setText((e.state == "open" ? (e.isNew ? "[有新消息]" : "") : e.state == "rejected" ? "[已拒绝]" : "[已处理]") + e.title);
 				Common.applyStyle(holder.text1, e.state == "open" ? "item_default" : "item_disabled", 3);
@@ -671,9 +440,7 @@ MapScript.loadModule("GiteeFeedback", {
 				if (self.loading) return Common.toast("正在加载中……");
 				self.loading = true;
 				self.adpt.setArray([]);
-				var progress = Common.showProgressDialog();
-				progress.setText("正在加载……");
-				progress.async(function() {
+				NetworkUI.progress("正在加载……", function() {
 					var i, e, a = GiteeFeedback.getRecentFeedback(self.issueState), rejectCount = 0, rejectLatest = -Infinity, latest = -Infinity;
 					for (i = 0; i < a.length; i++) {
 						e = a[i];
@@ -706,9 +473,7 @@ MapScript.loadModule("GiteeFeedback", {
 					body : "",
 					newIssue : true
 				}, function(o) {
-					var progress = Common.showProgressDialog();
-					progress.setText("正在创建……");
-					progress.async(function() {
+					NetworkUI.progress("正在创建……", function() {
 						var d, l;
 						try {
 							d = GiteeFeedback.createIssue(o.title, o.body);
@@ -725,34 +490,6 @@ MapScript.loadModule("GiteeFeedback", {
 			self.adpt = SimpleListAdapter.getController(new SimpleListAdapter([], self.vmaker, self.vbinder, null, true));
 			self.issueState = "all";
 
-			self.linear = new G.LinearLayout(ctx);
-			self.linear.setOrientation(G.LinearLayout.VERTICAL);
-			self.linear.setPadding(15 * G.dp, 15 * G.dp, 15 * G.dp, 0);
-			Common.applyStyle(self.linear, "message_bg");
-
-			self.header = new G.LinearLayout(ctx);
-			self.header.setOrientation(G.LinearLayout.HORIZONTAL);
-			self.header.setPadding(0, 0, 0, 10 * G.dp);
-			self.header.setOnClickListener(new G.View.OnClickListener({onClick : function(v) {try {
-				Common.showOperateDialog(self.contextMenu);
-				return true;
-			} catch(e) {erp(e)}}}));
-
-			self.title = new G.TextView(ctx);
-			self.title.setText("最近反馈");
-			self.title.setGravity(G.Gravity.LEFT | G.Gravity.CENTER);
-			self.title.setPadding(10 * G.dp, 0, 10 * G.dp, 0);
-			Common.applyStyle(self.title, "textview_default", 4);
-			self.header.addView(self.title, new G.LinearLayout.LayoutParams(0, -2, 1.0));
-
-			self.menu = new G.TextView(ctx);
-			self.menu.setText("▼");
-			self.menu.setPadding(10 * G.dp, 0, 10 * G.dp, 0);
-			self.menu.setGravity(G.Gravity.CENTER);
-			Common.applyStyle(self.menu, "button_highlight", 3);
-			self.header.addView(self.menu, new G.LinearLayout.LayoutParams(-2, -1));
-			self.linear.addView(self.header, new G.LinearLayout.LayoutParams(-1, -2));
-			
 			self.add = new G.TextView(ctx);
 			self.add.setGravity(G.Gravity.CENTER);
 			self.add.setText("新建反馈话题");
@@ -760,37 +497,12 @@ MapScript.loadModule("GiteeFeedback", {
 			self.add.setLayoutParams(new G.AbsListView.LayoutParams(-1, -2));
 			Common.applyStyle(self.add, "textview_prompt", 2);
 
-			self.list = new G.ListView(ctx);
-			self.list.setAdapter(self.adpt.self);
-			self.list.addHeaderView(self.add);
-			self.list.setOnItemClickListener(new G.AdapterView.OnItemClickListener({onItemClick : function(parent, view, pos, id) {try {
-				if (view == self.add) {
-					self.addIssue();
-					return;
-				}
-				var data = parent.getAdapter().getItem(pos);
+			NetworkUI.createListPage(self, "最近反馈", function(parent, data, view) {
+				if (view == self.add) return self.addIssue();
 				GiteeFeedback.showFeedbackDetail(data.number, 0, function() {
 					self.reload();
 				});
-			} catch(e) {erp(e)}}}));
-			self.linear.addView(self.list, new G.LinearLayout.LayoutParams(-1, 0, 1.0));
-
-			self.exit = new G.TextView(ctx);
-			self.exit.setText("关闭");
-			self.exit.setGravity(G.Gravity.CENTER);
-			self.exit.setPadding(10 * G.dp, 20 * G.dp, 10 * G.dp, 20 * G.dp);
-			Common.applyStyle(self.exit, "button_critical", 3);
-			self.exit.setOnClickListener(new G.View.OnClickListener({onClick : function(v) {try {
-				self.popup.exit();
-			} catch(e) {erp(e)}}}));
-			self.linear.addView(self.exit, new G.LinearLayout.LayoutParams(-1, -2));
-
-			self.popup = new PopupPage(self.linear, "feedback.Recent");
-			self.popup.on("exit", function() {
-				if (self.callback) self.callback();
-			});
-
-			PWM.registerResetFlag(self, "linear");
+			}, { headerView : self.add, popupKey : "feedback.Recent" });
 		}
 		self.callback = callback;
 		self.popup.enter();
@@ -812,9 +524,7 @@ MapScript.loadModule("GiteeFeedback", {
 			}
 			self.setState = function(state) {
 				var topic = self.commentData.topic;
-				var progress = Common.showProgressDialog();
-				progress.setText("正在标记……");
-				progress.async(function() {
+				NetworkUI.progress("正在标记……", function() {
 					var d;
 					try {
 						d = GiteeFeedback.updateIssue(topic.number, {
@@ -841,9 +551,7 @@ MapScript.loadModule("GiteeFeedback", {
 				onclick : function(v, tag) {
 					var topic = self.commentData.topic;
 					GiteeFeedback.showEditIssue(topic, function(o) {
-						var progress = Common.showProgressDialog();
-						progress.setText("正在保存……");
-						progress.async(function() {
+						NetworkUI.progress("正在保存……", function() {
 							var d;
 							try {
 								d = GiteeFeedback.updateIssue(topic.number, topic);
@@ -900,9 +608,7 @@ MapScript.loadModule("GiteeFeedback", {
 				self.loading = true;
 				self.comments.length = 0;
 				self.adpt.notifyChange();
-				var progress = Common.showProgressDialog();
-				progress.setText("正在加载……");
-				progress.async(function() {
+				NetworkUI.progress("正在加载……", function() {
 					var data;
 					try {
 						data = {
@@ -930,34 +636,20 @@ MapScript.loadModule("GiteeFeedback", {
 				});
 			}
 			self.appendPage = function(sync) {
-				if (!sync) {
-					var progress = Common.showProgressDialog();
-					progress.setText("正在加载……");
-					progress.async(function() {
-						self.appendPage(true);
-					});
-				} else {
-					if (self.loading) return Common.toast("正在加载中……");
-					if (isNaN(self.commentData.next)) return;
-					self.loading = true;
-					var i, off = self.comments.length, page;
-					try {
-						page = GiteeFeedback.getIssueComments(self.currentNumber, self.commentData.next);
-					} catch(e) {Log.e(e)}
-					if (!page) {
-						self.loading = false;
-						return Common.toast("评论列表加载失败");
-					}
-					G.ui(function() {try {
-						if (self.commentData.next > 1) {
-							self.commentData.next--;
-						} else {
-							self.commentData.next = NaN;
-						}
+				NetworkUI.appendPage(self, sync, {
+					failText : "评论列表加载失败",
+					canLoad : function() {
+						return !isNaN(self.commentData.next);
+					},
+					fetch : function() {
+						return GiteeFeedback.getIssueComments(self.currentNumber, self.commentData.next);
+					},
+					apply : function(page) {
+						var i;
+						if (self.commentData.next > 1) self.commentData.next--;
+						else self.commentData.next = NaN;
 						self.comments.length += page.length;
-						for (i = self.comments.length - 1; i >= page.length; i--) {
-							self.comments[i] = self.comments[i - page.length];
-						}
+						for (i = self.comments.length - 1; i >= page.length; i--) self.comments[i] = self.comments[i - page.length];
 						for (i = 0; i < page.length; i++) {
 							page[i].fromThis = page[i].user.id == GiteeFeedback.myUserId;
 							self.comments[i] = page[i];
@@ -971,22 +663,15 @@ MapScript.loadModule("GiteeFeedback", {
 							});
 						}
 						self.adpt.notifyChange();
-						if (self.commentData.next && !self.moreVisible) {
-							self.moreVisible = true;
-							self.list.addHeaderView(self.more);
-						} else if (!self.commentData.next && self.moreVisible) {
-							self.moreVisible = false;
-							self.list.removeHeaderView(self.more);
-						}
-						self.loading = false;
+						NetworkUI.updateMore(self, self.commentData.next, null, true);
+					},
+					afterApply : function(page) {
 						if (page.length < 3 && !isNaN(self.commentData.next)) self.appendPage(false);
-					} catch(e) {erp(e)}});
-				}
+					}
+				});
 			}
 			self.addComment = function(text) {
-				var progress = Common.showProgressDialog();
-				progress.setText("正在发送……");
-				progress.async(function() {
+				NetworkUI.progress("正在发送……", function() {
 					var d, l;
 					try {
 						d = GiteeFeedback.createIssueComment(self.currentNumber, text);
@@ -1089,17 +774,7 @@ MapScript.loadModule("GiteeFeedback", {
 							fontSize : 2
 						})
 					}),
-					L.TextView({
-						text : "关闭",
-						padding : [10 * G.dp, 20 * G.dp, 10 * G.dp, 20 * G.dp],
-						gravity : L.Gravity("center"),
-						layout : { width : -1, height : -2 },
-						style : "button_critical",
-						fontSize : 3,
-						onClick : function() {try {
-							self.popup.exit();
-						} catch(e) {erp(e)}}
-					})
+					NetworkUI.closeButton(self.popup)
 				]
 			}), "feedback.IssueDetail");
 			self.popup.on("exit", function() {

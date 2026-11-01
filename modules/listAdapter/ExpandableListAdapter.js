@@ -136,79 +136,59 @@ MapScript.loadModule("ExpandableListAdapter", (function() {
 		extend = extendArray(root, getChildren, idHolder, params).slice();
 		controller = new ExpandableListAdapter.Controller(root, extend, getChildren, groupholders, itemholders, itemMaker, groupMaker, itemBinder, groupBinder, dso, idHolder, params);
 		makePointer(controller);
-		return new G.ListAdapter({
-			getCount : function() {
-				return extend.length;
-			},
+		var adapter = ListAdapterBase.create({
+			array : extend,
+			controller : controller,
+			dso : dso,
 			getItem : function(pos) {
-				if (pos == -1) return controller;
-				return extend[pos].data;
+			return pos == -1 ? controller : extend[pos].data;
 			},
 			getItemId : function(pos) {
-				return extend[pos].id;
+			return extend[pos].id;
 			},
 			getItemViewType : function(pos) {
-				return extend[pos].group ? 1 : 0;
-			},
-			getView : function(pos, convert, parent) {
-				var holder, e;
-				try {
-					e = extend[pos];
-					if (e.group) {
-						if (!convert || !(convert.getTag() in groupholders)) {
-							holder = {};
-							convert = groupMaker(holder, params);
-							holder.self = convert;
-							convert.setTag(groupholders.length.toString());
-							groupholders.push(holder);
-						}
-						holder = groupholders[convert.getTag()];
-						holder.pos = parseInt(pos);
-						groupBinder(holder, e.data, e.index, e.parent.children, e.depth, e.expanded, params);
-					} else {
-						if (!convert || !(convert.getTag() in itemholders)) {
-							holder = {};
-							convert = itemMaker(holder, params);
-							holder.self = convert;
-							convert.setTag(itemholders.length.toString());
-							itemholders.push(holder);
-						}
-						holder = itemholders[convert.getTag()];
-						holder.pos = parseInt(pos);
-						itemBinder(holder, e.data, e.index, e.parent.children, e.depth, params);
-					}
-					return convert;
-				} catch(e) {
-					var a = new G.TextView(ctx);
-					a.setText(e + "\n" + e.stack);
-					erp(e);
-					return a;
-				}
+			return extend[pos].group ? 1 : 0;
 			},
 			getViewTypeCount : function() {
-				return 2;
+			return 2;
 			},
 			hasStableIds : function() {
-				return true;
-			},
-			isEmpty : function() {
-				return extend.length === 0;
-			},
-			areAllItemsEnabled : function() {
-				return true;
-			},
-			isEnabled : function(pos) {
-				return pos >= 0 && pos < extend.length;
-			},
-			registerDataSetObserver : function(p) {
-				if (dso.indexOf(p) >= 0) return;
-				dso.push(p);
-			},
-			unregisterDataSetObserver : function(p) {
-				var i = dso.indexOf(p);
-				if (p >= 0) dso.splice(i, 1);
+			return true;
 			}
 		});
+		adapter.getView = function(pos, convert, parent) {
+			var holder, e;
+			try {
+				e = extend[pos];
+				if (e.group) {
+					if (!convert || !(convert.getTag() in groupholders)) {
+						holder = {};
+						convert = groupMaker(holder, params);
+						holder.self = convert;
+						convert.setTag(groupholders.length.toString());
+						groupholders.push(holder);
+					}
+					holder = groupholders[convert.getTag()];
+					holder.pos = parseInt(pos);
+					groupBinder(holder, e.data, e.index, e.parent.children, e.depth, e.expanded, params);
+				} else {
+					if (!convert || !(convert.getTag() in itemholders)) {
+						holder = {};
+						convert = itemMaker(holder, params);
+						holder.self = convert;
+						convert.setTag(itemholders.length.toString());
+						itemholders.push(holder);
+					}
+					holder = itemholders[convert.getTag()];
+					holder.pos = parseInt(pos);
+					itemBinder(holder, e.data, e.index, e.parent.children, e.depth, params);
+				}
+				return convert;
+			} catch(e) {
+				return ListAdapterBase.errorView(e);
+			}
+		};
+		return new G.ListAdapter(adapter);
 	}
 	r.Controller = function(root, extend, getChildren, groupholders, itemholders, itemMaker, groupMaker, itemBinder, groupBinder, dso, idHolder, params) {
 		this.root = root;

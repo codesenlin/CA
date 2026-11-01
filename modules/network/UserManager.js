@@ -1134,17 +1134,7 @@ MapScript.loadModule("UserManager", {
 					}),
 				]
 			}),
-			L.TextView({
-				text : "关闭",
-				padding : [10 * G.dp, 20 * G.dp, 10 * G.dp, 20 * G.dp],
-				gravity : L.Gravity("center"),
-				layout : { width : -1, height : -2 },
-				style : "button_critical",
-				fontSize : 3,
-				onClick : function() {try {
-					popup.exit();
-				} catch(e) {erp(e)}}
-			})
+			NetworkUI.closeButton(popup)
 		);
 		popup = PopupPage.showSideBar("usermanager.ExpManage", L.ScrollView({
 			style : "message_bg",
@@ -1308,17 +1298,7 @@ MapScript.loadModule("UserManager", {
 					L.Space({
 						layout : { width : -1, height : 0, weight : 1.0 }
 					}),
-					L.TextView({
-						text : "关闭",
-						padding : [10 * G.dp, 20 * G.dp, 10 * G.dp, 20 * G.dp],
-						gravity : L.Gravity("center"),
-						layout : { width : -1, height : -2 },
-						style : "button_critical",
-						fontSize : 3,
-						onClick : function() {try {
-							popup.exit();
-						} catch(e) {erp(e)}}
-					})
+					NetworkUI.closeButton(popup)
 				]
 			})
 		}), "left", 160 * G.dp, 0.2);

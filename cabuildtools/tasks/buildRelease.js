@@ -1,15 +1,5 @@
 const flavorOf = require("../flavor");
-
-/** 渠道参数：-beta / -dev / -canary（不带则是默认渠道） */
-function channelOf(args) {
-	var list = args || [], i;
-	for (i = 0; i < list.length; i++) {
-		if (list[i] == "-beta" || list[i] == "--beta") return "beta";
-		if (list[i] == "-dev" || list[i] == "--dev") return "dev";
-		if (list[i] == "-canary" || list[i] == "--canary") return "canary";
-	}
-	return null;
-}
+const channelOf = require("../channel");
 
 module.exports = function(context, args) {
 	// 带 -beta 时 variants = "beta"：产物名带 -beta 后缀，且不写 update.json（避免覆盖正式更新）

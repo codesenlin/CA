@@ -1,0 +1,96 @@
+# 去重后续计划
+
+第三轮去重已收尾（release `main.js` 534,928 → 518,124 字节，约 -3.1%）。
+下面两项评估过但**暂不处理**，留作后续计划。
+
+## P1：登录 / 评论 / 反馈输入表单
+
+涉及：
+
+- `modules/network/GiteeFeedback.js`：`showLogin`（账号密码登录、匿名使用、浏览器登录）、
+  `showFeedbackDetail` 评论框
+- `modules/network/UserManager.js`：登录 / 注册 / 找回密码/ 改密表单
+- `modules/network/IssueService.js`：评论输入框
+
+重复内容：`L.ScrollView + L.LinearLayout + L.TextView/L.EditText` 的弹窗表单、
+按钮组、进度对话框和登录回调，约 **100 行**。
+
+计划做法：
+
+1. 在 `NetworkUI` 增加通用表单构造（如 `dialogForm({ title, fields, buttons })` 和
+   `inputDialog({ hint, onSubmit })`），字段支持 `hint/value/inputType/password/checkbox`
+2. 先迁移 `GiteeFeedback.showLogin` 与 `IssueService` 评论框（结构最接近），
+   再迁 UserManager 的登录/注册表单
+3. 迁移后需要**真实账号/联网**手动验证：登录、匿名登录、浏览器登录、评论发送、
+   注册/找回密码流程
+
+风险：登录/反馈是线上功能，自动构建只能验证编译和启动，必须真机手动走一遍；
+如果无测试账号，先只迁结构最简单的一处。
+
+## P2：JSONLanguageService 内部剩余副本
+
+涉及：`modules/JSONLanguageService.js`（vendored bundle）。
+
+已处理：独立的 `jsonc-parser` bundle（整份删除）、`_interopRequireWildcard`
+（8 份 → 1 份）、`mergeSort`（2 份 → 1 份）。
+
+剩余重复：
+
+- meta-schema 常量（如 `$vocabulary` / `multipleOf` 相关 schema 数组）在 bundle 内出现两份
+- `FullTextDocument` 等依赖模块被 webpack 打包了副本
+
+不建议手改：这些是 webpack 模块的独立副本，删一份需要改模块引用，容易破坏解析/补全。
+后续做法：
+
+1. 从上游 `vscode-json-languageservice` + `jsonc-parser` 源码重新打包这一份文件，
+   只保留一份 jsonc-parser，并重新套上本仓库的同步 Promise / Rhino polyfill 补丁
+2. 用 Node 对比原/新 bundle：`getLanguageService` 的 `doComplete` 多个光标位置、
+   `findNodeAtOffset` 结果一致
+3. 跑 `loader` 编译、`npm test`、`buildRelease` 对比体积、真机验证 jsonPro 补全
+
+风险：bundle 重建涉及版本/打包配置，需单独验证补全、schema 校验、错误提示。
+
+## cabuildtools 子项目
+
+已完成：
+
+- 新增 `cabuildtools/channel.js`：`buildRelease` / `buildSnapshot` 共用的渠道参数解析
+- 新增 `cabuildtools/libformat.js`：`.lib` 容器格式（LIBRARY / SIGNLIB01、
+  gzip、时间戳、签名）的唯一实现；`libtool.js`、`js2lib.js`、`js2signlib.js`
+  共用，去掉三份重复实现
+
+后续可做：
+
+- **`loader.js`（94 行）与 `loader-ast.js` 双实现**：`loader.js` 目前只被
+  `clibspawn.js` 使用，其余构建任务都走 AST loader。计划把 `clibspawn` 切到
+  `loader-ast` 后删除旧 loader；风险是 clib 打包产物可能与旧 loader 有差异，
+  需要对比 `buildCLib` 产物
+- `main.js` 中 `Build.execute` 与 `procArgs` 的 Process/Success 日志重复
+  （约 10 行，收益低）
+- `publish*` 各任务里 sftp/文件写入样板（量小，暂不处理）
+
+## 验证清单（每次去重后）
+
+```bash
+node --check <改动的单文件>
+node ./cabuildtools/main.js buildRelease        # 看产物大小
+npm test                                        # 6 + 7
+node ./cabuildtools/main.js shellBuildDebug     # 真机安装
+adb logcat | grep Script                        # 脚本编译/执行
+```
+
+JSONLanguageService 改动额外做：
+
+```js
+// Node 里加载模块，对比补丁前后
+doComplete(...多个位置...)
+findNodeAtOffset(root, offset, true)
+```
+
+## 已完成（参考）
+
+- 删除独立 jsonc-parser bundle；`_interopRequireWildcard` / `mergeSort` 收敛
+- `ListAdapterBase`：observer/errorView + `create()` 公共方法
+- `ConsolePanel`：DebugUtils / WSServer 控制台
+- `NetworkUI`：列表页外壳、列表项 vmaker、关闭按钮、状态菜单、进度对话框、分页流程
+- `UIHelp.settingItem`：CA.js / Common.js 的设置项 vmaker
