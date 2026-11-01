@@ -1,4 +1,7 @@
 {
+	"light": {
+		"nameKey": "common.theme.default"
+	},
 	"pink": {
 		"nameKey": "common.theme.pink",
 		"bgcolor": "#FFF5F7",
@@ -40,9 +43,6 @@
 		"go_textcolor": "#FFFFFF",
 		"go_touchbgcolor": "#9C6ABA",
 		"go_touchtextcolor": "#FFFFFF"
-	},
-	"light": {
-		"nameKey": "common.theme.default"
 	},
 	"dark": {
 		"nameKey": "common.theme.dark",
