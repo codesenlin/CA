@@ -281,11 +281,11 @@ desugaring 只是把 `java.util.Objects.requireNonNull` 换成
 
 | 加速点 | 位置 | 手段 |
 |---|---|---|
-| 补全字符串匹配 | `CA.IntelliSense.matchString` | `Accel.matchString`，O(n²) 去重 → O(n)；候选源按对象身份缓存（`setMatchSource` / `matchCached`）；JS 侧结果合并也用 `seen` 去重，最坏 1749 项全命中从 ~500ms 降到 ~107ms |
+| 补全字符串匹配 | `CA.IntelliSense.matchString` | `Accel.matchString`，O(n²) 去重 → O(n)；候选源按对象身份缓存（`setMatchSource` / `matchCached`）；JS 侧结果合并也用 `seen` 去重，最坏 1749 项全命中从 ~500ms 降到 ~107ms，再去掉 merge 里的 Java String 显式转换后约 60~99ms |
 | ID 列表过滤 | `CA.Assist.js` 的 `setFilter` | `Accel.filter`，字符串查找一次算完，JS 侧只剩取下标 |
 | 数组 enum 匹配 | `CA.IntelliSense` 的 enum 数组分支 | `Accel.classifyArray`，Java 一次算完 flags/length/canFinish |
 | 命令名匹配（无参数补全） | `CA.IntelliSense` 命令列表 | `Accel.matchCommandNames`，缓存命令表；无 jar 时 QuickJS/JS 回退 |
-| ID 列表过滤（缓存） | `CA.showIDList.update` | `Accel.setIDTexts` + `filterIDTexts`，只传前缀；空前缀直接复用构建时下标；重复打开同一 ID 表复用整次构建结果 |
+| ID 列表过滤（缓存） | `CA.showIDList.update` | `Accel.setIDTexts` + `filterIDTexts`，只传前缀；有 jar 时直接返回 Java `int[]` 给 readOnly 适配器，不再逐项转 JS 数组；空前缀复用构建时下标 |
 | 建议列表过滤（缓存） | `CA.Assist` 的 `setFilter` | `Accel.setFilterTexts` + `filterTexts`，不再每次传整个建议数组 |
 
 第二条尤其重要：原来的写法是**每个元素都从 Java 回调进 Rhino 做一次

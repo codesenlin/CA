@@ -21,6 +21,9 @@
 			idlist : [],
 			info : info = []
 		};
+		// 库对象换了，ID 列表构建缓存随之失效；否则增删拓展包后可能读到旧库的列表
+		CA._idListBuildCache = [];
+		CA._idAllIndices = null;
 		this.processDeprecated();
 		// 同一 uuid 只保留最高版本；低版本移除（内置的改为禁用）
 		var removed = this.dedupeLibraries();

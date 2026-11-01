@@ -1,13 +1,14 @@
 # JS / Java / QuickJS 跨语言迁移候选
 
-> 状态：ID 列表 + 数组 enum + ID 列表/Assist 缓存 + 命令匹配 + matchString 缓存已实现；其余为分析记录。目标是找真正值得跨边界的点，而不是把代码搬来搬去。
+> 状态：ID 列表 + 数组 enum + ID 列表/Assist 缓存 + 命令匹配 + matchString 缓存已实现；
+> ID 非空前缀结果构造已优化（返回 Java int[] + readOnly 适配器换引用）；其余为分析记录。目标是找真正值得跨边界的点，而不是把代码搬来搬去。
 > 已有加速层与基准见 [data-and-accel.md](data-and-accel.md)。
 
 ## 结论速览
 
 | 方向 | 候选 | 位置 | 优先级 | 预期收益 |
 |---|---|---|---|---|
-| JS → Java | ID 列表过滤 ✅ | `CA.js` `showIDList.update` | **P0** | 旧 JS 扫描 → `Accel.filter`；后续再加 Java 侧缓存，非空前缀降到 8~12ms |
+| JS → Java | ID 列表过滤 ✅ | `CA.js` `showIDList.update` | **P0** | 旧 JS 扫描 → `Accel.filter`；后续再加 Java 侧缓存，非空前缀降到 4~5ms |
 | JS → Java | ID 列表初始化去重 ✅ | `CA.js` `showIDList.init` | **P0** | `indexOf` O(n²)，桌面 Rhino 已 342ms/5239 项；先改 JS 用 map，必要时再上 Java |
 | JS → Java | 数组 enum 匹配 ✅ | `CA.IntelliSense.js` `matchParam` 的 `case "enum"` 数组分支 | P1 | 最多 1749 项、每次输入；新增 Java `classifyArray`（精确/前缀标志） |
 | JS → QuickJS | jsonPro 补全 | `CA.IntelliSense.js:311-520` | P1/P2 | 每次输入 parse + doComplete，且对每个 object/array 候选再模拟一次 doComplete；纯 JS，适合 worker |
@@ -132,6 +133,7 @@ r.input = t.filter(function(e) {
 | 旧路径（每次传候选对象，merge 改 seen 去重） | ~196ms |
 | 旧路径 + 数组访问器 | ~152ms |
 | 缓存路径（候选源只同步一次 + seen merge + 数组访问器） | **~107ms** |
+| 再去掉 merge 里对 Java String 的显式 `String()` 转换 | **~60~99ms** |
 
 结论：
 
@@ -140,6 +142,8 @@ r.input = t.filter(function(e) {
 - 候选源缓存再省掉重复的 1749 项跨边界转换，最坏情况降到 132ms
 - `Result` 再暴露 `inputArray/outputKeys/outputValues` 数组访问器，避免逐项
   `Map.get` 穿 Rhino，最坏情况进一步降到 **~107ms**
+- 最新一次把 merge 里 `String(keys[i])` / `String(vals[i])` / `String(ins[i])` 去掉，
+  Java String 直接作为 JS 值使用，真机最坏情况降到 **~60~99ms**（JIT 波动）
 - 1749 项全命中是最坏情况；实际补全中位数约 142 项，耗时远低于此
 - 还试过 Java `Result` 序列化 JSON + JS `JSON.parse` 的路径：~103.9ms
   vs 当前数组访问器 ~107.5ms，收益不足且增加转义复杂度，**未采用**
@@ -279,6 +283,25 @@ worker 不可用时已有完整 JS 回退，不需要迁移。
 
 有状态缓存的约定：列表重建时 `buildIDList` 会重新 `setIDTexts`，不跨列表复用。
 
+后续又做了一轮「结果构造」优化（2026-11-01，PERM10）：
+
+- `Accel.filterIDTextsRaw`：有 jar 时直接返回 Java `int[]`，不再在 JS 里逐项
+  `out.push(res[i])` 复制成 JS 数组
+- `SimpleListAdapter` 的 readOnly 模式改为直接替换 `controller.array` 引用
+  （`ListAdapterBase._replaceArray`），不再把 4434 个/命中项逐个拷进 JS 数组
+- `Accel.filterIDTexts` 改成单遍扫描，命中多时不再扫两遍
+
+真机 debug 控制台 `DebugUtils.benchIDListAdapter()`（4434 项，热态）：
+
+| 前缀 | 过滤后 | filter | 适配器 setArray |
+|---|---|---|---|
+| `minecraft:` | 607 | ~5ms | ~1ms |
+| `block` | 212 | ~4ms | ~1ms |
+| `item_1` / `zzz` | 0 | ~4~5ms | 0ms |
+
+对比优化前：filter 8~15ms、适配器 3~12ms；实际 UI 输入 `block` 的过滤日志为 4~5ms，
+`""` 仍走构建时缓存约 1ms。
+
 `buildIDList` 的构建/排序也连续做了优化：
 
 1. ID 都是字符串 → 原生 `ids.sort()`，避免 5 万次 JS 比较器回调
@@ -296,6 +319,19 @@ IDList init 262ms, 4434 项 (resolve=1 build=109 sort=86 sync=40 all=26)
 
 首次 init 从 504ms 降到 262ms（约 -48%）；重复打开同一列表 ≈0ms。
 
+再优化：空前缀的下标数组改由 Java `Accel.rangeIndices` 生成，避免 Rhino
+循环 4434 次：
+
+```
+IDList init 297ms, 4434 项 (resolve=1 build=148 sort=105 sync=42 all=1)
+```
+
+`all` 从 34ms 降到 1ms；`sort`/`build` 仍是大头。曾试过 Java 排序 +
+返回数组，但跨边界转换反而更慢，已回退。
+
+构建结果缓存也从「只缓存最近一个列表」改成「最近 4 个列表」，在
+「全部 / 方块 / 物品」等列表之间来回切换时不再重建。
+
 ## 六、附带清理项
 
 - `modules/utils/JSONHelper.js`（293 行）目前**没有被 `main.js` 加载**，
@@ -308,10 +344,10 @@ IDList init 262ms, 4434 项 (resolve=1 build=109 sort=86 sync=40 all=26)
 1. ✅ **P0（已完成，`937c82a`）**：`showIDList.init` 改 JS map 去重；
    `showIDList.update` 接 `Accel.filter`。改动小、用户可见（打开「全部」ID 列表 + 输入过滤）
    - 计时入口：debug 包在 `Script` 日志输出 `IDList init ...ms` / `IDList filter ...ms`；
-     调试控制台可执行 `DebugUtils.benchIDList()` 或 `DebugUtils.benchIDListCompare()`
+     调试控制台可执行 `DebugUtils.benchIDList()` / `benchIDListCompare()` / `benchIDListAdapter()`
    - 真机数据见上文：新路径 ~1.5~2.2x，但仍有 12~25ms 的数组转换成本
 2. ✅ **P1 数组 enum 已完成**：`Accel.classifyArray` + `CA.IntelliSense` 接线
-3. ✅ **ID 列表 Java 缓存已完成**：`setIDTexts` + `filterIDTexts`，非空前缀 8~12ms
+3. ✅ **ID 列表 Java 缓存已完成**：`setIDTexts` + `filterIDTexts`，非空前缀 4~5ms
 4. 下一步：jsonPro 的 QuickJS 原型（工作量大）；ID 列表非空前缀仍有
    8~40ms 的 Java→JS 结果构造成本，可选优化
 3. **P1/P2**：jsonPro 的 QuickJS 原型（lazy 注册、真机计时、失败回退）

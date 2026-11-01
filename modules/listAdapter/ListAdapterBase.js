@@ -16,6 +16,10 @@ MapScript.loadModule("ListAdapterBase", {
 	create : function(opts) {
 		var arr = opts.array;
 		return {
+			/** 内部使用：替换 getCount/getItem 持有的数组引用（readOnly 适配器避免逐项拷贝） */
+			_replaceArray : function(a) {
+				arr = a;
+			},
 			getCount : opts.getCount || function() {
 				return arr.length;
 			},

@@ -5651,14 +5651,18 @@ MapScript.loadModule("CA", {
 		// 同一库 + 同一 ID 表重复打开时直接复用（只缓存字符串 list）
 		if (list && list.length && typeof list[0] == "string") {
 			cacheKey = list.join("\u0001");
-			var cache = CA._idListBuildCache;
-			if (cache && cache.lib === lib && cache.key === cacheKey) {
-				CA._idAllIndices = cache.allIndices;
-				Accel.setIDTexts(cache.texts);
-				if (BuildConfig.variants == "debug") {
-					try { android.util.Log.i("Script", "IDList init cached, " + cache.ids.length + " 项"); } catch(e) {}
+			// 缓存最近打开过的多个列表；在「全部 / 方块 / 物品」之间切换时不用重建
+			var caches = CA._idListBuildCache, cache;
+			if (!Array.isArray(caches)) caches = CA._idListBuildCache = [];
+			for (var ci = 0; ci < caches.length; ci++) {
+				cache = caches[ci];
+				if (cache.lib === lib && cache.key === cacheKey) {
+					CA._idAllIndices = cache.allIndices;
+					if (BuildConfig.variants == "debug") {
+						try { android.util.Log.i("Script", "IDList init cached, " + cache.ids.length + " 项"); } catch(e) {}
+					}
+					return { ids : cache.ids, texts : cache.texts, allIndices : cache.allIndices };
 				}
-				return { ids : cache.ids, texts : cache.texts, allIndices : cache.allIndices };
 			}
 		}
 		for (i = 0; i < cur.length; i++) {
@@ -5712,17 +5716,20 @@ MapScript.loadModule("CA", {
 		// 同步给 Java/JS 缓存：之后每次输入只传前缀，不再传整个 texts 数组
 		Accel.setIDTexts(texts);
 		tSync = Date.now();
-		CA._idAllIndices = new Array(ids.length);
-		for (i = 0; i < ids.length; i++) CA._idAllIndices[i] = i;
+		CA._idAllIndices = Accel.rangeIndices(ids.length);
 		tAll = Date.now();
 		if (cacheKey != null) {
-			CA._idListBuildCache = {
+			var caches2 = CA._idListBuildCache;
+			if (!Array.isArray(caches2)) caches2 = CA._idListBuildCache = [];
+			caches2.push({
 				lib : lib,
 				key : cacheKey,
 				ids : ids,
 				texts : texts,
 				allIndices : CA._idAllIndices
-			};
+			});
+			// 只保留最近 4 个列表，避免多库/多列表时无限占内存
+			if (caches2.length > 4) caches2.shift();
 		}
 		if (BuildConfig.variants == "debug") {
 			try {
@@ -5746,7 +5753,9 @@ MapScript.loadModule("CA", {
 			}
 			return CA._idAllIndices;
 		}
-		var arr = Accel.filterIDTexts(p);
+		// 第一次非空前缀才把 texts 同步到 Java/JS 缓存；空前缀走 _idAllIndices
+		Accel.setIDTexts(texts);
+		var arr = Accel.filterIDTextsRaw(p);
 		if (BuildConfig.variants == "debug") {
 			try {
 				android.util.Log.i("Script", "IDList filter \"" + String(s).slice(0, 20) + "\" " + (Date.now() - t0) + "ms, " + texts.length + " -> " + arr.length);

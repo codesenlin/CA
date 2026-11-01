@@ -621,6 +621,33 @@ MapScript.loadModule("DebugUtils", {
 			return "IDListCompare error: " + e;
 		}
 	},
+	/** 调试控制台用：测量 filter 结果写进 SimpleListAdapter 的成本 */
+	benchIDListAdapter : function() {
+		try {
+			var lib = CA.IntelliSense.library, names = [], prefixes = ["minecraft:", "block", "item_1", "zzz"];
+			var i, j, e, l, t, arr, built, results = [];
+			for (i = 0; i < lib.idlist.length; i++) {
+				e = lib.idlist[i];
+				l = e.lists || (e.list ? [e.list] : []);
+				for (j = 0; j < l.length; j++) names.push(l[j]);
+			}
+			built = CA.buildIDList(names);
+			var adpt = SimpleListAdapter.getController(new SimpleListAdapter([], function(holder) {
+				return new G.TextView(ctx);
+			}, function() {}, null, true));
+			for (i = 0; i < prefixes.length; i++) {
+				arr = CA.filterIDList(built.texts, prefixes[i]);
+				t = Date.now();
+				adpt.setArray(arr);
+				results.push("[" + prefixes[i] + "]=" + arr.length + "/" + (Date.now() - t) + "ms");
+			}
+			results = "IDListAdapterBench n=" + built.ids.length + " " + results.join(", ");
+			try { android.util.Log.i("Script", results); } catch(e) {}
+			return results;
+		} catch(e) {
+			return "IDListAdapterBench error: " + e;
+		}
+	},
 	/** 调试控制台用：用当前 ID 表跑 buildIDList / filterIDList 并打日志
 	 *  控制台输入 DebugUtils.benchIDList() 即可；rounds 参数保留给以后重复计时
 	 */

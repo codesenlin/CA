@@ -184,20 +184,28 @@ public final class Accel {
      * 在缓存的 ID 文本里查找包含 s 的下标；没有缓存/无匹配返回空数组。
      * 相比 filter(String[] arr, String s) 省掉每次调用都从 Rhino 转 4000+ 字符串的开销。
      */
+    /** 生成 [0, n) 的下标数组；ID 列表空前缀直接复用，避免在 Rhino 里循环构建 */
+    public static int[] rangeIndices(int n) {
+        if (n <= 0) return new int[0];
+        int[] out = new int[n];
+        for (int i = 0; i < n; i++) out[i] = i;
+        return out;
+    }
+
     public static int[] filterIDTexts(String s) {
         String[] texts = idTexts;
         if (texts == null) return new int[0];
         String p = s == null ? "" : s;
+        // 单遍扫描：先按全量预分配，最后再裁到命中数，避免为了精确分配扫两遍
+        int[] out = new int[texts.length];
         int i, count = 0;
         for (i = 0; i < texts.length; i++) {
-            if (texts[i] != null && texts[i].contains(p)) count++;
+            if (texts[i] != null && texts[i].contains(p)) out[count++] = i;
         }
-        int[] out = new int[count];
-        int j = 0;
-        for (i = 0; i < texts.length; i++) {
-            if (texts[i] != null && texts[i].contains(p)) out[j++] = i;
-        }
-        return out;
+        if (count == out.length) return out;
+        int[] trimmed = new int[count];
+        System.arraycopy(out, 0, trimmed, 0, count);
+        return trimmed;
     }
 
     /**

@@ -99,7 +99,7 @@ MapScript.loadModule("Accel", (function() {
 			// 新 jar：一次取 keys/values 数组，避免逐项 Map.get 穿 Rhino
 			keys = res.outputKeys();
 			vals = res.outputValues();
-			for (i = 0; i < keys.length; i++) r.output[String(keys[i])] = String(vals[i]);
+			for (i = 0; i < keys.length; i++) r.output[keys[i]] = vals[i];
 			ins = res.inputArray();
 		} else {
 			var outs = res.outputs;
@@ -111,7 +111,7 @@ MapScript.loadModule("Accel", (function() {
 		var seen = Object.create(null);
 		for (i = 0; i < r.input.length; i++) seen[r.input[i]] = true;
 		for (i = 0; i < ins.length; i++) {
-			v = String(ins[i]);
+			v = ins[i];
 			if (!seen[v]) {
 				seen[v] = true;
 				r.input.push(v);
@@ -202,6 +202,28 @@ MapScript.loadModule("Accel", (function() {
 					if (idTextsCache[i] != null && idTextsCache[i].indexOf(p) >= 0) out.push(i);
 				}
 			}
+			return out;
+		},
+		/** 同 filterIDTexts，但 jar 可用时直接返回 Java int[]（给 ID 列表适配器用，少一次逐项转 JS 数组） */
+		filterIDTextsRaw : function(s) {
+			var p = String(s), out = [], i;
+			if (impl != null) {
+				try { return impl.filterIDTexts(p); } catch(e) { }
+			}
+			if (idTextsCache != null) {
+				for (i = 0; i < idTextsCache.length; i++) {
+					if (idTextsCache[i] != null && idTextsCache[i].indexOf(p) >= 0) out.push(i);
+				}
+			}
+			return out;
+		},
+		/** 生成 [0,n) 下标；有 jar 走 Java int[]，否则 JS 数组 */
+		rangeIndices : function(n) {
+			var out = [], i;
+			if (impl != null) {
+				try { return impl.rangeIndices(n); } catch(e) { }
+			}
+			for (i = 0; i < n; i++) out.push(i);
 			return out;
 		},
 		/** 同步命令快照（命令库重建时调用一次） */

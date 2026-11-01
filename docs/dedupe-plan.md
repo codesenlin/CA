@@ -110,4 +110,6 @@ findNodeAtOffset(root, offset, true)
 - `NetworkUI.issueDetailHeader` / `issueDetailPage`：GiteeFeedback / IssueService
   话题详情标题栏与页面外壳（返回、标题、菜单、列表挂载、关闭）
 - `cabuildtools/main.js`：Process/Success/Failed 日志收敛到 logTaskStart/Success/Failure
+- `cabuildtools/publish.js`：preparePublish→publishFile→endPublish 链、Publishing 日志、
+  异步/串行上传收敛；publishRelease/Snapshot/Hotfix/Directory/File 共用
 - `UIHelp.settingItem`：CA.js / Common.js 的设置项 vmaker
