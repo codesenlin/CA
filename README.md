@@ -35,7 +35,7 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
   由 `clibspawn` 打包发布，**不参与 App 构建**
 - `caaccel/` — Java 加速库源码（配合 `modules/Accel.js`）
 - `docs/` — 开发文档：分支约定、构建配置、数据外置方案、`data/` 各文件说明、
-  风味构建（`flavor-build.md`）、去重后续计划（`dedupe-plan.md`）、选择器补全的返回值结构等
+  风味构建（`flavor-build.md`）、去重后续计划（`dedupe-plan.md`）、跨语言迁移候选（`porting-candidates.md`）、选择器补全的返回值结构等
 - `community-clib/` — 社区拓展包源：`src/` 放原始包，`build.js` 解包重签后生成
   `info.json` / 索引 / `packs/*.lib` / `verify.key`，GitHub 上直接对外提供（见该目录 README）
 - `build/` — 构建产物（不入版本库）

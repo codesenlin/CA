@@ -132,7 +132,10 @@ function test() {
 	const listFile = path.join(BUILD, "test-sources.txt");
 	fs.writeFileSync(listFile, sources.join("\n") + "\n");
 	run(jdk.javac, ["-encoding", "UTF-8", "-cp", outJar, "-d", classes, "@" + listFile]);
-	run(jdk.java, ["-cp", outJar + path.delimiter + classes, "AccelTest"]);
+	// 逐个跑 test/ 下的 main，新增测试文件不需要再改这里
+	sources.map(function(file) { return path.basename(file, ".java"); }).forEach(function(name) {
+		run(jdk.java, ["-cp", outJar + path.delimiter + classes, name]);
+	});
 }
 
 /** 跑基准 */

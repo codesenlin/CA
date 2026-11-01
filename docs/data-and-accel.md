@@ -229,9 +229,11 @@ cadroid 仓库 [docs/quickjs-sidecar.md](https://github.com/codesenlin/cadroid/b
 
 - worker 用 `io.github.dokar3:quickjs-kt-android:1.0.15`（`.so` 已 16KB page 对齐）
 - 协议：JSON 进 / JSON 出；大块数据（命令库）用 `quickWorkerSetVar` 只同步一次
-- 已迁移：IntelliSense 命令名匹配（3000 条命令）
-  - Rhino：162ms/次 → worker 稳态 **~25ms/次**（≈6-8x；首次库同步几十 ms，在后台线程）
-  - worker 不可用/失败时自动回退原 JS 实现，不影响功能
+- 命令名匹配：现在**优先 Java** `Accel.matchCommandNames`（命令表缓存，只传前缀）；
+  无 jar 时用 QuickJS worker，再回退 JS
+  - QuickJS 参考：3000 条命令 Rhino 162ms/次 → worker 稳态 **~25ms/次**
+  - 内置 74 条命令实测：Java 0~4ms / worker 2ms / Rhino 2~5ms（Java 省掉 worker
+    排队与 JSON 编解码，库越大优势越明显）
 - 仍然成立的限制：**没有 Java 桥**，只能传可序列化的数据；结果集很大时回程
   JSON 解析会吃掉收益（成本模型见下）
 
@@ -278,8 +280,12 @@ desugaring 只是把 `java.util.Objects.requireNonNull` 换成
 
 | 加速点 | 位置 | 手段 |
 |---|---|---|
-| 命令名匹配 | `CA.IntelliSense.matchString` | `Accel.matchString`，O(n²) 去重 → O(n) |
+| 补全字符串匹配 | `CA.IntelliSense.matchString` | `Accel.matchString`，O(n²) 去重 → O(n)；候选源按对象身份缓存（`setMatchSource` / `matchCached`）；JS 侧结果合并也用 `seen` 去重，最坏 1749 项全命中从 ~500ms 降到 ~107ms |
 | ID 列表过滤 | `CA.Assist.js` 的 `setFilter` | `Accel.filter`，字符串查找一次算完，JS 侧只剩取下标 |
+| 数组 enum 匹配 | `CA.IntelliSense` 的 enum 数组分支 | `Accel.classifyArray`，Java 一次算完 flags/length/canFinish |
+| 命令名匹配（无参数补全） | `CA.IntelliSense` 命令列表 | `Accel.matchCommandNames`，缓存命令表；无 jar 时 QuickJS/JS 回退 |
+| ID 列表过滤（缓存） | `CA.showIDList.update` | `Accel.setIDTexts` + `filterIDTexts`，只传前缀；空前缀直接复用构建时下标；重复打开同一 ID 表复用整次构建结果 |
+| 建议列表过滤（缓存） | `CA.Assist` 的 `setFilter` | `Accel.setFilterTexts` + `filterTexts`，不再每次传整个建议数组 |
 
 第二条尤其重要：原来的写法是**每个元素都从 Java 回调进 Rhino 做一次
 `String.indexOf`**，上千个元素就是上千次边界穿越。
@@ -309,3 +315,6 @@ desugaring 只是把 `java.util.Objects.requireNonNull` 换成
 
 见 `caaccel/README.md`。一句话：**每个 `Accel.xxx()` 都有等价的 JS 实现**，
 jar 在不在、方法有没有都不影响功能，只影响速度。业务代码直接调用，不判断 jar 是否存在。
+
+跨语言迁移候选（JS→Java/QuickJS、Java→JS/QuickJS、QuickJS→Java 的取舍）见
+[porting-candidates.md](porting-candidates.md)。

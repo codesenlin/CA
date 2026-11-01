@@ -521,6 +521,134 @@ MapScript.loadModule("DebugUtils", {
 		});
 		popup = PopupPage.showDialog("debug.tileEdit", layout, -1, -2);
 	} catch(e) {erp(e)}})},
+	/** 调试控制台用：对比 matchString 旧路径（每次传候选数组）与缓存路径
+	 *  用法：DebugUtils.benchMatchString() / benchMatchString(3000, 20)
+	 */
+	benchMatchString : function(n, rounds) {
+		try {
+			n = n || 1749;
+			rounds = rounds || 10;
+			var a = {}, i, t, prefix = "minecraft:", msg;
+			for (i = 0; i < n; i++) a["minecraft:item_" + i] = "物品 " + i;
+			// 旧路径：每次调用都把对象/数组传给 Java matchString
+			Accel._matchStringDirect("__warmup__", a, {});
+			t = Date.now();
+			for (i = 0; i < rounds; i++) Accel._matchStringDirect(prefix, a, {});
+			var directMs = (Date.now() - t) / rounds;
+			// 新路径：第一次同步缓存，后续只传 prefix
+			t = Date.now();
+			Accel.matchString(prefix, a, {});
+			var firstMs = Date.now() - t;
+			t = Date.now();
+			for (i = 0; i < rounds; i++) Accel.matchString(prefix, a, {});
+			var cachedMs = (Date.now() - t) / rounds;
+			msg = "MatchStringBench n=" + n + " rounds=" + rounds +
+				" direct=" + directMs.toFixed(2) + "ms first=" + firstMs +
+				"ms cached=" + cachedMs.toFixed(2) + "ms";
+			try { android.util.Log.i("Script", msg); } catch(e) {}
+			return msg;
+		} catch(e) {
+			return "MatchStringBench error: " + e;
+		}
+	},
+	/** 调试控制台用：对比 Rhino / QuickJS worker / Java 命令名匹配 */
+	benchCommandMatch : function() {
+		try {
+			var snap = CA.IntelliSense.library.command_snap;
+			if (!snap) return "CommandMatchBench: no command_snap";
+			var prefixes = ["", "block", "cmd", "minecraft", "zzz"], out = [], i;
+			var keys = Object.keys(snap);
+			var rhinoMatch = function(p) {
+				return keys.filter(function(e) {
+					return e.indexOf(p) >= 0 || String(snap[e]).indexOf(p) >= 0;
+				}).sort();
+			};
+			// 预热：同步快照 / 注册 worker
+			Accel.matchCommandNames(snap, "__warmup__");
+			try { if (typeof QuickAccel !== "undefined") QuickAccel.matchCommandNames(snap, "__warmup__"); } catch(e) {}
+			for (i = 0; i < prefixes.length; i++) {
+				var p = prefixes[i], t;
+				t = Date.now(); var r = rhinoMatch(p); var rhinoMs = Date.now() - t;
+				t = Date.now(); var j = Accel.matchCommandNames(snap, p); var javaMs = Date.now() - t;
+				var q = null, qMs = null;
+				try {
+					if (typeof QuickAccel !== "undefined") {
+						t = Date.now(); q = QuickAccel.matchCommandNames(snap, p); qMs = Date.now() - t;
+					}
+				} catch(e) {}
+				out.push("[" + p + "] rhino=" + rhinoMs + "ms java=" + javaMs + "ms" +
+					(qMs == null ? "" : " quick=" + qMs + "ms") +
+					" r=" + r.length + " j=" + (j ? j.length : "null") +
+					" same=" + (j && q ? (j.length === q.length && j[0] === q[0] && j[j.length - 1] === q[q.length - 1]) : "?"));
+			}
+			out = "CommandMatchBench n=" + keys.length + " " + out.join(" | ");
+			try { android.util.Log.i("Script", out); } catch(e) {}
+			return out;
+		} catch(e) {
+			return "CommandMatchBench error: " + e;
+		}
+	},
+	/** 调试控制台用：同一份 ID 表对比旧 JS 循环 / CA.filterIDList / Accel.filter */
+	benchIDListCompare : function() {
+		try {
+			var lib = CA.IntelliSense.library, names = [], prefixes = ["", "minecraft:", "block", "item_1", "zzz"];
+			var i, j, e, l, t, old, built, out = [];
+			var texts;
+			for (i = 0; i < lib.idlist.length; i++) {
+				e = lib.idlist[i];
+				l = e.lists || (e.list ? [e.list] : []);
+				for (j = 0; j < l.length; j++) names.push(l[j]);
+			}
+			built = CA.buildIDList(names);
+			texts = built.texts;
+			old = function(s) {
+				var arr = [], k;
+				for (k = 0; k < texts.length; k++) {
+					if (texts[k].indexOf(s) >= 0) arr.push(k);
+				}
+				return arr;
+			};
+			for (i = 0; i < prefixes.length; i++) {
+				t = Date.now(); old(prefixes[i]); var oldMs = Date.now() - t;
+				t = Date.now(); CA.filterIDList(texts, prefixes[i]); var newMs = Date.now() - t;
+				t = Date.now(); Accel.filter(texts, prefixes[i]); var javaMs = Date.now() - t;
+				out.push("[" + prefixes[i] + "] old=" + oldMs + "ms new=" + newMs + "ms java=" + javaMs + "ms");
+			}
+			out = "IDListCompare n=" + texts.length + " accel=" + Accel.available() + " " + out.join(" | ");
+			try { android.util.Log.i("Script", out); } catch(e) {}
+			return out;
+		} catch(e) {
+			return "IDListCompare error: " + e;
+		}
+	},
+	/** 调试控制台用：用当前 ID 表跑 buildIDList / filterIDList 并打日志
+	 *  控制台输入 DebugUtils.benchIDList() 即可；rounds 参数保留给以后重复计时
+	 */
+	benchIDList : function(rounds) {
+		try {
+			var lib = CA.IntelliSense.library, names = [], prefixes = ["", "minecraft:", "block", "item_1", "zzz"];
+			var i, j, e, l, t, arr, results = [], built, buildMs, total = 0;
+			for (i = 0; i < lib.idlist.length; i++) {
+				e = lib.idlist[i];
+				l = e.lists || (e.list ? [e.list] : []);
+				for (j = 0; j < l.length; j++) names.push(l[j]);
+			}
+			t = Date.now();
+			built = CA.buildIDList(names);
+			buildMs = Date.now() - t;
+			for (i = 0; i < prefixes.length; i++) {
+				t = Date.now();
+				arr = CA.filterIDList(built.texts, prefixes[i]);
+				results.push("[" + prefixes[i] + "]=" + arr.length + "/" + (Date.now() - t) + "ms");
+				total += arr.length;
+			}
+			results = "IDListBench n=" + built.ids.length + " build=" + buildMs + "ms filter: " + results.join(", ");
+			try { android.util.Log.i("Script", results); } catch(e) {}
+			return results;
+		} catch(e) {
+			return "IDListBench error: " + e;
+		}
+	},
 	updateDebugAction : function() {
 		if (CA.settings.enableDebugAction) {
 			CA.Actions["debug.action"] = this.debugAction;

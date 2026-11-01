@@ -5643,6 +5643,117 @@ MapScript.loadModule("CA", {
 			CA.showIDList(r[pos].list, callback);
 		});
 	},
+	/** 构建 ID 列表（去重 + 按 ID 排序）；被 showIDList 与调试基准共用 */
+	buildIDList : function(list) {
+		var t0 = Date.now(), tResolve, tBuild, tSort, tSync, tAll;
+		var i, j, cur = list, e, ks, id, seen = Object.create(null);
+		var ids = [], texts = [], cacheKey = null, lib = CA.IntelliSense.library;
+		// 同一库 + 同一 ID 表重复打开时直接复用（只缓存字符串 list）
+		if (list && list.length && typeof list[0] == "string") {
+			cacheKey = list.join("\u0001");
+			var cache = CA._idListBuildCache;
+			if (cache && cache.lib === lib && cache.key === cacheKey) {
+				CA._idAllIndices = cache.allIndices;
+				Accel.setIDTexts(cache.texts);
+				if (BuildConfig.variants == "debug") {
+					try { android.util.Log.i("Script", "IDList init cached, " + cache.ids.length + " 项"); } catch(e) {}
+				}
+				return { ids : cache.ids, texts : cache.texts, allIndices : cache.allIndices };
+			}
+		}
+		for (i = 0; i < cur.length; i++) {
+			if (!(cur[i] instanceof Object)) {
+				cur[i] = CA.IntelliSense.library.enums[cur[i]];
+			}
+		}
+		tResolve = Date.now();
+		// 用 seen 做 O(n) 去重，并顺手存下显示文本（省掉后面再建一次 id→text 映射）
+		for (i = 0; i < cur.length; i++) {
+			e = cur[i];
+			if (e == null) continue;
+			if (Array.isArray(e)) {
+				for (j = 0; j < e.length; j++) {
+					id = e[j];
+					if (seen[id] !== undefined) continue;
+					seen[id] = id;
+					ids.push(id);
+				}
+			} else {
+				ks = Object.keys(e);
+				for (j = 0; j < ks.length; j++) {
+					id = ks[j];
+					if (seen[id] !== undefined) continue;
+					seen[id] = id + (e[id] ? " - " + e[id] : "");
+					ids.push(id);
+				}
+			}
+		}
+		tBuild = Date.now();
+		// ID 表都是字符串；用原生 sort，再按 seen 还原 texts（比逐次比较器快 ~10x）
+		var allString = true, i2;
+		for (i2 = 0; i2 < ids.length; i2++) {
+			if (typeof ids[i2] != "string") {
+				allString = false;
+				break;
+			}
+		}
+		if (allString) {
+			ids.sort();
+		} else {
+			texts = new Array(ids.length);
+			for (i2 = 0; i2 < ids.length; i2++) texts[i2] = seen[ids[i2]];
+			ISegment.kvSort(ids, texts, function(a, b) {
+				return a > b ? 1 : a == b ? 0 : -1;
+			});
+		}
+		texts = new Array(ids.length);
+		for (i2 = 0; i2 < ids.length; i2++) texts[i2] = seen[ids[i2]];
+		tSort = Date.now();
+		// 同步给 Java/JS 缓存：之后每次输入只传前缀，不再传整个 texts 数组
+		Accel.setIDTexts(texts);
+		tSync = Date.now();
+		CA._idAllIndices = new Array(ids.length);
+		for (i = 0; i < ids.length; i++) CA._idAllIndices[i] = i;
+		tAll = Date.now();
+		if (cacheKey != null) {
+			CA._idListBuildCache = {
+				lib : lib,
+				key : cacheKey,
+				ids : ids,
+				texts : texts,
+				allIndices : CA._idAllIndices
+			};
+		}
+		if (BuildConfig.variants == "debug") {
+			try {
+				android.util.Log.i("Script", "IDList init " + (Date.now() - t0) + "ms, " + ids.length +
+					" 项 (resolve=" + (tResolve - t0) + " build=" + (tBuild - tResolve) +
+					" sort=" + (tSort - tBuild) + " sync=" + (tSync - tSort) +
+					" all=" + (tAll - tSync) + ")");
+			} catch(e) {}
+		}
+		return { ids : ids, texts : texts };
+	},
+	/** 过滤 ID 列表，返回 texts 下标数组；有 jar 走 Accel.filter，没有走等价 JS */
+	filterIDList : function(texts, s) {
+		var t0 = Date.now(), p = String(s);
+		// 空前缀直接返回构建时缓存的全部下标，避免 4000+ 结果反复构造
+		if (p === "" && CA._idAllIndices != null) {
+			if (BuildConfig.variants == "debug") {
+				try {
+					android.util.Log.i("Script", "IDList filter \"\" cached " + (Date.now() - t0) + "ms, " + texts.length + " -> " + CA._idAllIndices.length);
+				} catch(e) {}
+			}
+			return CA._idAllIndices;
+		}
+		var arr = Accel.filterIDTexts(p);
+		if (BuildConfig.variants == "debug") {
+			try {
+				android.util.Log.i("Script", "IDList filter \"" + String(s).slice(0, 20) + "\" " + (Date.now() - t0) + "ms, " + texts.length + " -> " + arr.length);
+			} catch(e) {}
+		}
+		return arr;
+	},
 	showIDList : function self(list, callback) {G.ui(function() {try {
 		if (!self.linear) {
 			self.vmaker = function(holder) {
@@ -5656,56 +5767,13 @@ MapScript.loadModule("CA", {
 				holder.self.setText(self.texts[e]);
 			}
 			self.init = function(list) {
-				self.ids = [];
-				self.texts = [];
-				var i, j, cur = list, e, ks, off, total = 0;
-				for (i = 0; i < cur.length; i++) {
-					if (!(cur[i] instanceof Object)) {
-						cur[i] = CA.IntelliSense.library.enums[cur[i]];
-					}
-				}
-				for (i = 0; i < cur.length; i++) {
-					e = cur[i];
-					if (e == null) continue;
-					off = total;
-					if (Array.isArray(e)) {
-						self.ids.length = (self.texts.length += e.length);
-						for (j = 0; j < e.length; j++) {
-							if (self.ids.indexOf(e[j]) >= 0) {
-								off--;
-								continue;
-							}
-							self.ids[off + j] = self.texts[off + j] = e[j];
-							total++;
-						}
-					} else {
-						ks = Object.keys(e);
-						self.ids.length = (self.texts.length += ks.length);
-						for (j = 0; j < ks.length; j++) {
-							if (self.ids.indexOf(ks[j]) >= 0) {
-								off--;
-								continue;
-							}
-							self.ids[off + j] = ks[j];
-							self.texts[off + j] = ks[j] + (e[ks[j]] ? " - " + e[ks[j]] : "");
-							total++;
-						}
-					}
-					self.ids.length = self.texts.length = total;
-				}
-				ISegment.kvSort(self.ids, self.texts, function(a, b) {
-					return a > b ? 1 : a == b ? 0 : -1;
-				});
+				var t = CA.buildIDList(list);
+				self.ids = t.ids;
+				self.texts = t.texts;
 				self.update("");
 			}
 			self.update = function(s) {
-				var i, arr = [];
-				for (i = 0; i < self.texts.length; i++) {
-					if (self.texts[i].indexOf(s) >= 0) {
-						arr.push(i);
-					}
-				}
-				self.adpt.setArray(arr);
+				self.adpt.setArray(CA.filterIDList(self.texts, s));
 			}
 			self.adpt = SimpleListAdapter.getController(new SimpleListAdapter([], self.vmaker, self.vbinder, null, true));
 			self.linear = new G.LinearLayout(ctx);

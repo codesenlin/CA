@@ -315,7 +315,9 @@
 			}
 		}
 		if (listener.setText) {
-			var sugg = new G.ListView(ctx), adpt = new FilterListAdapter(new SimpleListAdapter(Object.keys(suggestion), CA.Assist.smallVMaker, CA.Assist.smallVBinder));
+			var suggKeys = Object.keys(suggestion);
+			Accel.setFilterTexts(suggKeys);
+			var sugg = new G.ListView(ctx), adpt = new FilterListAdapter(new SimpleListAdapter(suggKeys, CA.Assist.smallVMaker, CA.Assist.smallVBinder));
 			sugg.setBackgroundColor(G.Color.TRANSPARENT);
 			sugg.setLayoutParams(new G.LinearLayout.LayoutParams(-1, 0, 1));
 			sugg.setAdapter(adpt.build());
@@ -331,7 +333,7 @@
 				var s = String(s);
 				if (s) {
 					// 过滤在 Java 里一次算完，JS 侧只剩取下标；没有 jar 时走等价 JS 实现
-					var keep = Accel.filter(Object.keys(suggestion), s);
+					var keep = Accel.filterTexts(s);
 					adpt.setFilter(function(e, i) {
 						return keep[i];
 					});

@@ -89,15 +89,22 @@
 		} else {
 			//分类 - 未输入参数
 
-			//获得可选命令（QuickJS worker 加速：命令库同步一次，之后每次只传前缀）
+			//获得可选命令：优先 Java 缓存命令表；无 jar 时用 QuickJS worker；最后 JS
 			t = this.library.command_snap;
 			ca = null;
 			try {
-				if (typeof QuickAccel !== "undefined") ca = QuickAccel.matchCommandNames(t, c[2]);
+				if (typeof Accel !== "undefined" && Accel.available()) ca = Accel.matchCommandNames(t, c[2]);
 			} catch (e) {
 				ca = null;
 			}
-			if (!ca) {
+			if (ca == null) {
+				try {
+					if (typeof QuickAccel !== "undefined") ca = QuickAccel.matchCommandNames(t, c[2]);
+				} catch (e) {
+					ca = null;
+				}
+			}
+			if (ca == null) {
 				ca = Object.keys(t).filter(function(e, i, a) {
 					return e.indexOf(c[2]) >= 0 || t[e].indexOf(c[2]) >= 0;
 				}).sort();
@@ -815,17 +822,18 @@
 				canFinish : false,
 				length : -1
 			};
-			if (Array.isArray(t)) { //这个懒得用matchString了
-				r.input = t.filter(function(e, i, a) {
-					if (ps.startsWith(e + " ") || ps == e) {
-						r.length = Math.max(r.length, e.length);
-						r.canFinish = true;
-					} else if (e.startsWith(ps)) {
-						r.length = Math.max(r.length, ps.length);;
-					} else return false;
-					r.output[e] = e;
-					return true;
-				});
+			if (Array.isArray(t)) {
+				var __ac = Accel.classifyArray(t, ps);
+				var __flags = __ac.flags, __i, __e;
+				r.length = __ac.length;
+				r.canFinish = __ac.canFinish;
+				r.input = [];
+				for (__i = 0; __i < __flags.length; __i++) {
+					if (!__flags[__i]) continue;
+					__e = t[__i];
+					r.output[__e] = __e;
+					r.input.push(__e);
+				}
 				r.input.sort();
 			} else {
 				t2 = [];

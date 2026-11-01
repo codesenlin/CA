@@ -35,6 +35,59 @@ public final class Accel {
      *
      * 相比 JS 版的收益：JS 版用 indexOf 去重是 O(n²)，这里用 LinkedHashSet 是 O(n)。
      */
+    private static String[] matchKeys = null;
+    private static String[] matchDescs = null;
+    private static boolean matchIsMap = false;
+
+    /** 缓存 matchString 的候选源：数组模式 descs 传 null，对象模式 descs 为描述 */
+    public static void setMatchSource(String[] keys, String[] descs, boolean isMap) {
+        matchKeys = keys;
+        matchDescs = descs;
+        matchIsMap = isMap;
+    }
+
+    /** 在缓存的候选源上做 matchString；与 matchString(ps, a) 结果等价 */
+    public static Result matchCached(String ps) {
+        Result r = new Result();
+        String[] keys = matchKeys;
+        if (keys == null) return r;
+        String p = ps == null ? "" : ps;
+        if (!matchIsMap) {
+            List<String> hits = new ArrayList<String>();
+            for (int i = 0; i < keys.length; i++) {
+                String e = keys[i];
+                if (e == null || e.indexOf(p) < 0) continue;
+                r.outputs.put(e, e);
+                hits.add(e);
+            }
+            Collections.sort(hits);
+            r.inputs.addAll(hits);
+            return r;
+        }
+        String[] descs = matchDescs;
+        List<String> withDesc = new ArrayList<String>();
+        List<String> plain = new ArrayList<String>();
+        for (int i = 0; i < keys.length; i++) {
+            String key = keys[i];
+            if (key == null) continue;
+            String val = (descs != null && i < descs.length && descs[i] != null) ? descs[i] : "";
+            if (key.indexOf(p) < 0 && val.indexOf(p) < 0) continue;
+            if (val.length() > 0) {
+                String display = key + " - " + val;
+                r.outputs.put(display, key);
+                withDesc.add(display);
+            } else {
+                r.outputs.put(key, key);
+                plain.add(key);
+            }
+        }
+        Collections.sort(withDesc);
+        Collections.sort(plain);
+        r.inputs.addAll(withDesc);
+        r.inputs.addAll(plain);
+        return r;
+    }
+
     public static Result matchString(String ps, Object a) {
         Result r = new Result();
         String p = ps == null ? "" : ps;
@@ -73,7 +126,81 @@ public final class Accel {
         return r;
     }
 
-/**
+/** 通用文本过滤缓存：CA.Assist 建议列表每次输入不再传整个数组 */
+    private static String[] filterTextsCache = null;
+
+    public static void setFilterTexts(String[] texts) {
+        filterTextsCache = texts;
+    }
+
+    /** 在缓存的文本里标记包含 s 的元素；没有缓存返回空掩码 */
+    public static boolean[] filterTexts(String s) {
+        String[] texts = filterTextsCache;
+        boolean[] keep = new boolean[texts == null ? 0 : texts.length];
+        if (texts == null) return keep;
+        String p = s == null ? "" : s;
+        for (int i = 0; i < texts.length; i++) {
+            keep[i] = texts[i] != null && texts[i].contains(p);
+        }
+        return keep;
+    }
+
+    /** 命令名/描述缓存：命令库重建时同步一次，之后只传前缀（CA.IntelliSense 用） */
+    private static String[] commandKeys = null;
+    private static String[] commandDescs = null;
+
+    /** 同步命令快照；keys 为命令名，descs 为对应描述（可为 null） */
+    public static void setCommandSnapshot(String[] keys, String[] descs) {
+        commandKeys = keys;
+        commandDescs = descs;
+    }
+
+    /** 匹配命令名/描述中包含 prefix 的命令，按名称排序返回 */
+    public static String[] matchCommandNames(String prefix) {
+        String[] keys = commandKeys;
+        String[] descs = commandDescs;
+        if (keys == null) return new String[0];
+        String p = prefix == null ? "" : prefix;
+        List<String> out = new ArrayList<String>();
+        for (int i = 0; i < keys.length; i++) {
+            String k = keys[i];
+            if (k == null) continue;
+            String d = (descs != null && i < descs.length && descs[i] != null) ? descs[i] : "";
+            if (k.contains(p) || d.contains(p)) out.add(k);
+        }
+        Collections.sort(out);
+        return out.toArray(new String[0]);
+    }
+
+    /** ID 列表文本缓存：buildIDList 时同步一次，之后只传前缀（CA.showIDList 用） */
+    private static String[] idTexts = null;
+
+    /** 同步 ID 列表文本；列表重建时由 JS 侧重新调用 */
+    public static void setIDTexts(String[] texts) {
+        idTexts = texts;
+    }
+
+    /**
+     * 在缓存的 ID 文本里查找包含 s 的下标；没有缓存/无匹配返回空数组。
+     * 相比 filter(String[] arr, String s) 省掉每次调用都从 Rhino 转 4000+ 字符串的开销。
+     */
+    public static int[] filterIDTexts(String s) {
+        String[] texts = idTexts;
+        if (texts == null) return new int[0];
+        String p = s == null ? "" : s;
+        int i, count = 0;
+        for (i = 0; i < texts.length; i++) {
+            if (texts[i] != null && texts[i].contains(p)) count++;
+        }
+        int[] out = new int[count];
+        int j = 0;
+        for (i = 0; i < texts.length; i++) {
+            if (texts[i] != null && texts[i].contains(p)) out[j++] = i;
+        }
+        return out;
+    }
+
+    /**
      * 批量过滤：保留 arr 中包含 s 的元素，返回下标掩码。
      *
      * 对应 JS 侧的 setFilter(function(e, i) { return e.indexOf(s) >= 0; })：
@@ -131,10 +258,65 @@ public final class Accel {
         return flags;
     }
 
+    /**
+     * 数组形式的枚举候选匹配（CA.IntelliSense 的 enum 数组分支）。
+     * 返回标志数组 + 匹配到的最大长度 + 是否可结束，JS 侧只负责拼 label。
+     *
+     * flags: 1 = ps 完整命中（ps == e 或 ps.startsWith(e + " ")，可结束）
+     *        2 = 前缀命中（e.startsWith(ps)）
+     *        0 = 不命中
+     */
+    public static ArrayClassifyResult classifyArray(String[] arr, String ps) {
+        int n = arr == null ? 0 : arr.length;
+        int[] flags = new int[n];
+        int length = -1;
+        boolean canFinish = false;
+        String p = ps == null ? "" : ps;
+        for (int i = 0; i < n; i++) {
+            String e = arr[i];
+            if (e == null) continue;
+            if (p.equals(e) || p.startsWith(e + " ")) {
+                flags[i] = 1;
+                if (e.length() > length) length = e.length();
+                canFinish = true;
+            } else if (e.startsWith(p)) {
+                flags[i] = 2;
+                if (p.length() > length) length = p.length();
+            }
+        }
+        return new ArrayClassifyResult(flags, length, canFinish);
+    }
+
+    /** classifyArray 的结果 */
+    public static final class ArrayClassifyResult {
+        public final int[] flags;
+        public final int length;
+        public final boolean canFinish;
+
+        public ArrayClassifyResult(int[] flags, int length, boolean canFinish) {
+            this.flags = flags;
+            this.length = length;
+            this.canFinish = canFinish;
+        }
+    }
+
     /** matchString 的结果：新增的候选与新增的显示映射 */
     public static final class Result {
         public final List<String> inputs = new ArrayList<String>();
         public final Map<String, String> outputs = new LinkedHashMap<String, String>();
+
+        // 给 JS 侧批量取用，避免对 1000+ 项逐个 keySet()/Map.get() 穿过 Rhino
+        public String[] inputArray() {
+            return inputs.toArray(new String[0]);
+        }
+
+        public String[] outputKeys() {
+            return outputs.keySet().toArray(new String[0]);
+        }
+
+        public String[] outputValues() {
+            return outputs.values().toArray(new String[0]);
+        }
     }
 
     /**
