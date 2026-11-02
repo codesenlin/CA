@@ -605,22 +605,12 @@ MapScript.loadModule("GiteeFeedback", {
 						}
 					}];
 					self.vmaker = function (holder) {
-						var layout = holder.linear = new G.LinearLayout(ctx),
-							text1 = holder.text1 = new G.TextView(ctx),
-							text2 = holder.text2 = new G.TextView(ctx);
-						layout.setLayoutParams(new G.AbsListView.LayoutParams(-1, -2));
-						layout.setOrientation(G.LinearLayout.VERTICAL);
-						layout.setPadding(20 * G.dp, 15 * G.dp, 20 * G.dp, 15 * G.dp);
-						text1.setLayoutParams(new G.LinearLayout.LayoutParams(-2, -2));
-						text1.setEllipsize(G.TextUtils.TruncateAt.END);
-						text1.setSingleLine(true);
-						Common.applyStyle(text1, "item_default", 3);
-						layout.addView(text1);
-						text2.setPadding(0, 5 * G.dp, 0, 0);
-						text2.setLayoutParams(new G.LinearLayout.LayoutParams(-2, -2));
-						Common.applyStyle(text2, "textview_prompt", 1);
-						layout.addView(text2);
-						return layout;
+						return NetworkUI.listItem(holder, {
+							padding: [20 * G.dp, 15 * G.dp, 20 * G.dp, 15 * G.dp],
+							width: -2,
+							text1Style: "item_default",
+							text1FontSize: 3
+						});
 					}
 					self.vbinder = function (holder, e, i, a) {
 						holder.linear.setGravity(e.fromThis ? G.Gravity.RIGHT : G.Gravity.LEFT);

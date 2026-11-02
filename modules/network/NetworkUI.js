@@ -419,22 +419,30 @@ MapScript.loadModule("NetworkUI", {
 			} catch (e) { erp(e) }
 		});
 	},
-	/** 网络列表项通用 vmaker：标题 + 描述两行 */
-	listItem: function (holder) {
-		var layout = new G.LinearLayout(ctx),
+	/**
+	 * 通用两行列表项：标题 + 描述。opts 可覆盖 padding/宽度/样式。
+	 * 默认给反馈列表用；详情页评论行通过 opts 复用。
+	 */
+	listItem: function (holder, opts) {
+		opts = opts || {};
+		var width = opts.width || -1,
+			padding = opts.padding || [15 * G.dp, 15 * G.dp, 15 * G.dp, 15 * G.dp],
+			layout = holder.linear = new G.LinearLayout(ctx),
 			text1 = holder.text1 = new G.TextView(ctx),
 			text2 = holder.text2 = new G.TextView(ctx);
 		layout.setLayoutParams(new G.AbsListView.LayoutParams(-1, -2));
 		layout.setOrientation(G.LinearLayout.VERTICAL);
-		layout.setPadding(15 * G.dp, 15 * G.dp, 15 * G.dp, 15 * G.dp);
-		text1.setLayoutParams(new G.LinearLayout.LayoutParams(-1, -2));
+		layout.setPadding(padding[0], padding[1], padding[2], padding[3]);
+		text1.setLayoutParams(new G.LinearLayout.LayoutParams(width, -2));
 		text1.setEllipsize(G.TextUtils.TruncateAt.END);
 		text1.setSingleLine(true);
+		if (opts.text1Style) Common.applyStyle(text1, opts.text1Style, opts.text1FontSize || 3);
 		layout.addView(text1);
 		text2.setPadding(0, 5 * G.dp, 0, 0);
-		text2.setLayoutParams(new G.LinearLayout.LayoutParams(-1, -2));
-		Common.applyStyle(text2, "textview_prompt", 1);
+		text2.setLayoutParams(new G.LinearLayout.LayoutParams(width, -2));
+		Common.applyStyle(text2, opts.text2Style || "textview_prompt", opts.text2FontSize || 1);
 		layout.addView(text2);
 		return layout;
 	}
+
 });

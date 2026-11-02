@@ -25,6 +25,8 @@
 - `NetworkUI.formDialog`：通用标题 + 输入框 + 说明 + 按钮表单
 - `GiteeFeedback.showLogin`、`UserManager` 的登录 / 注册 / 忘记密码 / 改密表单
   已迁移；自动构建通过，线上账号登录流程仍需真机手动验证
+- `NetworkUI.listItem` 支持 `opts`；GiteeFeedback / IssueService 详情页评论行
+  复用该 helper，去掉两份手写两行 item
 
 剩余验证：
 
@@ -40,14 +42,14 @@
 （8 份 → 1 份）、`mergeSort`（2 份 → 1 份）、module 30 的重复
 `FullTextDocument`（改为 require module 29 的 `vscode-languageserver-textdocument`）。
 
-剩余重复：
-
-- meta-schema 常量（如 `$vocabulary` / `multipleOf` 相关 schema 数组）在 bundle 内出现若干份
+检查结论：module 19 / 20 分别是 JSON Schema draft 2019-09 / 2020-12 的
+meta-schema，结构相似但内容不同，并非重复副本；不再按重复处理。
 
 已验证：
 - Node 下对比改动前后 `TextDocument.create/update/applyEdits`、`doComplete`
   多个光标位置、`findNodeAtOffset`，结果一致
 - 删除约 5.9KB / 141 行
+- 评论行去重后 npm test / buildRelease / shellBuildDebug 通过
 
 不建议手改：这些是 webpack 模块的独立副本，删一份需要改模块引用，容易破坏解析/补全。
 后续做法：
@@ -76,11 +78,8 @@
   `.json` clib 源按原文读取
 - 新增 loader 测试覆盖 LOADER 注释兼容；`clibspawn` 用临时签名密钥跑通全部 5 个库
 
-后续可做：
-
-- `main.js` 中 `Build.execute` 与 `procArgs` 的 Process/Success 日志重复
-  （约 10 行，收益低）
-- `publish*` 各任务里 sftp/文件写入样板（量小，暂不处理）
+本轮已收尾：`publish*` 已共用 `publish.js`，构建日志样板也已收敛；
+暂无计划内去重项。
 
 ## 验证清单（每次去重后）
 
