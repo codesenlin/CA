@@ -92,13 +92,17 @@ function build(quiet) {
 	return { jdk, outJar };
 }
 
-/** 在 Gradle 缓存里找 rhino-runtime jar（找不到就用 test/ 下自带的） */
+/**
+ * 在 Gradle 缓存里找 Rhino jar。
+ * cadroid 已从 rhino-runtime 1.7.15.1 换到完整版 org.mozilla:rhino:1.9.2
+ * （rhino-runtime 1.8+ 停更；完整版才带 E4X/xml 支持），这里优先找新 jar。
+ */
 function findRhino() {
-	const target = "rhino-runtime-1.7.15.1.jar";
+	const targets = ["rhino-1.9.2.jar", "rhino-1.9.1.jar"];
 	const gradleCaches = path.join(process.env.HOME || process.env.USERPROFILE || "", ".gradle", "caches");
-	const found = [];
+	const found = {};
 	(function walk(dir, depth) {
-		if (found.length || depth > 8 || !fs.existsSync(dir)) return;
+		if (depth > 8 || !fs.existsSync(dir)) return;
 		let entries;
 		try {
 			entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -108,16 +112,18 @@ function findRhino() {
 		entries.forEach(function (entry) {
 			const full = path.join(dir, entry.name);
 			if (entry.isDirectory()) walk(full, depth + 1);
-			else if (entry.name === target) found.push(full);
+			else if (targets.indexOf(entry.name) >= 0 && !found[entry.name]) found[entry.name] = full;
 		});
 	})(gradleCaches, 0);
-	if (found.length) return found[0];
-
-	const candidates = [path.join(ROOT, "test", "rhino-runtime.jar"), path.join(ROOT, "test", target)];
-	for (let i = 0; i < candidates.length; i++) {
-		if (fs.existsSync(candidates[i])) return candidates[i];
+	for (let i = 0; i < targets.length; i++) {
+		if (found[targets[i]]) return found[targets[i]];
 	}
-	fail("找不到 rhino-runtime jar：先跑一次 cadroid 的构建（会下载到 Gradle 缓存），或放一份到 caaccel/test/rhino-runtime.jar");
+
+	for (let i = 0; i < targets.length; i++) {
+		const candidate = path.join(ROOT, "test", targets[i]);
+		if (fs.existsSync(candidate)) return candidate;
+	}
+	fail("找不到 Rhino jar（rhino-1.9.2.jar）：先跑一次 cadroid 的构建（会下载到 Gradle 缓存），或放一份到 caaccel/test/rhino-1.9.2.jar");
 }
 
 /** 跑单测 */
@@ -165,7 +171,7 @@ try {
 			"",
 			"  build   构建 build/caaccel.jar（纯 javac + jar）",
 			"  test    跑 caaccel/test 下的单测",
-			"  bench   matchString 的 Java vs Rhino 基准（需要 rhino-runtime jar）",
+			"  bench   matchString 的 Java vs Rhino 基准（需要 Rhino 1.9.2 jar）",
 			"",
 			"JDK 优先用 $JAVA_HOME/bin，没有就用 PATH 里的 javac/jar/java。"
 		].join("\n"));
