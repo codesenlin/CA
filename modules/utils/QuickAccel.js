@@ -100,6 +100,13 @@ MapScript.loadModule("QuickAccel", (function () {
 		"  for (i = 0; i < a.length; i++) out.push(a[i] != null && String(a[i]).indexOf(p) >= 0);",
 		"  return out;",
 		"}",
+		// 大文本搜索：worker 缓存 texts，只传查询串、回传命中下标
+		"function searchTextsCached(ps) {",
+		"  var g = globalThis, a = g.__searchTexts, p = String(ps), out = [], i;",
+		"  if (!a) return out;",
+		"  for (i = 0; i < a.length; i++) if (String(a[i]).indexOf(p) >= 0) out.push(i);",
+		"  return out;",
+		"}",
 		// 基准用：只处理字符串/字符串数组的 bundleStrings，逻辑与 CA.showBatchBuilder 一致
 		"function bundleStringsCached(parts) {",
 		"  var msp = [], msi, msn, r = [], cur, i;",
@@ -111,6 +118,17 @@ MapScript.loadModule("QuickAccel", (function () {
 		"  while (msi[0] < msn[0]) {",
 		"    cur = parts.slice();",
 		"    for (i = 0; i < msp.length; i++) cur[msp[i]] = cur[msp[i]][msi[i]];",
+		"    for (i = 0; i < cur.length; i++) {",
+		"      if (cur[i] && typeof cur[i] === 'object' && !Array.isArray(cur[i])) {",
+		"        if (cur[i].type === 'map') {",
+		"          cur[i] = cur[i].index < 0 ? '{找不到标签}' : cur[cur[i].index];",
+		"        } else if (cur[i].type === 'syncmap') {",
+		"          var t2 = msp.indexOf(cur[i].target);",
+		"          var idx = t2 >= 0 ? msi[t2] : 0;",
+		"          cur[i] = idx < cur[i].arr.length ? cur[i].arr[idx] : '{下标超出}';",
+		"        } else { cur[i] = ''; }",
+		"      }",
+		"    }",
 		"    r.push(cur.join(''));",
 		"    msi[msi.length - 1]++;",
 		"    for (i = msi.length - 1; i > 0; i--) {",
@@ -157,6 +175,7 @@ MapScript.loadModule("QuickAccel", (function () {
 	r.filterTextsRef = null;
 	r.idNamesRef = null;
 	r.idEnumsRef = null;
+	r.searchTextsRef = null;
 	r.lastIDSyncMs = 0;
 	r.lastIDBuildMs = 0;
 
@@ -279,7 +298,12 @@ MapScript.loadModule("QuickAccel", (function () {
 			var i, j, e;
 			for (i = 0; i < parts.length; i++) {
 				e = parts[i];
-				if (typeof e == "function" || (e && typeof e == "object" && !Array.isArray(e))) return null;
+				if (typeof e == "function") return null;
+				if (e && typeof e == "object" && !Array.isArray(e)) {
+					if (e.type == "map" && typeof e.index == "number") continue;
+					if (e.type == "syncmap" && Array.isArray(e.arr) && typeof e.target == "number") continue;
+					return null;
+				}
 				if (Array.isArray(e)) {
 					for (j = 0; j < e.length; j++) {
 						if (typeof e[j] == "function" || (e[j] && typeof e[j] == "object")) return null;
@@ -290,6 +314,21 @@ MapScript.loadModule("QuickAccel", (function () {
 			return res ? JSON.parse(res) : null;
 		} catch (e) {
 			android.util.Log.w("Script", "QuickAccel.bundleStrings 异常: " + e);
+			return null;
+		}
+	};
+
+	// 大文本搜索：缓存 texts，之后每次只传查询串；供未来搜索 UI/基准使用
+	r.searchTexts = function (texts, query) {
+		try {
+			if (!r.available || !texts || !r.ensureWorker()) return null;
+			if (texts !== r.searchTextsRef) {
+				if (!r.syncVar("__searchTexts", texts, "searchTextsRef")) return null;
+			}
+			var res = ScriptInterface.quickWorkerCall("searchTextsCached", JSON.stringify([String(query)]));
+			return res ? JSON.parse(res) : null;
+		} catch (e) {
+			android.util.Log.w("Script", "QuickAccel.searchTexts 异常: " + e);
 			return null;
 		}
 	};

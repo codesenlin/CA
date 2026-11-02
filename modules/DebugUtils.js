@@ -824,6 +824,31 @@ MapScript.loadModule("DebugUtils", {
 			return "IDListBench error: " + e;
 		}
 	},
+	/** 调试控制台用：大文本搜索 Rhino vs QuickJS worker（目前没有搜索 UI，暂作基准/接口） */
+	benchLargeSearch: function (n) {
+		try {
+			if (typeof QuickAccel === "undefined" || !QuickAccel.available) return "LargeSearch unavailable";
+			n = n || 12000;
+			var i, texts = [], query = "item_99", t0, t1, js, quick, same;
+			for (i = 0; i < n; i++) texts.push("item_" + i + " description text " + (i % 97));
+			function jsSearch() {
+				var out = [], i, p = query;
+				for (i = 0; i < texts.length; i++) if (texts[i].indexOf(p) >= 0) out.push(i);
+				return out;
+			}
+			t0 = Date.now(); js = jsSearch(); var jsMs = Date.now() - t0;
+			t1 = Date.now(); quick = QuickAccel.searchTexts(texts, query); var firstMs = Date.now() - t1;
+			t1 = Date.now(); quick = QuickAccel.searchTexts(texts, query); var warmMs = Date.now() - t1;
+			same = !!quick && quick.length === js.length;
+			if (same) for (i = 0; i < js.length; i++) if (js[i] !== quick[i]) { same = false; break; }
+			var out = "LargeSearch n=" + n + " rhino=" + jsMs + "ms quickFirst=" + firstMs +
+				"ms quickWarm=" + warmMs + "ms hits=" + js.length + " same=" + same;
+			try { android.util.Log.i("Script", out); } catch (e) { }
+			return out;
+		} catch (e) {
+			return "LargeSearch error: " + e;
+		}
+	},
 	/** 调试控制台用：批量导出 bundleStrings Rhino vs QuickJS A/B，只测不接生产 */
 	benchBatchBundle: function () {
 		try {
@@ -860,7 +885,20 @@ MapScript.loadModule("DebugUtils", {
 			if (same) {
 				for (i = 0; i < rhino.length; i++) if (rhino[i] !== quick[i]) { same = false; break; }
 			}
-			var out = "BatchBundle n=" + rhino.length + " rhino=" + rhinoMs + "ms quick=" + quickMs + "ms same=" + same;
+			var complex = QuickAccel.bundleStrings([
+				["A", "B"],
+				{ type: "syncmap", arr: ["1", "2"], target: 0 },
+				["X", "Y"],
+				{ type: "map", index: 0 }
+			]);
+			var expected = ["A1XA", "A1YA", "B2XB", "B2YB"];
+			var complexOk = false;
+			if (complex && complex.length === expected.length) {
+				complexOk = true;
+				for (i = 0; i < expected.length; i++) if (complex[i] !== expected[i]) { complexOk = false; break; }
+			}
+			var out = "BatchBundle n=" + rhino.length + " rhino=" + rhinoMs + "ms quick=" + quickMs + "ms same=" + same +
+				" complex=" + complexOk + (complex && !complexOk ? " " + JSON.stringify(complex) : "");
 			try { android.util.Log.i("Script", out); } catch (e) { }
 			return out;
 		} catch (e) {

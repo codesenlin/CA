@@ -6171,10 +6171,24 @@ MapScript.loadModule("CA", {
 	},
 	loadIDListDiskCache: function (key) {
 		try {
-			// SafeFileUtils.readJSON 走 eval，66KB 数组在 Rhino 下明显慢；JSON.parse 更快
 			var text = SafeFileUtils.readText(new java.io.File(this.idListCachePath()), null);
-			var data = text ? JSON.parse(text) : null;
+			if (!text) return null;
+			var data, ids, texts, p1, p2;
+			// 兼容旧版 JSON 缓存
+			if (text.charAt(0) == "{") {
+				data = JSON.parse(text);
+			} else {
+				p1 = text.indexOf("\n");
+				p2 = p1 < 0 ? -1 : text.indexOf("\n", p1 + 1);
+				if (p1 < 0 || p2 < 0 || text.slice(0, p1) !== key) return null;
+				ids = text.slice(p1 + 1, p2).split("\u0001");
+				texts = text.slice(p2 + 1).split("\u0001");
+				if (ids.length === 1 && ids[0] === "") ids = [];
+				if (texts.length === 1 && texts[0] === "") texts = [];
+				data = { key: key, ids: ids, texts: texts };
+			}
 			if (!data || data.key !== key || !Array.isArray(data.ids) || !Array.isArray(data.texts)) return null;
+			if (data.ids.length !== data.texts.length) return null;
 			return data;
 		} catch (e) {
 			return null;
@@ -6182,12 +6196,9 @@ MapScript.loadModule("CA", {
 	},
 	saveIDListDiskCache: function (key, built) {
 		try {
-			// JSON.stringify 比 MapScript.toSource 快很多；SafeFileUtils 内部仍会 gzip
-			SafeFileUtils.writeText(new java.io.File(this.idListCachePath()), JSON.stringify({
-				key: key,
-				ids: built.ids,
-				texts: built.texts
-			}));
+			// 行格式比 JSON 数组解析快：header\nids\ntexts，元素内用 U+0001 分隔
+			SafeFileUtils.writeText(new java.io.File(this.idListCachePath()),
+				key + "\n" + built.ids.join("\u0001") + "\n" + built.texts.join("\u0001"));
 		} catch (e) {
 			android.util.Log.w("Script", "IDList disk cache save failed: " + e);
 		}
@@ -6784,7 +6795,13 @@ MapScript.loadModule("CA", {
 							var estimate = 1, serializable = true, q, quick;
 							for (i = 0; i < array.length; i++) {
 								q = array[i];
-								if (typeof q == "function" || (q && typeof q == "object" && !Array.isArray(q))) {
+								if (typeof q == "function") {
+									serializable = false;
+									break;
+								}
+								if (q && typeof q == "object" && !Array.isArray(q)) {
+									if (q.type == "map" && typeof q.index == "number") continue;
+									if (q.type == "syncmap" && Array.isArray(q.arr) && typeof q.target == "number") continue;
 									serializable = false;
 									break;
 								}
@@ -7597,6 +7614,7 @@ MapScript.loadModule("CA", {
 				var index = controller.getBundleIndexByLabel(o.label);
 				return {
 					type: "map",
+					index: index,
 					map: function (arr) {
 						return index < 0 ? "{找不到标签}" : arr[index];
 					}
