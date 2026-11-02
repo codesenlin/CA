@@ -282,6 +282,7 @@ desugaring 只是把 `java.util.Objects.requireNonNull` 换成
 | 加速点 | 位置 | 手段 |
 |---|---|---|
 | 补全字符串匹配 | `CA.IntelliSense.matchString` | `Accel.matchString`，O(n²) 去重 → O(n)；候选源按对象身份缓存（`setMatchSource` / `matchCached`）；JS 侧结果合并也用 `seen` 去重，最坏 1749 项全命中从 ~500ms 降到 ~107ms，再去掉 merge 里的 Java String 显式转换后约 60~99ms |
+| 批量生成/导出 | `CA.showBatchBuilder.export` | 可序列化的字符串/数组片段交给 QuickJS worker；含 `map`/`syncmap`/`expr` 函数时回退原 JS。9216 行实测 Rhino 787ms → QuickJS 134~180ms |
 | ID 列表过滤 | `CA.Assist.js` 的 `setFilter` | `Accel.filter`，字符串查找一次算完，JS 侧只剩取下标 |
 | 数组 enum 匹配 | `CA.IntelliSense` 的 enum 数组分支 | `Accel.classifyArray`，Java 一次算完 flags/length/canFinish |
 | 命令名匹配（无参数补全） | `CA.IntelliSense` 命令列表 | `Accel.matchCommandNames`，缓存命令表；无 jar 时 QuickJS/JS 回退 |
@@ -292,6 +293,25 @@ desugaring 只是把 `java.util.Objects.requireNonNull` 换成
 `String.indexOf`**，上千个元素就是上千次边界穿越。
 
 ### 候选规模的真实数据（别再拿总数吓自己）
+
+### ID 列表预热
+
+第一次打开 ID 选择器时，`CA.buildIDList` 要构建默认「全部」列表（约 4400~4800 项）。
+启动后延迟 1.5s，等 `CA.Library.loadingStatus` 清空（拓展包是异步加载的），
+再在 `Threads` 后台执行一次同样的 `buildIDList` 预热；之后用户第一次打开 ID 选择器
+直接命中 `CA._idListBuildCache`，构建耗时为 0。
+
+- 预热在后台线程，不占首屏
+- 必须等库加载完成，避免缓存不完整的列表
+- 设备实测：预热 ~417ms，首次打开 `IDList init cached ... 0ms`
+
+跨会话缓存：
+
+- 构建结果写入 `app_rhino/idlist_cache.dat`（gzip JSON）
+- 缓存键包含版本、内置/启用库列表、`lib.info` 指纹和 ID 原始列表
+- 启动预热先读缓存；命中则不再重建，直接放入 `_idListBuildCache` 并同步 Java 文本缓存
+- 设备实测：首次构建+落盘 ~612ms，第二次启动磁盘命中 ~90~140ms；首次打开仍为缓存命中
+- 数据/库变化时缓存键变化，自动失效
 
 `matchString` / `filter` 的输入是**当前参数对应的那一个列表**，不是全部 enums：
 

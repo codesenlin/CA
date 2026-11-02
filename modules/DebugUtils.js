@@ -824,6 +824,89 @@ MapScript.loadModule("DebugUtils", {
 			return "IDListBench error: " + e;
 		}
 	},
+	/** 调试控制台用：批量导出 bundleStrings Rhino vs QuickJS A/B，只测不接生产 */
+	benchBatchBundle: function () {
+		try {
+			if (typeof QuickAccel === "undefined" || !QuickAccel.available) return "BatchBundle unavailable";
+			var i, parts = [[], [], []], a, b;
+			for (i = 0; i < 24; i++) parts[0].push("line_" + i + ":");
+			for (i = 0; i < 16; i++) parts[1].push("x" + i);
+			for (i = 0; i < 24; i++) parts[2].push("_" + i);
+			function jsBundle(array) {
+				var msp = [], msi, msn, r = [], cur, i;
+				if (!array) return r;
+				for (i = 0; i < array.length; i++) if (Array.isArray(array[i])) msp.push(i);
+				if (msp.length == 0) { if (array.length == 0) array = [""]; array[0] = [array[0]]; msp.push(0); }
+				msi = new Array(msp.length); msn = new Array(msp.length);
+				for (i = 0; i < msp.length; i++) { msi[i] = 0; msn[i] = array[msp[i]].length; }
+				while (msi[0] < msn[0]) {
+					cur = array.slice();
+					for (i = 0; i < msp.length; i++) cur[msp[i]] = cur[msp[i]][msi[i]];
+					r.push(cur.join(""));
+					msi[msi.length - 1]++;
+					for (i = msi.length - 1; i > 0; i--) {
+						if (msi[i] >= msn[i]) { msi[i] = 0; msi[i - 1]++; } else break;
+					}
+				}
+				return r;
+			}
+			var t0 = Date.now();
+			var rhino = jsBundle(parts);
+			var rhinoMs = Date.now() - t0;
+			var t1 = Date.now();
+			var quick = QuickAccel.bundleStrings(parts);
+			var quickMs = Date.now() - t1;
+			var same = !!quick && quick.length === rhino.length;
+			if (same) {
+				for (i = 0; i < rhino.length; i++) if (rhino[i] !== quick[i]) { same = false; break; }
+			}
+			var out = "BatchBundle n=" + rhino.length + " rhino=" + rhinoMs + "ms quick=" + quickMs + "ms same=" + same;
+			try { android.util.Log.i("Script", out); } catch (e) { }
+			return out;
+		} catch (e) {
+			return "BatchBundle error: " + e;
+		}
+	},
+	/** 调试控制台用：ID 首次构建 Rhino vs QuickJS A/B，只测不接生产 */
+	benchIDListQuick: function () {
+		try {
+			var lib = CA.IntelliSense.library, names = [], enums = lib.enums, i, j, e, l;
+			for (i = 0; i < lib.idlist.length; i++) {
+				e = lib.idlist[i];
+				l = e.lists || (e.list ? [e.list] : []);
+				for (j = 0; j < l.length; j++) names.push(l[j]);
+			}
+			if (typeof QuickAccel === "undefined" || !QuickAccel.available) {
+				return "IDListQuick unavailable";
+			}
+			// 先清掉内存缓存，保证测到首次构建
+			CA._idListBuildCache = [];
+			var t0 = Date.now();
+			var rhino = CA.buildIDList(names);
+			var rhinoMs = Date.now() - t0;
+			var t1 = Date.now();
+			var quick = QuickAccel.buildIDList(names, enums);
+			var quickMs = Date.now() - t1;
+			var same = !!quick && quick.ids.length === rhino.ids.length;
+			if (same) {
+				for (i = 0; i < rhino.ids.length; i++) {
+					if (rhino.ids[i] !== quick.ids[i] || rhino.texts[i] !== quick.texts[i]) {
+						same = false;
+						break;
+					}
+				}
+			}
+			var out = "IDListQuick n=" + rhino.ids.length +
+				" rhino=" + rhinoMs + "ms quick=" + quickMs + "ms" +
+				" sync=" + (QuickAccel.lastIDSyncMs || 0) + "ms" +
+				" workerBuild=" + (QuickAccel.lastIDBuildMs || 0) + "ms" +
+				" same=" + same;
+			try { android.util.Log.i("Script", out); } catch (e) { }
+			return out;
+		} catch (e) {
+			return "IDListQuick error: " + e;
+		}
+	},
 	updateDebugAction: function () {
 		if (CA.settings.enableDebugAction) {
 			CA.Actions["debug.action"] = this.debugAction;

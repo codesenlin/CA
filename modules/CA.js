@@ -54,6 +54,13 @@ MapScript.loadModule("CA", {
 			} else if (this.hasFeature("version_1_1")) {
 				Common.showTextDialog("兼容性警告\n\n您的Minecraft PE版本较低（" + getMinecraftVersion() + "），可以使用命令，但没有ID表，且部分命令有bug。推荐升级您的Minecraft PE至1.2及以上，或者使用网易代理的我的世界最新版本。\n您也可在设置→拓展包→切换版本→自定义中设置版本为1.2。");
 			}
+			// 延迟到启动界面稳定后再预热，避免和首屏初始化抢 CPU
+			Threads.run(function () {
+				try {
+					java.lang.Thread.sleep(1500);
+					CA.prewarmIDList();
+				} catch (e) { }
+			});
 			Common.toast("命令助手 " + this.version.join(".") + " by ProjectXero\n\n" + this.getTip(), 1);
 			this.fine = true;
 			this.screenChangeHook();
@@ -6147,6 +6154,99 @@ MapScript.loadModule("CA", {
 		}
 		return { ids: ids, texts: texts };
 	},
+	/** 跨会话 ID 列表缓存文件；键包含版本、库列表和 ID 原始表，数据变化会自然失效 */
+	idListCachePath: function () {
+		return MapScript.baseDir + "idlist_cache.dat";
+	},
+	idListCacheKey: function (names) {
+		var lib = CA.IntelliSense && CA.IntelliSense.library;
+		var info = lib && lib.info ? String(MapScript.toSource(lib.info)) : "";
+		var hash = new java.lang.String(info);
+		return [1, BuildConfig.versionCode, BuildConfig.date,
+			(CA.settings.coreLibrarys || []).join(","),
+			(CA.settings.enabledLibrarys || []).join(","),
+			lib && lib.idlist ? lib.idlist.length : 0,
+			hash.hashCode() + "@" + hash.length(),
+			names.join("\u0001")].join("|");
+	},
+	loadIDListDiskCache: function (key) {
+		try {
+			// SafeFileUtils.readJSON 走 eval，66KB 数组在 Rhino 下明显慢；JSON.parse 更快
+			var text = SafeFileUtils.readText(new java.io.File(this.idListCachePath()), null);
+			var data = text ? JSON.parse(text) : null;
+			if (!data || data.key !== key || !Array.isArray(data.ids) || !Array.isArray(data.texts)) return null;
+			return data;
+		} catch (e) {
+			return null;
+		}
+	},
+	saveIDListDiskCache: function (key, built) {
+		try {
+			// JSON.stringify 比 MapScript.toSource 快很多；SafeFileUtils 内部仍会 gzip
+			SafeFileUtils.writeText(new java.io.File(this.idListCachePath()), JSON.stringify({
+				key: key,
+				ids: built.ids,
+				texts: built.texts
+			}));
+		} catch (e) {
+			android.util.Log.w("Script", "IDList disk cache save failed: " + e);
+		}
+	},
+	/** 启动后在后台预热「全部」ID 列表，减少用户第一次打开 ID 选择器的等待 */
+	prewarmIDList: function () {
+		if (this._idListPrewarmStarted) return;
+		// 拓展包是异步加载的，必须等库加载完成再预热，否则会缓存一份不完整的「全部」列表
+		if (CA.Library && CA.Library.loadingStatus) {
+			this._idListPrewarmRetry = (this._idListPrewarmRetry || 0) + 1;
+			if (this._idListPrewarmRetry > 20) return;
+			var retry = this;
+			gHandler.postDelayed(new java.lang.Runnable({
+				run: function () {
+					try { retry.prewarmIDList(); } catch (e) { }
+				}
+			}), 500);
+			return;
+		}
+		this._idListPrewarmStarted = true;
+		var lib = CA.IntelliSense && CA.IntelliSense.library, names = [], i, j, e, l;
+		if (!lib || !lib.idlist) return;
+		try {
+			for (i = 0; i < lib.idlist.length; i++) {
+				e = lib.idlist[i];
+				l = e.lists || (e.list ? [e.list] : []);
+				for (j = 0; j < l.length; j++) names.push(l[j]);
+			}
+			if (!names.length) return;
+			var key = CA.idListCacheKey(names);
+			Threads.run(function () {
+				var t0 = Date.now();
+				try {
+					var disk = CA.loadIDListDiskCache(key);
+					if (disk) {
+						var allIndices = Accel.rangeIndices(disk.ids.length);
+						CA._idAllIndices = allIndices;
+						CA._idListBuildCache = [{
+							lib: CA.IntelliSense.library,
+							key: names.join("\u0001"),
+							ids: disk.ids,
+							texts: disk.texts,
+							allIndices: allIndices
+						}];
+						Accel.setIDTexts(disk.texts);
+						if (BuildConfig.variants == "debug") android.util.Log.i("Script", "IDList prewarm disk hit " + (Date.now() - t0) + "ms, " + disk.ids.length + " 项");
+						return;
+					}
+					var built = CA.buildIDList(names);
+					CA.saveIDListDiskCache(key, built);
+					if (BuildConfig.variants == "debug") android.util.Log.i("Script", "IDList prewarm " + (Date.now() - t0) + "ms, " + built.ids.length + " 项");
+				} catch (e) {
+					android.util.Log.w("Script", "IDList prewarm failed: " + e);
+				}
+			});
+		} catch (e) {
+			android.util.Log.w("Script", "IDList prewarm setup failed: " + e);
+		}
+	},
 	/** 过滤 ID 列表，返回 texts 下标数组；有 jar 走 Accel.filter，没有走等价 JS */
 	filterIDList: function (texts, s) {
 		var t0 = Date.now(), p = String(s);
@@ -6678,6 +6778,26 @@ MapScript.loadModule("CA", {
 					}
 					self.bundleStrings = function (array) {
 						var i, msp = [], msi, msn, r = [], cur, t;
+						// 大批量导出：所有片段都是字符串/字符串数组时交给 QuickJS worker；
+						// 含 map/syncmap/expr 函数时保留原 JS 路径。
+						if (typeof QuickAccel !== "undefined" && QuickAccel.available) {
+							var estimate = 1, serializable = true, q, quick;
+							for (i = 0; i < array.length; i++) {
+								q = array[i];
+								if (typeof q == "function" || (q && typeof q == "object" && !Array.isArray(q))) {
+									serializable = false;
+									break;
+								}
+								if (Array.isArray(q)) {
+									estimate *= q.length;
+									if (estimate > 2000) break;
+								}
+							}
+							if (serializable && estimate > 2000) {
+								quick = QuickAccel.bundleStrings(array);
+								if (quick) return quick;
+							}
+						}
 						for (i = 0; i < array.length; i++) {
 							if (array[i] instanceof Function) {
 								array[i] = array[i](); //懒计算

@@ -99,6 +99,54 @@ MapScript.loadModule("QuickAccel", (function () {
 		"  if (!a) return out;",
 		"  for (i = 0; i < a.length; i++) out.push(a[i] != null && String(a[i]).indexOf(p) >= 0);",
 		"  return out;",
+		"}",
+		// 基准用：只处理字符串/字符串数组的 bundleStrings，逻辑与 CA.showBatchBuilder 一致
+		"function bundleStringsCached(parts) {",
+		"  var msp = [], msi, msn, r = [], cur, i;",
+		"  if (!parts) return r;",
+		"  for (i = 0; i < parts.length; i++) if (Array.isArray(parts[i])) msp.push(i);",
+		"  if (msp.length === 0) { if (parts.length === 0) parts = ['']; parts[0] = [parts[0]]; msp.push(0); }",
+		"  msi = new Array(msp.length); msn = new Array(msp.length);",
+		"  for (i = 0; i < msp.length; i++) { msi[i] = 0; msn[i] = parts[msp[i]].length; }",
+		"  while (msi[0] < msn[0]) {",
+		"    cur = parts.slice();",
+		"    for (i = 0; i < msp.length; i++) cur[msp[i]] = cur[msp[i]][msi[i]];",
+		"    r.push(cur.join(''));",
+		"    msi[msi.length - 1]++;",
+		"    for (i = msi.length - 1; i > 0; i--) {",
+		"      if (msi[i] >= msn[i]) { msi[i] = 0; msi[i - 1]++; } else break;",
+		"    }",
+		"  }",
+		"  return r;",
+		"}",
+		// 基准用：和 CA.buildIDList 同样的去重 + 排序 + texts 还原
+		"function buildIDCached() {",
+		"  var g = globalThis, names = g.__idNames, enums = g.__idEnums || {};",
+		"  var seen = {}, ids = [], texts = [], i, j, e, ks, id;",
+		"  if (!names) return { ids: ids, texts: texts };",
+		"  for (i = 0; i < names.length; i++) {",
+		"    e = names[i];",
+		"    if (typeof e === 'string') e = enums[e];",
+		"    if (e == null) continue;",
+		"    if (Array.isArray(e)) {",
+		"      for (j = 0; j < e.length; j++) {",
+		"        id = e[j];",
+		"        if (seen[id] !== undefined) continue;",
+		"        seen[id] = id; ids.push(id);",
+		"      }",
+		"    } else {",
+		"      ks = Object.keys(e);",
+		"      for (j = 0; j < ks.length; j++) {",
+		"        id = ks[j];",
+		"        if (seen[id] !== undefined) continue;",
+		"        seen[id] = id + (e[id] ? ' - ' + e[id] : '');",
+		"        ids.push(id);",
+		"      }",
+		"    }",
+		"  }",
+		"  ids.sort();",
+		"  for (i = 0; i < ids.length; i++) texts[i] = seen[ids[i]];",
+		"  return { ids: ids, texts: texts };",
 		"}"
 	].join("\n");
 
@@ -107,6 +155,10 @@ MapScript.loadModule("QuickAccel", (function () {
 	r.classifyKeysRef = r.classifyDescsRef = null;
 	r.classifyArrayRef = null;
 	r.filterTextsRef = null;
+	r.idNamesRef = null;
+	r.idEnumsRef = null;
+	r.lastIDSyncMs = 0;
+	r.lastIDBuildMs = 0;
 
 	r.ensureWorker = function () {
 		if (!r.available) return false;
@@ -196,6 +248,48 @@ MapScript.loadModule("QuickAccel", (function () {
 			return res ? JSON.parse(res) : null;
 		} catch (e) {
 			android.util.Log.w("Script", "QuickAccel.matchCommandNames 失败: " + e);
+			return null;
+		}
+	};
+
+	// 基准用：把 ID 原始数据和 enums 同步到 worker，再在 worker 里构建
+	r.buildIDList = function (names, enums) {
+		try {
+			if (!r.available || !names || !r.ensureWorker()) return null;
+			var t0 = Date.now(), ok = true;
+			if (names !== r.idNamesRef) ok = ok && r.syncVar("__idNames", names, "idNamesRef");
+			if (enums !== r.idEnumsRef) ok = ok && r.syncVar("__idEnums", enums || {}, "idEnumsRef");
+			r.lastIDSyncMs = Date.now() - t0;
+			if (!ok) return null;
+			var t1 = Date.now();
+			var res = ScriptInterface.quickWorkerCall("buildIDCached", "[]");
+			r.lastIDBuildMs = Date.now() - t1;
+			if (!res) android.util.Log.w("Script", "QuickAccel buildIDCached 返回 null");
+			return res ? JSON.parse(res) : null;
+		} catch (e) {
+			android.util.Log.w("Script", "QuickAccel.buildIDList 异常: " + e);
+			return null;
+		}
+	};
+
+	// 基准用：批量导出（只接受字符串/字符串数组，含函数或对象时返回 null）
+	r.bundleStrings = function (parts) {
+		try {
+			if (!r.available || !parts || !r.ensureWorker()) return null;
+			var i, j, e;
+			for (i = 0; i < parts.length; i++) {
+				e = parts[i];
+				if (typeof e == "function" || (e && typeof e == "object" && !Array.isArray(e))) return null;
+				if (Array.isArray(e)) {
+					for (j = 0; j < e.length; j++) {
+						if (typeof e[j] == "function" || (e[j] && typeof e[j] == "object")) return null;
+					}
+				}
+			}
+			var res = ScriptInterface.quickWorkerCall("bundleStringsCached", JSON.stringify([parts]));
+			return res ? JSON.parse(res) : null;
+		} catch (e) {
+			android.util.Log.w("Script", "QuickAccel.bundleStrings 异常: " + e);
 			return null;
 		}
 	};

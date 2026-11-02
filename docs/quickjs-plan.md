@@ -111,6 +111,15 @@ cmd=["cmd"]
 
 现状：`CA.buildIDList` 首次打开约 **262~351ms**（去重/格式化/排序/同步缓存）。
 
+A/B 结果（PERM10，默认库 4796 项，2026-11-03）：
+
+- Rhino：**279ms**
+- QuickJS：**1236ms**（其中 enums/names JSON 同步 **1068ms**，worker 内构建 36ms）
+- 结果 `same=true`
+
+结论：**不接入**。瓶颈是把 enums 数据同步进 worker，不是构建计算本身；
+回程/同步成本远超能省下的 279ms。
+
 方案：
 
 - 把枚举数据 JSON 化一次缓存到 worker
@@ -125,16 +134,19 @@ cmd=["cmd"]
 
 验收：真机首次/重复打开耗时、内存、worker 同步耗时。
 
-### P3：批量生成/导出（低频，暂缓）
+### P3：批量生成/导出
 
-`CA.showBatchBuilder` 的 `bundleStrings` / `export` 是纯组合字符串生成，
-输入变量、输出最终文本，适合 worker；但：
+`CA.showBatchBuilder` 的 `bundleStrings` / `export` 是纯组合字符串生成。
 
-- 只在导入/导出批量命令时触发
-- 依赖 `CA.BatchPattern` 的函数，需要先抽成可序列化数据/纯函数
-- 结果可能很大（多变量组合），回程成本未知
+A/B 结果（PERM10，3 个数组共 9216 行，2026-11-03）：
 
-结论：等真有批量卡顿反馈再做。
+- Rhino：**787ms**
+- QuickJS：**134~180ms**
+- 结果 `same=true`
+
+接入方式：只对**所有片段都是字符串/字符串数组**且组合数 > 2000 的导出走 worker；
+含 `map` / `syncmap` / `expr` 函数或对象的模板继续走原 JS 路径。
+小批量不触发 worker，避免同步开销。
 
 ### P4：大文本搜索（未来）
 
@@ -157,8 +169,9 @@ cmd=["cmd"]
 1. ✅ **P1**：无 jar 回退（filterTexts/命令匹配）
    - 已实现 `benchQuickAccel` 等价验证（有/无 jar 结果一致）
    - 大数据量基准已补；classify/classifyArray 不接入
-2. **P2**：ID 构建 A/B，只写基准，不接生产，除非明显更快
-3. **P3/P4**：按真实性能反馈再排期
+2. ✅ **P2**：ID 构建 A/B 已完成；QuickJS 1236ms vs Rhino 279ms，不接生产
+3. ✅ **P3**：大批量导出接 QuickJS worker（可序列化片段），小批量/复杂模板回退
+4. **P4**：按真实性能反馈再排期
 4. 清理 jsonPro 实验代码后再推送当前 30+ 个加速/去重提交
 
 ## 五、测量方法
