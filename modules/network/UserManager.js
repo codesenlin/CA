@@ -408,208 +408,111 @@ MapScript.loadModule("UserManager", {
 		}
 	},
 	showLogin: function self(callback) {
-		var realThis = this; G.ui(function () {
-			try {
-				var username, password, popup;
-				popup = PopupPage.showDialog("usermanager.Login", L.ScrollView({
-					style: "message_bg",
-					child: L.LinearLayout({
-						orientation: L.LinearLayout("vertical"),
-						padding: [15 * G.dp, 15 * G.dp, 15 * G.dp, 5 * G.dp],
-						children: [
-							L.TextView({
-								text: "登录",
-								padding: [0, 0, 0, 10 * G.dp],
-								layout: { width: -1, height: -2 },
-								gravity: L.Gravity("center"),
-								style: "textview_default",
-								fontSize: 4
-							}),
-							username = L.EditText({
-								hint: "邮箱或用户名",
-								singleLine: true,
-								padding: [0, 0, 0, 0],
-								imeOptions: L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
-								inputType: L.InputType("TYPE_CLASS_TEXT|TYPE_TEXT_VARIATION_EMAIL_ADDRESS"),
-								style: "edittext_default",
-								fontSize: 3,
-								layout: { width: -1, height: -2 }
-							}),
-							password = L.EditText({
-								hint: "密码",
-								singleLine: true,
-								padding: [0, 20 * G.dp, 0, 0],
-								imeOptions: L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
-								transformationMethod: L.asClass(L.PasswordTransformationMethod).instance,
-								style: "edittext_default",
-								fontSize: 3,
-								layout: { width: -1, height: -2 }
-							}),
-							L.TextView({
-								text: "登录",
-								padding: [10 * G.dp, 10 * G.dp, 10 * G.dp, 10 * G.dp],
-								gravity: L.Gravity("center"),
-								layout: { width: -1, height: -2 },
-								style: "button_critical",
-								fontSize: 3,
-								onClick: function () {
-									try {
-										if (!username.length()) return Common.toast("用户名不能为空");
-										if (!password.length()) return Common.toast("密码不能为空");
-										Common.showProgressDialog(function (dia) {
-											dia.setText("正在登录...");
-											try {
-												realThis.login(String(username.text), String(password.text));
-											} catch (e) {
-												Log.e(e);
-												return Common.toast("登录失败\n" + e);
-											}
-											CA.trySave();
-											G.ui(function () {
-												try {
-													popup.exit();
-													Common.toast("登录成功");
-													if (callback) callback();
-												} catch (e) { erp(e) }
-											});
-										});
-									} catch (e) { erp(e) }
-								}
-							}),
-							L.TextView({
-								text: "注册",
-								padding: [10 * G.dp, 10 * G.dp, 10 * G.dp, 10 * G.dp],
-								gravity: L.Gravity("center"),
-								layout: { width: -1, height: -2 },
-								style: "button_critical",
-								fontSize: 3,
-								onClick: function () {
-									try {
-										popup.exit();
-										realThis.showRegister();
-									} catch (e) { erp(e) }
-								}
-							}),
-							L.TextView({
-								text: "忘记密码",
-								padding: [10 * G.dp, 10 * G.dp, 10 * G.dp, 10 * G.dp],
-								gravity: L.Gravity("center"),
-								layout: { width: -1, height: -2 },
-								style: "button_critical",
-								fontSize: 3,
-								onClick: function () {
-									try {
-										popup.exit();
-										realThis.showForgetPassword();
-									} catch (e) { erp(e) }
-								}
-							})
-						]
-					})
-				}), -1, -2);
-			} catch (e) { erp(e) }
-		})
+		var realThis = this;
+		NetworkUI.formDialog({
+			popupName: "usermanager.Login",
+			title: "登录",
+			fields: [{
+				name: "username",
+				hint: "邮箱或用户名",
+				inputType: "TYPE_CLASS_TEXT|TYPE_TEXT_VARIATION_EMAIL_ADDRESS"
+			}, {
+				name: "password",
+				hint: "密码",
+				password: true
+			}],
+			buttons: [{
+				text: "登录",
+				onClick: function (fields, popup) {
+					if (!fields.username.length()) return Common.toast("用户名不能为空");
+					if (!fields.password.length()) return Common.toast("密码不能为空");
+					Common.showProgressDialog(function (dia) {
+						dia.setText("正在登录...");
+						try {
+							realThis.login(String(fields.username.text), String(fields.password.text));
+						} catch (e) {
+							Log.e(e);
+							return Common.toast("登录失败\n" + e);
+						}
+						CA.trySave();
+						G.ui(function () {
+							try {
+								popup.exit();
+								Common.toast("登录成功");
+								if (callback) callback();
+							} catch (e) { erp(e) }
+						});
+					});
+				}
+			}, {
+				text: "注册",
+				onClick: function (fields, popup) {
+					popup.exit();
+					realThis.showRegister();
+				}
+			}, {
+				text: "忘记密码",
+				onClick: function (fields, popup) {
+					popup.exit();
+					realThis.showForgetPassword();
+				}
+			}]
+		});
 	},
 	showRegister: function self() {
-		var realThis = this; G.ui(function () {
-			try {
-				var email, username, password, password2, popup, emailRegex = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
-				popup = PopupPage.showDialog("usermanager.Register", L.ScrollView({
-					style: "message_bg",
-					child: L.LinearLayout({
-						orientation: L.LinearLayout("vertical"),
-						padding: [15 * G.dp, 15 * G.dp, 15 * G.dp, 5 * G.dp],
-						children: [
-							L.TextView({
-								text: "注册",
-								padding: [0, 0, 0, 10 * G.dp],
-								layout: { width: -1, height: -2 },
-								gravity: L.Gravity("center"),
-								style: "textview_default",
-								fontSize: 4
-							}),
-							email = L.EditText({
-								hint: "邮箱",
-								singleLine: true,
-								padding: [0, 0, 0, 0],
-								imeOptions: L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
-								inputType: L.InputType("TYPE_CLASS_TEXT|TYPE_TEXT_VARIATION_EMAIL_ADDRESS"),
-								style: "edittext_default",
-								fontSize: 3,
-								layout: { width: -1, height: -2 }
-							}),
-							username = L.EditText({
-								hint: "用户名",
-								singleLine: true,
-								padding: [0, 20 * G.dp, 0, 0],
-								imeOptions: L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
-								inputType: L.InputType("TYPE_CLASS_TEXT|TYPE_TEXT_VARIATION_EMAIL_ADDRESS"),
-								style: "edittext_default",
-								fontSize: 3,
-								layout: { width: -1, height: -2 }
-							}),
-							password = L.EditText({
-								hint: "密码",
-								singleLine: true,
-								padding: [0, 20 * G.dp, 0, 0],
-								imeOptions: L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
-								transformationMethod: L.asClass(L.PasswordTransformationMethod).instance,
-								style: "edittext_default",
-								fontSize: 3,
-								layout: { width: -1, height: -2 }
-							}),
-							password2 = L.EditText({
-								hint: "确认密码",
-								singleLine: true,
-								padding: [0, 20 * G.dp, 0, 0],
-								imeOptions: L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
-								transformationMethod: L.asClass(L.PasswordTransformationMethod).instance,
-								style: "edittext_default",
-								fontSize: 3,
-								layout: { width: -1, height: -2 }
-							}),
-							L.TextView({
-								text: "注册",
-								padding: [10 * G.dp, 15 * G.dp, 10 * G.dp, 15 * G.dp],
-								gravity: L.Gravity("center"),
-								layout: { width: -1, height: -2 },
-								style: "button_critical",
-								fontSize: 3,
-								onClick: function () {
-									try {
-										if (!email.length()) return Common.toast("邮箱地址不能为空");
-										if (email.length() > 80) return Common.toast("邮箱地址过长");
-										if (!emailRegex.test(email.text)) return Common.toast("邮箱地址不正确");
-										if (!username.length()) return Common.toast("用户名不能为空");
-										if (username.length() < 2) return Common.toast("用户名太短\n用户名长度应大于等于2字符且小于等于80字符");
-										if (username.length() > 80) return Common.toast("用户名太长\n用户名长度应大于等于2字符且小于等于80字符");
-										if (!password.length()) return Common.toast("密码不能为空");
-										if (password.length() < 6) return Common.toast("密码太短\n密码长度应大于等于6字符且小于等于1000字符");
-										if (password.length() > 1000) return Common.toast("密码太长\n密码长度应大于等于6字符且小于等于1000字符");
-										if (String(password.text) != String(password2.text)) return Common.toast("两次密码输入不一致");
-										Common.showProgressDialog(function (dia) {
-											dia.setText("正在发送验证邮件...");
-											try {
-												realThis.register(String(email.text), String(username.text), String(password.text));
-											} catch (e) {
-												Log.e(e);
-												return Common.toast("注册失败\n" + e);
-											}
-											G.ui(function () {
-												try {
-													popup.exit();
-													Common.showTextDialog("一份用于验证的邮件正在发送至" + email.text + "\n请在1天内点击邮件内的链接来确认注册");
-												} catch (e) { erp(e) }
-											});
-										});
-									} catch (e) { erp(e) }
-								}
-							})
-						]
-					})
-				}), -1, -2);
-			} catch (e) { erp(e) }
-		})
+		var realThis = this, emailRegex = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
+		NetworkUI.formDialog({
+			popupName: "usermanager.Register",
+			title: "注册",
+			fields: [{
+				name: "email",
+				hint: "邮箱",
+				inputType: "TYPE_CLASS_TEXT|TYPE_TEXT_VARIATION_EMAIL_ADDRESS"
+			}, {
+				name: "username",
+				hint: "用户名",
+				inputType: "TYPE_CLASS_TEXT|TYPE_TEXT_VARIATION_EMAIL_ADDRESS"
+			}, {
+				name: "password",
+				hint: "密码",
+				password: true
+			}, {
+				name: "password2",
+				hint: "确认密码",
+				password: true
+			}],
+			buttons: [{
+				text: "注册",
+				padding: [10 * G.dp, 15 * G.dp, 10 * G.dp, 15 * G.dp],
+				onClick: function (fields, popup) {
+					if (!fields.email.length()) return Common.toast("邮箱地址不能为空");
+					if (fields.email.length() > 80) return Common.toast("邮箱地址过长");
+					if (!emailRegex.test(fields.email.text)) return Common.toast("邮箱地址不正确");
+					if (!fields.username.length()) return Common.toast("用户名不能为空");
+					if (fields.username.length() < 2) return Common.toast("用户名太短\n用户名长度应大于等于2字符且小于等于80字符");
+					if (fields.username.length() > 80) return Common.toast("用户名太长\n用户名长度应大于等于2字符且小于等于80字符");
+					if (!fields.password.length()) return Common.toast("密码不能为空");
+					if (fields.password.length() < 6) return Common.toast("密码太短\n密码长度应大于等于6字符且小于等于1000字符");
+					if (fields.password.length() > 1000) return Common.toast("密码太长\n密码长度应大于等于6字符且小于等于1000字符");
+					if (String(fields.password.text) != String(fields.password2.text)) return Common.toast("两次密码输入不一致");
+					Common.showProgressDialog(function (dia) {
+						dia.setText("正在发送验证邮件...");
+						try {
+							realThis.register(String(fields.email.text), String(fields.username.text), String(fields.password.text));
+						} catch (e) {
+							Log.e(e);
+							return Common.toast("注册失败\n" + e);
+						}
+						G.ui(function () {
+							try {
+								popup.exit();
+								Common.showTextDialog("一份用于验证的邮件正在发送至" + fields.email.text + "\n请在1天内点击邮件内的链接来确认注册");
+							} catch (e) { erp(e) }
+						});
+					});
+				}
+			}]
+		});
 	},
 	showRefreshLogin: function (refreshToken, silent) {
 		var realThis = this;
@@ -649,88 +552,48 @@ MapScript.loadModule("UserManager", {
 		});
 	},
 	showForgetPassword: function self() {
-		var realThis = this; G.ui(function () {
-			try {
-				var email, password, password2, popup;
-				popup = PopupPage.showDialog("usermanager.ForgetPassword", L.ScrollView({
-					style: "message_bg",
-					child: L.LinearLayout({
-						orientation: L.LinearLayout("vertical"),
-						padding: [15 * G.dp, 15 * G.dp, 15 * G.dp, 5 * G.dp],
-						children: [
-							L.TextView({
-								text: "忘记密码",
-								padding: [0, 0, 0, 10 * G.dp],
-								layout: { width: -1, height: -2 },
-								gravity: L.Gravity("center"),
-								style: "textview_default",
-								fontSize: 4
-							}),
-							email = L.EditText({
-								hint: "邮箱",
-								singleLine: true,
-								padding: [0, 0, 0, 0],
-								imeOptions: L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
-								inputType: L.InputType("TYPE_CLASS_TEXT|TYPE_TEXT_VARIATION_EMAIL_ADDRESS"),
-								style: "edittext_default",
-								fontSize: 3,
-								layout: { width: -1, height: -2 }
-							}),
-							password = L.EditText({
-								hint: "密码",
-								singleLine: true,
-								padding: [0, 20 * G.dp, 0, 0],
-								imeOptions: L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
-								transformationMethod: L.asClass(L.PasswordTransformationMethod).instance,
-								style: "edittext_default",
-								fontSize: 3,
-								layout: { width: -1, height: -2 }
-							}),
-							password2 = L.EditText({
-								hint: "确认密码",
-								singleLine: true,
-								padding: [0, 20 * G.dp, 0, 0],
-								imeOptions: L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
-								transformationMethod: L.asClass(L.PasswordTransformationMethod).instance,
-								style: "edittext_default",
-								fontSize: 3,
-								layout: { width: -1, height: -2 }
-							}),
-							L.TextView({
-								text: "重置密码",
-								padding: [10 * G.dp, 15 * G.dp, 10 * G.dp, 15 * G.dp],
-								gravity: L.Gravity("center"),
-								layout: { width: -1, height: -2 },
-								style: "button_critical",
-								fontSize: 3,
-								onClick: function () {
-									try {
-										if (!email.length()) return Common.toast("邮箱地址不能为空");
-										if (!password.length()) return Common.toast("密码不能为空");
-										if (String(password.text) != String(password2.text)) return Common.toast("两次密码输入不一致");
-										Common.showProgressDialog(function (dia) {
-											dia.setText("正在发送重置密码邮件...");
-											try {
-												realThis.requestResetPassword(String(email.text), String(password.text));
-											} catch (e) {
-												Log.e(e);
-												return Common.toast("重置密码失败\n" + e);
-											}
-											G.ui(function () {
-												try {
-													popup.exit();
-													Common.showTextDialog("一份用于确认重置密码的邮件正在发送至" + email.text + "\n请在1天内点击邮件内的链接来确认重置密码");
-												} catch (e) { erp(e) }
-											});
-										});
-									} catch (e) { erp(e) }
-								}
-							})
-						]
-					})
-				}), -1, -2);
-			} catch (e) { erp(e) }
-		})
+		var realThis = this;
+		NetworkUI.formDialog({
+			popupName: "usermanager.ForgetPassword",
+			title: "忘记密码",
+			fields: [{
+				name: "email",
+				hint: "邮箱",
+				inputType: "TYPE_CLASS_TEXT|TYPE_TEXT_VARIATION_EMAIL_ADDRESS"
+			}, {
+				name: "password",
+				hint: "密码",
+				password: true
+			}, {
+				name: "password2",
+				hint: "确认密码",
+				password: true
+			}],
+			buttons: [{
+				text: "重置密码",
+				padding: [10 * G.dp, 15 * G.dp, 10 * G.dp, 15 * G.dp],
+				onClick: function (fields, popup) {
+					if (!fields.email.length()) return Common.toast("邮箱地址不能为空");
+					if (!fields.password.length()) return Common.toast("密码不能为空");
+					if (String(fields.password.text) != String(fields.password2.text)) return Common.toast("两次密码输入不一致");
+					Common.showProgressDialog(function (dia) {
+						dia.setText("正在发送重置密码邮件...");
+						try {
+							realThis.requestResetPassword(String(fields.email.text), String(fields.password.text));
+						} catch (e) {
+							Log.e(e);
+							return Common.toast("重置密码失败\n" + e);
+						}
+						G.ui(function () {
+							try {
+								popup.exit();
+								Common.showTextDialog("一份用于确认重置密码的邮件正在发送至" + fields.email.text + "\n请在1天内点击邮件内的链接来确认重置密码");
+							} catch (e) { erp(e) }
+						});
+					});
+				}
+			}]
+		});
 	},
 	showAuthorize: function (query) {
 		var realThis = this;
@@ -770,88 +633,48 @@ MapScript.loadModule("UserManager", {
 		});
 	},
 	showChangePassword: function self() {
-		var realThis = this; G.ui(function () {
-			try {
-				var oldpwd, newpwd, newpwd2, popup;
-				popup = PopupPage.showDialog("usermanager.ForgetPassword", L.ScrollView({
-					style: "message_bg",
-					child: L.LinearLayout({
-						orientation: L.LinearLayout("vertical"),
-						padding: [15 * G.dp, 15 * G.dp, 15 * G.dp, 5 * G.dp],
-						children: [
-							L.TextView({
-								text: "更改密码",
-								padding: [0, 0, 0, 10 * G.dp],
-								layout: { width: -1, height: -2 },
-								gravity: L.Gravity("center"),
-								style: "textview_default",
-								fontSize: 4
-							}),
-							oldpwd = L.EditText({
-								hint: "旧密码",
-								singleLine: true,
-								padding: [0, 20 * G.dp, 0, 0],
-								imeOptions: L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
-								transformationMethod: L.asClass(L.PasswordTransformationMethod).instance,
-								style: "edittext_default",
-								fontSize: 3,
-								layout: { width: -1, height: -2 }
-							}),
-							newpwd = L.EditText({
-								hint: "新密码",
-								singleLine: true,
-								padding: [0, 20 * G.dp, 0, 0],
-								imeOptions: L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
-								transformationMethod: L.asClass(L.PasswordTransformationMethod).instance,
-								style: "edittext_default",
-								fontSize: 3,
-								layout: { width: -1, height: -2 }
-							}),
-							newpwd2 = L.EditText({
-								hint: "确认新密码",
-								singleLine: true,
-								padding: [0, 20 * G.dp, 0, 0],
-								imeOptions: L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
-								transformationMethod: L.asClass(L.PasswordTransformationMethod).instance,
-								style: "edittext_default",
-								fontSize: 3,
-								layout: { width: -1, height: -2 }
-							}),
-							L.TextView({
-								text: "设置密码",
-								padding: [10 * G.dp, 15 * G.dp, 10 * G.dp, 15 * G.dp],
-								gravity: L.Gravity("center"),
-								layout: { width: -1, height: -2 },
-								style: "button_critical",
-								fontSize: 3,
-								onClick: function () {
-									try {
-										if (!oldpwd.length()) return Common.toast("原密码不能为空");
-										if (!newpwd.length()) return Common.toast("新密码不能为空");
-										if (String(newpwd.text) != String(newpwd2.text)) return Common.toast("两次新密码输入不一致");
-										Common.showProgressDialog(function (dia) {
-											dia.setText("正在保存密码..");
-											try {
-												realThis.setPassword(String(oldpwd.text), String(newpwd.text));
-											} catch (e) {
-												Log.e(e);
-												return Common.toast("密码保存失败\n" + e);
-											}
-											G.ui(function () {
-												try {
-													popup.exit();
-													Common.toast("密码已保存");
-												} catch (e) { erp(e) }
-											});
-										});
-									} catch (e) { erp(e) }
-								}
-							})
-						]
-					})
-				}), -1, -2);
-			} catch (e) { erp(e) }
-		})
+		var realThis = this;
+		NetworkUI.formDialog({
+			popupName: "usermanager.ForgetPassword",
+			title: "更改密码",
+			fields: [{
+				name: "oldpwd",
+				hint: "旧密码",
+				password: true
+			}, {
+				name: "newpwd",
+				hint: "新密码",
+				password: true
+			}, {
+				name: "newpwd2",
+				hint: "确认新密码",
+				password: true
+			}],
+			buttons: [{
+				text: "设置密码",
+				padding: [10 * G.dp, 15 * G.dp, 10 * G.dp, 15 * G.dp],
+				onClick: function (fields, popup) {
+					if (!fields.oldpwd.length()) return Common.toast("原密码不能为空");
+					if (!fields.newpwd.length()) return Common.toast("新密码不能为空");
+					if (String(fields.newpwd.text) != String(fields.newpwd2.text)) return Common.toast("两次新密码输入不一致");
+					Common.showProgressDialog(function (dia) {
+						dia.setText("正在保存密码..");
+						try {
+							realThis.setPassword(String(fields.oldpwd.text), String(fields.newpwd.text));
+						} catch (e) {
+							Log.e(e);
+							return Common.toast("密码保存失败\n" + e);
+						}
+						G.ui(function () {
+							try {
+								popup.exit();
+								Common.toast("密码已保存");
+							} catch (e) { erp(e) }
+						});
+					});
+				}
+			}]
+		});
 	},
 	showChangeName: function (callback) {
 		var realThis = this;

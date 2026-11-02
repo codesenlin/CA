@@ -342,6 +342,81 @@ MapScript.loadModule("NetworkUI", {
 			} catch (e) { erp(e) }
 		})
 	},
+	/**
+	 * 通用表单弹窗：标题 + 输入框 + 可选说明 + 按钮。
+	 * opts: { popupName, title, fields, note?, buttons, padding? }
+	 * fields: { name, hint, value?, inputType?, password?, singleLine? }
+	 * buttons: { text, onClick(fields, popup), style?, fontSize?, padding? }
+	 */
+	formDialog: function (opts) {
+		G.ui(function () {
+			try {
+				var popup, fields = {}, children = [], i, f, b, inputOpts, buttonOpts;
+				children.push(L.TextView({
+					text: opts.title,
+					padding: [0, 0, 0, 10 * G.dp],
+					layout: { width: -1, height: -2 },
+					gravity: L.Gravity("center"),
+					style: "textview_default",
+					fontSize: 4
+				}));
+				for (i = 0; i < opts.fields.length; i++) {
+					f = opts.fields[i];
+					inputOpts = {
+						hint: f.hint,
+						singleLine: f.singleLine !== false,
+						padding: [0, i === 0 ? 0 : 20 * G.dp, 0, 0],
+						imeOptions: L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
+						style: "edittext_default",
+						fontSize: 3,
+						layout: { width: -1, height: -2 }
+					};
+					if (f.value !== undefined) inputOpts.text = f.value;
+					if (f.inputType) inputOpts.inputType = L.InputType(f.inputType);
+					if (f.password) inputOpts.transformationMethod = L.asClass(L.PasswordTransformationMethod).instance;
+					fields[f.name] = L.EditText(inputOpts);
+					children.push(fields[f.name]);
+				}
+				if (opts.note) {
+					children.push(L.TextView({
+						text: opts.note.text,
+						padding: opts.note.padding || [0, 20 * G.dp, 0, 10 * G.dp],
+						layout: { width: -1, height: -2 },
+						style: opts.note.style || "textview_highlight",
+						fontSize: opts.note.fontSize || 2
+					}));
+				}
+				for (i = 0; i < opts.buttons.length; i++) {
+					b = opts.buttons[i];
+					buttonOpts = {
+						text: b.text,
+						padding: b.padding || [10 * G.dp, 10 * G.dp, 10 * G.dp, 10 * G.dp],
+						gravity: L.Gravity("center"),
+						layout: { width: -1, height: -2 },
+						style: b.style || "button_critical",
+						fontSize: b.fontSize || 3,
+						onClick: function (fields, button) {
+							return function () {
+								try {
+									button.onClick(fields, popup);
+								} catch (e) { erp(e) }
+							};
+						}(fields, b)
+					};
+					children.push(L.TextView(buttonOpts));
+				}
+				popup = PopupPage.showDialog(opts.popupName, L.ScrollView({
+					style: "message_bg",
+					child: L.LinearLayout({
+						orientation: L.LinearLayout("vertical"),
+						padding: opts.padding || [15 * G.dp, 15 * G.dp, 15 * G.dp, 5 * G.dp],
+						children: children
+					})
+				}), -1, -2);
+				return { popup: popup, fields: fields };
+			} catch (e) { erp(e) }
+		});
+	},
 	/** 网络列表项通用 vmaker：标题 + 描述两行 */
 	listItem: function (holder) {
 		var layout = new G.LinearLayout(ctx),

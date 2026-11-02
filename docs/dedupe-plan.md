@@ -22,20 +22,15 @@
 - `IssueService.showEditIssue`、`GiteeFeedback.showEditIssue`、两处评论条已迁移
 - `IssueService` / `GiteeFeedback` 的话题详情页已收敛到 `issueDetailHeader` +
   `issueDetailPage`
-- 剩余：`GiteeFeedback.showLogin`、`UserManager` 的登录/注册/找回密码/改密表单，
-  这些涉及线上账号流程，迁移后需要真机手动验证
+- `NetworkUI.formDialog`：通用标题 + 输入框 + 说明 + 按钮表单
+- `GiteeFeedback.showLogin`、`UserManager` 的登录 / 注册 / 忘记密码 / 改密表单
+  已迁移；自动构建通过，线上账号登录流程仍需真机手动验证
 
-计划做法：
+剩余验证：
 
-1. 在 `NetworkUI` 增加通用表单构造（如 `dialogForm({ title, fields, buttons })` 和
-   `inputDialog({ hint, onSubmit })`），字段支持 `hint/value/inputType/password/checkbox`
-2. 先迁移 `GiteeFeedback.showLogin` 与 `IssueService` 评论框（结构最接近），
-   再迁 UserManager 的登录/注册表单
-3. 迁移后需要**真实账号/联网**手动验证：登录、匿名登录、浏览器登录、评论发送、
-   注册/找回密码流程
-
-风险：登录/反馈是线上功能，自动构建只能验证编译和启动，必须真机手动走一遍；
-如果无测试账号，先只迁结构最简单的一处。
+- 真实账号/联网手动走一遍：登录、匿名登录、浏览器登录、评论发送、
+  注册/找回密码/改密流程
+- 自动构建目前只能验证脚本编译、启动和表单 UI 构造
 
 ## P2：JSONLanguageService 内部剩余副本
 

@@ -812,126 +812,77 @@ MapScript.loadModule("GiteeFeedback", {
 		}
 	},
 	showLogin: function self(callback) {
-		G.ui(function () {
-			try {
-				var username, password, popup;
-				popup = PopupPage.showDialog("feedback.GiteeLogin", L.ScrollView({
-					style: "message_bg",
-					child: L.LinearLayout({
-						orientation: L.LinearLayout("vertical"),
-						padding: [15 * G.dp, 15 * G.dp, 15 * G.dp, 0],
-						children: [
-							L.TextView({
-								text: "登录码云",
-								padding: [0, 0, 0, 10 * G.dp],
-								layout: { width: -1, height: -2 },
-								gravity: L.Gravity("center"),
-								style: "textview_default",
-								fontSize: 4
-							}),
-							username = L.EditText({
-								hint: "用户名(邮箱)",
-								singleLine: true,
-								padding: [0, 0, 0, 0],
-								imeOptions: L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
-								inputType: L.InputType("TYPE_CLASS_TEXT|TYPE_TEXT_VARIATION_EMAIL_ADDRESS"),
-								style: "edittext_default",
-								fontSize: 3,
-								layout: { width: -1, height: -2 }
-							}),
-							password = L.EditText({
-								hint: "密码",
-								padding: [0, 20 * G.dp, 0, 0],
-								imeOptions: L.EditorInfo("IME_FLAG_NO_FULLSCREEN"),
-								transformationMethod: L.asClass(L.PasswordTransformationMethod).instance,
-								style: "edittext_default",
-								fontSize: 3,
-								layout: { width: -1, height: -2 }
-							}),
-							L.TextView({
-								text: "您需要一个账户才能创建和回复反馈，您也可以选择使用匿名用户来查看反馈",
-								padding: [0, 20 * G.dp, 0, 10 * G.dp],
-								layout: { width: -1, height: -2 },
-								style: "textview_highlight",
-								fontSize: 2
-							}),
-							L.TextView({
-								text: "登录",
-								padding: [10 * G.dp, 10 * G.dp, 10 * G.dp, 10 * G.dp],
-								gravity: L.Gravity("center"),
-								layout: { width: -1, height: -2 },
-								style: "button_critical",
-								fontSize: 3,
-								onClick: function () {
-									try {
-										if (!username.length()) return Common.toast("用户名不能为空");
-										if (!password.length()) return Common.toast("密码不能为空");
-										Common.showProgressDialog(function (dia) {
-											dia.setText("正在登录...");
-											try {
-												GiteeFeedback.acquireAccessToken(username.text, password.text);
-												GiteeFeedback.save(GiteeFeedback.getUserInfo());
-											} catch (e) {
-												Log.e(e);
-												return Common.toast("登录失败，请检查您是否已连接互联网且用户名与密码正确\n" + e);
-											}
-											G.ui(function () {
-												try {
-													popup.exit();
-													if (callback) callback();
-												} catch (e) { erp(e) }
-											});
-										});
-									} catch (e) { erp(e) }
-								}
-							}),
-							L.TextView({
-								text: "匿名使用",
-								padding: [10 * G.dp, 10 * G.dp, 10 * G.dp, 10 * G.dp],
-								gravity: L.Gravity("center"),
-								layout: { width: -1, height: -2 },
-								style: "button_critical",
-								fontSize: 3,
-								onClick: function () {
-									try {
-										Common.showProgressDialog(function (dia) {
-											dia.setText("正在登录...");
-											try {
-												GiteeFeedback.acquireAccessTokenAnonymous();
-												GiteeFeedback.save(null);
-											} catch (e) {
-												erp(e, true);
-												return Common.toast("登录失败\n" + e);
-											}
-											G.ui(function () {
-												try {
-													popup.exit();
-													if (callback) callback();
-												} catch (e) { erp(e) }
-											});
-										});
-									} catch (e) { erp(e) }
-								}
-							}),
-							L.TextView({
-								text: "使用浏览器登录或注册",
-								padding: [10 * G.dp, 10 * G.dp, 10 * G.dp, 20 * G.dp],
-								gravity: L.Gravity("center"),
-								layout: { width: -1, height: -2 },
-								style: "button_critical",
-								fontSize: 3,
-								onClick: function () {
-									try {
-										GiteeFeedback.startOAuth(callback);
-										popup.exit();
-									} catch (e) { erp(e) }
-								}
-							})
-						]
-					})
-				}), -1, -2);
-			} catch (e) { erp(e) }
-		})
+		NetworkUI.formDialog({
+			popupName: "feedback.GiteeLogin",
+			title: "登录码云",
+			padding: [15 * G.dp, 15 * G.dp, 15 * G.dp, 0],
+			fields: [{
+				name: "username",
+				hint: "用户名(邮箱)",
+				inputType: "TYPE_CLASS_TEXT|TYPE_TEXT_VARIATION_EMAIL_ADDRESS"
+			}, {
+				name: "password",
+				hint: "密码",
+				password: true,
+				singleLine: false
+			}],
+			note: {
+				text: "您需要一个账户才能创建和回复反馈，您也可以选择使用匿名用户来查看反馈",
+				style: "textview_highlight",
+				fontSize: 2,
+				padding: [0, 20 * G.dp, 0, 10 * G.dp]
+			},
+			buttons: [{
+				text: "登录",
+				onClick: function (fields, popup) {
+					if (!fields.username.length()) return Common.toast("用户名不能为空");
+					if (!fields.password.length()) return Common.toast("密码不能为空");
+					Common.showProgressDialog(function (dia) {
+						dia.setText("正在登录...");
+						try {
+							GiteeFeedback.acquireAccessToken(fields.username.text, fields.password.text);
+							GiteeFeedback.save(GiteeFeedback.getUserInfo());
+						} catch (e) {
+							Log.e(e);
+							return Common.toast("登录失败，请检查您是否已连接互联网且用户名与密码正确\n" + e);
+						}
+						G.ui(function () {
+							try {
+								popup.exit();
+								if (callback) callback();
+							} catch (e) { erp(e) }
+						});
+					});
+				}
+			}, {
+				text: "匿名使用",
+				onClick: function (fields, popup) {
+					Common.showProgressDialog(function (dia) {
+						dia.setText("正在登录...");
+						try {
+							GiteeFeedback.acquireAccessTokenAnonymous();
+							GiteeFeedback.save(null);
+						} catch (e) {
+							erp(e, true);
+							return Common.toast("登录失败\n" + e);
+						}
+						G.ui(function () {
+							try {
+								popup.exit();
+								if (callback) callback();
+							} catch (e) { erp(e) }
+						});
+					});
+				}
+			}, {
+				text: "使用浏览器登录或注册",
+				padding: [10 * G.dp, 10 * G.dp, 10 * G.dp, 20 * G.dp],
+				onClick: function (fields, popup) {
+					GiteeFeedback.startOAuth(callback);
+					popup.exit();
+				}
+			}]
+		});
 	},
 	load: function () {
 		this.settings = CA.settings.feedbackSettings || (CA.settings.feedbackSettings = {});
