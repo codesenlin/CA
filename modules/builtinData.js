@@ -1,11 +1,3 @@
-/*LOADER
-if (variables.buildConfig.variants == "release") {
-	postprocessor = function(src) {
-		var jsmin = require("jsmin").jsmin;
-		return jsmin(src, 2);
-	};
-}
-*/
 // 内置拓展包：内容用 Loader.fromFile 在构建时内联，默认启用/禁用由 data/builtinLibs.json 清单决定。
 // 新增内置包：①把 .json 放到 data/idlibs/ ②在这里加一行 Loader.fromFile
 // ③在 data/builtinLibs.json 的 libraries 里登记（default: enabled/disabled）④更新 docs/data-notes/builtinLibs.md

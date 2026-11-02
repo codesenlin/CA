@@ -1,11 +1,3 @@
-/*LOADER
-if (variables.buildConfig.variants == "release") {
-	postprocessor = function(src) {
-		var jsmin = require("jsmin").jsmin;
-		return jsmin(src, 2);
-	};
-}
-*/
 Intl.defaultLang = Loader.fromFile("./zh_CN/main.json");
 switch (Intl.lookupLang({
 	"zh_CN": {

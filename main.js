@@ -607,33 +607,6 @@ MapScript.loadModule("Loader", {
 });
 
 Loader.load(function () {
-	/*LOADER
-	if (variables.buildConfig.variants == "release") {
-		postprocessor = function(src) {
-			var jsmin = require("jsmin").jsmin;
-			return jsmin(src, 1)
-				.replace(/\{DATE\}/g, variables.buildConfig.date)
-				.replace(/^\s+/, "") //去除开头多余的空行
-				.replace(/^"ui";\n/, "").replace(/CA\.RELEASE/g, "true"); //去除UI标志，标记正式版
-		};
-	} else if (variables.buildConfig.variants == "snapshot") {
-		postprocessor = function(src) {
-			return src.replace(/\{DATE\}/g, "S" + variables.buildConfig.date);
-		};
-	} else if (/^(beta|dev|canary)$/.test(variables.buildConfig.variants)) {
-		postprocessor = function(src) {
-			var jsmin = require("jsmin").jsmin;
-			return jsmin(src, 1)
-				.replace(/\{DATE\}/g, variables.buildConfig.date)
-				.replace(/^\s+/, "");
-		};
-	} else if (variables.buildConfig.variants == "debug") {
-		// 调试包也要替换 {DATE}，否则 erp 的错误报告里显示的就是字面量 "{DATE}"
-		postprocessor = function(src) {
-			return src.replace(/\{DATE\}/g, variables.buildConfig.date);
-		};
-	}
-	*/
 
 	Loader.fromFile("modules/BuildConfig.js")
 

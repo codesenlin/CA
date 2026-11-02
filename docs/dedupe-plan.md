@@ -78,8 +78,16 @@ meta-schema，结构相似但内容不同，并非重复副本；不再按重复
   `.json` clib 源按原文读取
 - 新增 loader 测试覆盖 LOADER 注释兼容；`clibspawn` 用临时签名密钥跑通全部 5 个库
 
-本轮已收尾：`publish*` 已共用 `publish.js`，构建日志样板也已收敛；
-暂无计划内去重项。
+本轮已收尾：`publish*` 已共用 `publish.js`，构建日志样板也已收敛。
+
+遗留 LOADER 清理：
+
+- ✅ 删除 `main.js` / `G.js` / `builtinData.js` / `intl/index.js` 里重复的
+  `postprocessor` LOADER 块，发布压缩/日期替换统一由 `postprocess.js` 执行
+- ✅ 删除失效的 `caclib/src/daily_question/tool_export.js`（引用已删除的旧 loader）
+- 保留 `BuildConfig.js` / `UpdateSources.js` 的数据注入、`FileLogger.js` 的
+  `TestOnly()`、`caclib verify.js` 的 `postprocessor`
+- release 产物与清理前逐字节一致（仅 `publishTime` 时间戳不同）
 
 ## 验证清单（每次去重后）
 
