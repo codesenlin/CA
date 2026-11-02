@@ -94,7 +94,7 @@ meta-schema，结构相似但内容不同，并非重复副本；不再按重复
 ```bash
 node --check <改动的单文件>
 node ./cabuildtools/main.js buildRelease        # 看产物大小
-npm test                                        # 6 + 7
+npm test                                        # 6 + 8
 node ./cabuildtools/main.js shellBuildDebug     # 真机安装
 adb logcat | grep Script                        # 脚本编译/执行
 ```
