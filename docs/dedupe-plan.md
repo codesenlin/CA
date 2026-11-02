@@ -37,12 +37,17 @@
 涉及：`modules/JSONLanguageService.js`（vendored bundle）。
 
 已处理：独立的 `jsonc-parser` bundle（整份删除）、`_interopRequireWildcard`
-（8 份 → 1 份）、`mergeSort`（2 份 → 1 份）。
+（8 份 → 1 份）、`mergeSort`（2 份 → 1 份）、module 30 的重复
+`FullTextDocument`（改为 require module 29 的 `vscode-languageserver-textdocument`）。
 
 剩余重复：
 
-- meta-schema 常量（如 `$vocabulary` / `multipleOf` 相关 schema 数组）在 bundle 内出现两份
-- `FullTextDocument` 等依赖模块被 webpack 打包了副本
+- meta-schema 常量（如 `$vocabulary` / `multipleOf` 相关 schema 数组）在 bundle 内出现若干份
+
+已验证：
+- Node 下对比改动前后 `TextDocument.create/update/applyEdits`、`doComplete`
+  多个光标位置、`findNodeAtOffset`，结果一致
+- 删除约 5.9KB / 141 行
 
 不建议手改：这些是 webpack 模块的独立副本，删一份需要改模块引用，容易破坏解析/补全。
 后续做法：

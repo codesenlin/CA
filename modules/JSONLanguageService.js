@@ -10839,146 +10839,8 @@ MapScript.loadModule("JSONLanguageService", (function () {
             WorkspaceFolder.is = is;
           })(WorkspaceFolder || (exports.WorkspaceFolder = WorkspaceFolder = {}));
           exports.EOL = ['\n', '\r\n', '\r'];
-          var TextDocument;
-          (function (TextDocument) {
-            function create(uri, languageId, version, content) {
-              return new FullTextDocument(uri, languageId, version, content);
-            }
-            TextDocument.create = create;
-            function is(value) {
-              var candidate = value;
-              return Is.defined(candidate) && Is.string(candidate.uri) && (Is.undefined(candidate.languageId) || Is.string(candidate.languageId)) && Is.uinteger(candidate.lineCount) && Is.func(candidate.getText) && Is.func(candidate.positionAt) && Is.func(candidate.offsetAt) ? true : false;
-            }
-            TextDocument.is = is;
-            function applyEdits(document, edits) {
-              var text = document.getText();
-              var sortedEdits = mergeSort(edits, function (a, b) {
-                var diff = a.range.start.line - b.range.start.line;
-                if (diff === 0) {
-                  return a.range.start.character - b.range.start.character;
-                }
-                return diff;
-              });
-              var lastModifiedOffset = text.length;
-              for (var i = sortedEdits.length - 1; i >= 0; i--) {
-                var e = sortedEdits[i];
-                var startOffset = document.offsetAt(e.range.start);
-                var endOffset = document.offsetAt(e.range.end);
-                if (endOffset <= lastModifiedOffset) {
-                  text = text.substring(0, startOffset) + e.newText + text.substring(endOffset, text.length);
-                } else {
-                  throw new Error('Overlapping edit');
-                }
-                lastModifiedOffset = startOffset;
-              }
-              return text;
-            }
-            TextDocument.applyEdits = applyEdits;
-          })(TextDocument || (exports.TextDocument = TextDocument = {}));
-          var FullTextDocument = function () {
-            function FullTextDocument(uri, languageId, version, content) {
-              this._uri = uri;
-              this._languageId = languageId;
-              this._version = version;
-              this._content = content;
-              this._lineOffsets = undefined;
-            }
-            Object.defineProperty(FullTextDocument.prototype, "uri", {
-              get: function get() {
-                return this._uri;
-              },
-              enumerable: false,
-              configurable: true
-            });
-            Object.defineProperty(FullTextDocument.prototype, "languageId", {
-              get: function get() {
-                return this._languageId;
-              },
-              enumerable: false,
-              configurable: true
-            });
-            Object.defineProperty(FullTextDocument.prototype, "version", {
-              get: function get() {
-                return this._version;
-              },
-              enumerable: false,
-              configurable: true
-            });
-            FullTextDocument.prototype.getText = function (range) {
-              if (range) {
-                var start = this.offsetAt(range.start);
-                var end = this.offsetAt(range.end);
-                return this._content.substring(start, end);
-              }
-              return this._content;
-            };
-            FullTextDocument.prototype.update = function (event, version) {
-              this._content = event.text;
-              this._version = version;
-              this._lineOffsets = undefined;
-            };
-            FullTextDocument.prototype.getLineOffsets = function () {
-              if (this._lineOffsets === undefined) {
-                var lineOffsets = [];
-                var text = this._content;
-                var isLineStart = true;
-                for (var i = 0; i < text.length; i++) {
-                  if (isLineStart) {
-                    lineOffsets.push(i);
-                    isLineStart = false;
-                  }
-                  var ch = text.charAt(i);
-                  isLineStart = ch === '\r' || ch === '\n';
-                  if (ch === '\r' && i + 1 < text.length && text.charAt(i + 1) === '\n') {
-                    i++;
-                  }
-                }
-                if (isLineStart && text.length > 0) {
-                  lineOffsets.push(text.length);
-                }
-                this._lineOffsets = lineOffsets;
-              }
-              return this._lineOffsets;
-            };
-            FullTextDocument.prototype.positionAt = function (offset) {
-              offset = Math.max(Math.min(offset, this._content.length), 0);
-              var lineOffsets = this.getLineOffsets();
-              var low = 0,
-                high = lineOffsets.length;
-              if (high === 0) {
-                return Position.create(0, offset);
-              }
-              while (low < high) {
-                var mid = Math.floor((low + high) / 2);
-                if (lineOffsets[mid] > offset) {
-                  high = mid;
-                } else {
-                  low = mid + 1;
-                }
-              }
-              var line = low - 1;
-              return Position.create(line, offset - lineOffsets[line]);
-            };
-            FullTextDocument.prototype.offsetAt = function (position) {
-              var lineOffsets = this.getLineOffsets();
-              if (position.line >= lineOffsets.length) {
-                return this._content.length;
-              } else if (position.line < 0) {
-                return 0;
-              }
-              var lineOffset = lineOffsets[position.line];
-              var nextLineOffset = position.line + 1 < lineOffsets.length ? lineOffsets[position.line + 1] : this._content.length;
-              return Math.max(Math.min(lineOffset + position.character, nextLineOffset), lineOffset);
-            };
-            Object.defineProperty(FullTextDocument.prototype, "lineCount", {
-              get: function get() {
-                return this.getLineOffsets().length;
-              },
-              enumerable: false,
-              configurable: true
-            });
-            return FullTextDocument;
-          }();
+          var TextDocument = require("vscode-languageserver-textdocument").TextDocument;
+          exports.TextDocument = TextDocument;
           var Is;
           (function (Is) {
             var toString = Object.prototype.toString;
@@ -11028,7 +10890,7 @@ MapScript.loadModule("JSONLanguageService", (function () {
             Is.typedArray = typedArray;
           })(Is || (Is = {}));
         });
-      }, {}],
+      }, {"vscode-languageserver-textdocument": 29}],
       31: [function (require, module, exports) {
         (function (process) {
           (function () {
