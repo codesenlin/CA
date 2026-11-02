@@ -8,7 +8,7 @@
 
 | id | 名称 | 默认 | 说明 |
 | --- | --- | --- | --- |
-| `light` | 默认风格 | 默认版 | 白色基线 |
+| `light` | 浅色风格 | 默认版 | 白色基线；显式给出全部颜色，不再依赖 loadTheme 兜底 |
 | `dark` | 夜间风格 | — | 深色 |
 | `pink` | 晨星粉 | 社区版 | 南鸢晨星社区版配色 |
 | `blue` | 晨雾蓝 | — | 社区版蓝 |
@@ -39,8 +39,8 @@
 | `go_touchbgcolor` | GO 按钮按下背景色 |
 | `go_touchtextcolor` | GO 按钮按下文本色 |
 
-颜色使用 `#RRGGBB`；`Common.loadTheme` 解析成 ARGB int。`light` 只给
-`nameKey`，其余颜色由 `Common.loadTheme` 的默认值兜底。
+颜色使用 `#RRGGBB`；`Common.loadTheme` 解析成 ARGB int。`light` 现在也显式给出
+全部颜色，`Common.loadTheme` 里的默认值只作为旧数据/缺字段兜底。
 
 配色来源：`Git/CA_reforged` 的 `pink_theme`（`modules/Common.js`）、
 `blue_theme` / `purple_theme`（`modules/builtinData.js`）。

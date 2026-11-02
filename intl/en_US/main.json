@@ -12,6 +12,7 @@
 		"settings": "Settings",
 		"webviewUnavailable": "Your device cannot load Android System WebView%n%n%s",
 		"theme": {
+			"light": "Light",
 			"default": "Default",
 			"dark": "Night",
 			"pink": "Pink",

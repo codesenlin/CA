@@ -120,7 +120,7 @@ flavors/
 
 | 字段 | 说明 |
 | --- | --- |
-| `nameKey` | 主题名称的多语言 key，加载时用 `Intl.get()` 解析成 `name` |
+| `nameKey` | 主题名称的多语言 key，加载时用 `Intl.get()` 解析成 `name`；`light` 用 `common.theme.light` |
 | `bgcolor` | 主界面背景色 |
 | `float_bgcolor` | 浮动栏（滑动时与屏幕保持静止的栏）背景色 |
 | `message_bgcolor` | 浮动界面背景色 |
@@ -133,7 +133,7 @@ flavors/
 | `go_touchbgcolor` | GO 按钮按下时背景色 |
 | `go_touchtextcolor` | GO 按钮按下时文本颜色 |
 
-- `light` 主题只给 `nameKey`，其余颜色由 `Common.loadTheme` 的默认值兜底
+- `light` 主题现在也显式给出全部颜色；`Common.loadTheme` 的默认值只作为旧数据兜底
 - 颜色必须是 `#RRGGBB` 形式，`loadTheme` 会解析成 ARGB int
 - 新增主题时在 `data/theme.json` 加一项，并在
   `intl/<lang>/main.json` 的 `common.theme` 下补名称
@@ -153,7 +153,7 @@ flavors/
 
 所有主题都在 `data/theme.json`：
 
-- `light`：默认风格（白色；默认版默认主题）
+- `light`：浅色风格（白色；默认版默认主题）
 - `dark`：夜间风格
 - `pink`：晨星粉（社区版默认主题）
 - `blue`：晨雾蓝
