@@ -112,7 +112,8 @@ MapScript.loadModule("NetworkUI", {
 			fontSize: 3,
 			onClick: function () {
 				try {
-					popup.exit();
+					var target = typeof popup == "function" ? popup() : popup;
+					if (target) target.exit();
 				} catch (e) { erp(e) }
 			}
 		});
@@ -413,6 +414,7 @@ MapScript.loadModule("NetworkUI", {
 						children: children
 					})
 				}), -1, -2);
+				fields.__popup = popup;
 				return { popup: popup, fields: fields };
 			} catch (e) { erp(e) }
 		});

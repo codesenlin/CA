@@ -877,9 +877,9 @@ MapScript.loadModule("GiteeFeedback", {
 			}, {
 				text: "使用浏览器登录或注册",
 				padding: [10 * G.dp, 10 * G.dp, 10 * G.dp, 20 * G.dp],
-				onClick: function (fields, popup) {
+				onClick: function (fields) {
 					GiteeFeedback.startOAuth(callback);
-					popup.exit();
+					fields.__popup.exit();
 				}
 			}]
 		});

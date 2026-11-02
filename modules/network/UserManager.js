@@ -1001,7 +1001,7 @@ MapScript.loadModule("UserManager", {
 							}),
 						]
 					}),
-					NetworkUI.closeButton(popup)
+					NetworkUI.closeButton(function () { return popup; })
 				);
 				popup = PopupPage.showSideBar("usermanager.ExpManage", L.ScrollView({
 					style: "message_bg",
@@ -1179,7 +1179,7 @@ MapScript.loadModule("UserManager", {
 							L.Space({
 								layout: { width: -1, height: 0, weight: 1.0 }
 							}),
-							NetworkUI.closeButton(popup)
+							NetworkUI.closeButton(function () { return popup; })
 						]
 					})
 				}), "left", 160 * G.dp, 0.2);

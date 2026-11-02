@@ -453,7 +453,7 @@ MapScript.loadModule("IssueService", {
 									listView.adapter = this._adapter;
 								}
 							}),
-							NetworkUI.closeButton(self.popup)
+							NetworkUI.closeButton(function () { return self.popup; })
 						]
 					}), "issue.Issues");
 					self.popup.on("exit", function () {
@@ -594,6 +594,19 @@ MapScript.loadModule("IssueService", {
 							callback();
 						});
 					}
+					self.talkBar = NetworkUI.commentBar({
+						onSend: function (s) {
+							self.addComment(s, function () {
+								G.ui(function () {
+									try {
+										self.talkbox.text = "";
+									} catch (e) { erp(e) }
+								});
+							});
+						}
+					});
+					self.talk = self.talkBar.view;
+					self.talkbox = self.talkBar.input;
 					self.setState = function (state) {
 						NetworkUI.progress("正在标记……", function () {
 							try {
