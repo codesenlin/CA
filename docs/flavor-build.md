@@ -25,8 +25,8 @@ npm run build -- -flavor <名字>
 产物的风味后缀：
 
 ```
-build/dist/命令助手(1.2.14).apk              # stable
-build/dist/命令助手(1.2.14-huangyxHUTAO).apk # huangyxHUTAO
+build/dist/命令助手(1.2.15).apk              # stable
+build/dist/命令助手(1.2.15-huangyxHUTAO).apk # huangyxHUTAO
 build/dist/命令助手(2026-10-31) stable-huangyxHUTAO.js
 build/outputs/debugApk/app-debug-huangyxHUTAO.apk
 ```

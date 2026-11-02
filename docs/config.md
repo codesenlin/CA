@@ -19,9 +19,9 @@
 
 ```json
 {
-	"version": "1.2.14",
-	"versionCode": [1, 2, 14],
-	"date": "2026-10-22",
+	"version": "1.2.15",
+	"versionCode": [1, 2, 16],
+	"date": "2026-11-02",
 	"licenceUpdate": "2019/9/21",
 	"description": "……"
 }
