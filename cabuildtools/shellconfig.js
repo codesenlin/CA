@@ -7,7 +7,7 @@ const path = require("path");
  *
  * config/shell.json、config/import.json 里只写「和机器无关的默认值 + 平台差异」，
  * 具体路径由这里补齐：
- *   - cadroid 项目：CA 仓库旁边叫 cadroid / ca 的目录（含 app/build.gradle），可用 CA_CADROID 覆盖
+ *   - cadroid 项目：CA 仓库旁边叫 cadroid / ca 的目录（含 app/build.gradle 或 app/build.gradle.kts），可用 CA_CADROID 覆盖
  *   - Android SDK：ANDROID_HOME / ANDROID_SDK_ROOT → cadroid/local.properties 的 sdk.dir → 常见安装位置
  *   - Build Tools：优先 config/shell.json 里的 buildToolVersion，否则取已安装的最高版本
  *   - JDK：JAVA_HOME → Android Studio 自带的 JBR → ~/.jdks（优先 17）
@@ -49,7 +49,7 @@ function looksLikeSdk(dir) {
 }
 
 function looksLikeCadroid(dir) {
-	return hasFile(path.join(dir, "app", "build.gradle")) && hasFile(path.join(dir, "app", "src", "main"));
+	return (hasFile(path.join(dir, "app", "build.gradle.kts")) || hasFile(path.join(dir, "app", "build.gradle"))) && hasFile(path.join(dir, "app", "src", "main"));
 }
 
 /** 从 cadroid 的 local.properties 里读 sdk.dir（Android Studio 生成的那份） */
