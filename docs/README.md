@@ -19,6 +19,7 @@
 | [data-and-accel.md](data-and-accel.md) | 数据外置、caaccel / QuickJS 加速方案与实测 |
 | [dedupe-plan.md](dedupe-plan.md) | 去重计划和遗留 LOADER 清理记录 |
 | [porting-candidates.md](porting-candidates.md) | JS / Java / QuickJS 跨语言迁移候选与结论 |
+| [kotlin-migration.md](kotlin-migration.md) | CA 项目 Kotlin 化分层路线：cabuildtools 先迁移，核心 JS/拓展包保持 |
 | [quickjs-plan.md](quickjs-plan.md) | QuickJS worker 的能力、限制和 P1–P4 计划 |
 | [jsonpro-quickjs.md](jsonpro-quickjs.md) | jsonPro → QuickJS 实验记录（暂停） |
 | [intellisense-selector.md](intellisense-selector.md) | 选择器补全返回值结构 |

@@ -36,7 +36,7 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 - `caaccel/` — Java 加速库源码（配合 `modules/Accel.js`）
 - `docs/` — 开发文档：索引见 [`docs/README.md`](docs/README.md)，包含分支约定、构建配置、
   数据外置与加速方案、`data/` 各文件说明、风味构建、去重/LOADER 清理记录、
-  跨语言迁移候选、QuickJS 计划等
+  跨语言迁移候选、Kotlin 化路线、QuickJS 计划等
 - `community-clib/` — 社区拓展包源：`src/` 放原始包，`build.js` 解包重签后生成
   `info.json` / 索引 / `packs/*.lib` / `verify.key`，GitHub 上直接对外提供（见该目录 README）
 - `build/` — 构建产物（不入版本库）
