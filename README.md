@@ -86,7 +86,7 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
     npm run help               # 列出所有任务、渠道参数与产物位置
 
     npm run build              # 正式版
-    npm run buildSnapshot      # 快照版
+    npm run snapshot      # 快照版
 
     # 渠道参数要放在 -- 后面（npm 会把 -- 之后的参数传给脚本）
     npm run build -- -beta      # 测试渠道

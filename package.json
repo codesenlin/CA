@@ -10,7 +10,7 @@
   },
   "scripts": {
     "build": "node ./cabuildtools/main.js buildRelease",
-    "buildSnapshot": "node ./cabuildtools/main.js buildSnapshot",
+    "snapshot": "node ./cabuildtools/main.js buildSnapshot",
     "postinstall": "node scripts/check-legacy.js",
     "gradlew": "node ./cabuildtools/gradlew.js",
     "help": "node ./cabuildtools/main.js help",

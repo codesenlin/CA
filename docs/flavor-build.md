@@ -14,7 +14,7 @@
 
 ```bash
 npm run build -- -huangyxHUTAO                  # 正式版 + 南鸢晨星社区版风味
-npm run buildSnapshot -- -huangyxHUTAO          # 快照版 + 社区版风味
+npm run snapshot -- -huangyxHUTAO          # 快照版 + 社区版风味
 node ./cabuildtools/main.js shellBuildRelease -huangyxHUTAO
 node ./cabuildtools/main.js shellBuildDebug -huangyxHUTAO
 
