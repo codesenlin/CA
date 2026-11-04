@@ -1,6 +1,6 @@
 MapScript.loadModule("WSServer", {
-	//Thanks to [jocopa3/PEWS-API](https://github.com/jocopa3/PEWS-API)
-	// and [LNSSPsd/MyAgent](https://github.com/LNSSPsd/MyAgent)
+	// Thanks to [jocopa3/PEWS-API](https://github.com/jocopa3/PEWS-API)
+	// And [LNSSPsd/MyAgent](https://github.com/LNSSPsd/MyAgent)
 	startPort: 19134,
 	endPort: 19165,
 	conn: null,
