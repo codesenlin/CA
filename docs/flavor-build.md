@@ -92,6 +92,8 @@ flavors/
 | `startupText` | 启动加载文字（替换默认的 `命令助手 by ProjectXero`） |
 | `aboutText` | 关于页副标题（默认 `Developed by ProjectXero`） |
 | `welcome` | 新用户的初始历史/欢迎语数组 |
+| `aboutTitle` | 关于页标题（默认 `命令助手`，社区版可用 `命令助手 Reforged`） |
+| `communityInfo` | 可选：关于页「社区信息」列表，数组项为 `{ name, description?, url?, copy? }`；官方信息始终保留，社区信息追加在官方信息之后 |
 
 ### data/theme.json
 

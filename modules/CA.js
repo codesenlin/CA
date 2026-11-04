@@ -2786,6 +2786,17 @@ MapScript.loadModule("CA", {
 							Common.showSettings("关于", self.about);
 						}
 					}];
+					// 原作者/官方信息始终保留；风味只替换副标题，并追加社区信息列表。
+					var flavorData = BuildConfig.flavorData || {};
+					var aboutTitle = flavorData.aboutTitle || "命令助手";
+					var aboutText = flavorData.aboutText || "Developed by ProjectXero";
+					var communityVersion = flavorData.communityVersion || "";
+					var communityMaintainer = flavorData.communityMaintainer || "";
+					var communityInfo = Array.isArray(flavorData.communityInfo) ? flavorData.communityInfo : [];
+					var officialProjectUrl = "https://ca.projectxero.top/";
+					var officialAboutUrl = "https://ca.projectxero.top/blog/about/";
+					var officialLicenseUrl = "https://ca.projectxero.top/blog/about/license/";
+					var officialPrivacyUrl = "https://ca.projectxero.top/blog/about/privacy/";
 					self.about = [MapScript.host == "Android" ? {
 						type: "layout",
 						maker: function (holder) {
@@ -2801,14 +2812,14 @@ MapScript.loadModule("CA", {
 							title = new G.TextView(ctx);
 							title.setPadding(0, 15 * G.dp, 0, 0);
 							title.setGravity(G.Gravity.CENTER);
-							title.setText("命令助手  " + CA.getVersionLabel());
+							title.setText(aboutTitle + "  " + CA.getVersionLabel());
 							title.setLayoutParams(new G.LinearLayout.LayoutParams(-1, -2));
 							Common.applyStyle(title, "textview_default", 4);
 							linear.addView(title);
 							desp = new G.TextView(ctx);
 							desp.setGravity(G.Gravity.CENTER);
 							// 风味可以覆盖关于页副标题（例如社区版归属说明），默认保持作者署名
-							desp.setText((BuildConfig.flavorData && BuildConfig.flavorData.aboutText) || "Developed by ProjectXero");
+							desp.setText(aboutText);
 							desp.setTypeface(G.Typeface.SERIF || G.Typeface.DEFAULT);
 							desp.setLayoutParams(new G.LinearLayout.LayoutParams(-1, -2));
 							Common.applyStyle(desp, "textview_prompt", 2);
@@ -2859,7 +2870,7 @@ MapScript.loadModule("CA", {
 						name: "分享软件",
 						type: "custom",
 						onclick: function () {
-							var t = "https://ca.projectxero.top";
+							var t = officialProjectUrl;
 							try {
 								AndroidBridge.shareText("Hi，我发现一款很棒的Minecraft辅助软件，命令助手。下载链接：" + t);
 							} catch (e) {
@@ -2878,7 +2889,7 @@ MapScript.loadModule("CA", {
 						type: "custom",
 						onclick: function () {
 							try {
-								AndroidBridge.viewUri("https://ca.projectxero.top");
+								AndroidBridge.viewUri(officialProjectUrl);
 							} catch (e) {
 								Common.toast("项目官网打开失败");
 								Log.e(e);
@@ -2937,7 +2948,7 @@ MapScript.loadModule("CA", {
 						type: "custom",
 						onclick: function () {
 							Common.showWebViewDialog({
-								url: "https://ca.projectxero.top/blog/about/license/"
+								url: officialLicenseUrl
 							});
 						}
 					}, {
@@ -2945,7 +2956,7 @@ MapScript.loadModule("CA", {
 						type: "custom",
 						onclick: function () {
 							Common.showWebViewDialog({
-								url: "https://ca.projectxero.top/blog/about/privacy/"
+								url: officialPrivacyUrl
 							});
 						}
 					}, {
@@ -2953,7 +2964,7 @@ MapScript.loadModule("CA", {
 						type: "custom",
 						onclick: function () {
 							try {
-								AndroidBridge.viewUri("https://ca.projectxero.top/blog/about/");
+								AndroidBridge.viewUri(officialAboutUrl);
 							} catch (e) {
 								Common.toast("关于页面打开失败");
 								Log.e(e);
@@ -3044,6 +3055,86 @@ MapScript.loadModule("CA", {
 							DebugUtils.showDebugDialog();
 						}
 					}];
+					// 官方信息标签固定在最上方；社区风味在官方信息之后追加蓝色标签和条目。
+					// 标签放在图标/标题/副标题下面，官方条目上面。
+					self.about.splice(1, 0, {
+						type: "layout",
+						maker: function () {
+							var label = new G.TextView(ctx);
+							label.setText("官方信息");
+							label.setPadding(20 * G.dp, 20 * G.dp, 20 * G.dp, 0);
+							Common.applyStyle(label, "textview_highlight", 2);
+							return label;
+						}
+					});
+					if (communityInfo.length) {
+						var communityRows = [{
+							type: "layout",
+							maker: function () {
+								var label = new G.TextView(ctx);
+								label.setText("社区信息");
+								label.setPadding(20 * G.dp, 20 * G.dp, 20 * G.dp, 0);
+								// 跟随主题高亮色：白色主题下为蓝字，粉色主题下为粉字
+								Common.applyStyle(label, "textview_highlight", 2);
+								return label;
+							}
+						}], insertAt = -1, ci;
+						if (communityVersion) communityRows.push({
+							name: "社区版本",
+							type: "custom",
+							get: function () { return communityVersion; }
+						});
+						if (communityMaintainer) communityRows.push({
+							name: "维护者",
+							type: "custom",
+							get: function () { return communityMaintainer; }
+						});
+						for (ci = 0; ci < communityInfo.length; ci++) {
+							communityRows.push((function (item) {
+								var row = {
+									name: String(item.name || "社区信息"),
+									type: "custom",
+									onclick: function () {
+										try {
+											if (item.copy) {
+												Common.setClipboardText(String(item.copy));
+												Common.toast("已复制到剪贴板");
+											}
+											if (item.url) AndroidBridge.viewUri(String(item.url));
+										} catch (e) {
+											Log.e(e);
+										}
+									}
+								};
+								if (item.value) row.get = function () { return item.value; };
+								else if (item.description) row.description = String(item.description);
+								return row;
+							})(communityInfo[ci]));
+						}
+						// 社区信息放在官方信息之后、通用设置之前。
+						for (ci = 0; ci < self.about.length; ci++) {
+							if (self.about[ci].name == "自动检查更新") {
+								insertAt = ci;
+								break;
+							}
+						}
+						if (insertAt < 0) insertAt = self.about.length;
+						for (ci = communityRows.length - 1; ci >= 0; ci--) {
+							self.about.splice(insertAt, 0, communityRows[ci]);
+						}
+					}
+					// 自动检查更新/诊断信息放在社区信息下方，单独列「通用设置」
+					var generalTag = {
+						name: "通用设置",
+						type: "tag"
+					}, generalAt = -1, gi;
+					for (gi = 0; gi < self.about.length; gi++) {
+						if (self.about[gi].name == "自动检查更新") {
+							generalAt = gi;
+							break;
+						}
+					}
+					if (generalAt >= 0) self.about.splice(generalAt, 0, generalTag);
 					self.appearance = [{
 						name: "界面主题",
 						type: "custom",

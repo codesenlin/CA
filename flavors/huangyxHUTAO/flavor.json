@@ -6,5 +6,31 @@
 	"welcome": [
 		"/say 你好呀喵~ 我是命令助手呀~ 这里是历史喵~ 右滑是收藏哦 可以拖来拖去，还可以长按编辑呢喵~",
 		"/say 命令助手 - 南鸢晨星社区版 喵喵喵~"
-	]
+	],
+	"aboutTitle": "命令助手 Reforged",
+	"communityInfo": [
+		{
+			"name": "社区官网",
+			"url": "https://ca.nycx.top/"
+		},
+		{
+			"name": "加入交流群",
+			"copy": "1044451866",
+			"url": "https://qm.qq.com/q/dTqhmNpcoo"
+		},
+		{
+			"name": "社区许可协议",
+			"url": "https://ca.nycx.top/doc/legal/eula.html"
+		},
+		{
+			"name": "社区隐私政策",
+			"url": "https://ca.nycx.top/doc/legal/privacy.html"
+		},
+		{
+			"name": "关于命令助手",
+			"url": "https://ca.nycx.top/"
+		}
+	],
+	"communityVersion": "命令助手 Reforged",
+	"communityMaintainer": "南鸢晨星"
 }
