@@ -2,11 +2,13 @@ Intl.defaultLang = Loader.fromFile("./zh_CN/main.json");
 switch (Intl.lookupLang({
 	"zh_CN": {
 		language: "zh",
-		country: "CN"
+		country: "CN",
+		ignoreCountry: true
 	},
 	"en_US": {
 		language: "en",
-		country: "US"
+		country: "US",
+		ignoreCountry: true
 	}
 })) {
 	case "en_US":

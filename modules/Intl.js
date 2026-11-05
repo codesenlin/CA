@@ -139,7 +139,9 @@ MapScript.loadModule("Intl", {
 		for (i = 0; i < this.locales.length; i++) {
 			e = this.locales[i];
 			if (range.language && range.language != e.getLanguage()) continue;
-			if (range.country && range.country != e.getCountry()) continue;
+			// 系统「应用语言」可能只给语言码（如 en / zh），不带地区；
+			// 本项目只有中英两份，按语言匹配即可。
+			if (range.country && range.country != e.getCountry() && !range.ignoreCountry) continue;
 			if (range.variant && range.variant != e.getVariant()) continue;
 			return i;
 		}
@@ -173,6 +175,7 @@ MapScript.loadModule("Intl", {
 			v = this.getFitLocaleIndex(ranges[i]);
 			if (v >= 0 && v < minValue) {
 				minIndex = i;
+				minValue = v;
 			}
 		}
 		return minIndex;
