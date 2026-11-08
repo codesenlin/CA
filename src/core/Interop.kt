@@ -1,4 +1,5 @@
-package ca.kotlin
+package ca.kotlin.core
+
 
 /**
  * CA 现有脚本作用域里的全局对象。

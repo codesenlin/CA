@@ -1,4 +1,7 @@
-package ca.kotlin
+package ca.kotlin.ca
+
+import ca.kotlin.core.*
+
 
 /**
  * modules/CA.js 的 core 组迁移（原文件约 1-313 行，以成员名为准）。

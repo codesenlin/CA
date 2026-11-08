@@ -1,4 +1,7 @@
-package ca.kotlin
+package ca.kotlin.android
+
+import ca.kotlin.core.*
+
 
 /**
  * modules/utils/DBSettings.js 的 Kotlin/JS 版本。

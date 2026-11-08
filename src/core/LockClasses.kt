@@ -1,4 +1,8 @@
-package ca.kotlin
+package ca.kotlin.core
+
+import ca.kotlin.ca.*
+import ca.kotlin.network.*
+
 
 /**
  * modules/LockClasses.js 的 Kotlin/JS 版本。
@@ -14,8 +18,6 @@ private fun lockClasses() {
     Loader.protectMethods(MapScript.global, "IssueService", js("['showIssuesWithAgreement']"))
 }
 
-fun exposeLate() {
-    val late = js("({})")
-    late.installLockClasses = { lockClasses() }
-    js("globalThis").CaKotlinLate = late
+fun installLockClassesNow() {
+    lockClasses()
 }

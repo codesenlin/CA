@@ -1,4 +1,7 @@
-package ca.kotlin
+package ca.kotlin.ca
+
+import ca.kotlin.core.*
+
 
 /**
  * modules/CA.js 的 favorite 组 Kotlin/JS 版本（原文件 1765-2706 行）。

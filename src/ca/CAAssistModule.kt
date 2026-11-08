@@ -1,4 +1,7 @@
-package ca.kotlin
+package ca.kotlin.ca
+
+import ca.kotlin.core.*
+
 
 /**
  * modules/CA.Assist.js 的 Kotlin/JS 版本。

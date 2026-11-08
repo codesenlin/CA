@@ -1,4 +1,5 @@
-package ca.kotlin
+package ca.kotlin.core
+
 
 /** modules/builtinData.js 的 Kotlin/JS 版本。数据仍由 Loader.fromFile 在构建期内联。 */
 fun installBuiltinData() {

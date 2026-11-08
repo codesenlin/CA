@@ -1,4 +1,5 @@
-package ca.kotlin
+package ca.kotlin.core
+
 
 /** modules/test/FileLogger.js 的 Kotlin/JS 版本（调试日志，构建时可能被裁剪）。 */
 fun installFileLogger() {

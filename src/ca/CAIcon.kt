@@ -1,4 +1,7 @@
-package ca.kotlin
+package ca.kotlin.ca
+
+import ca.kotlin.core.*
+
 
 /**
  * modules/CA.js icon 组的 Kotlin/JS 迁移（原文件第 314-601 行，以成员名为准）。

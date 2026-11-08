@@ -1,4 +1,7 @@
-package ca.kotlin
+package ca.kotlin.ui
+
+import ca.kotlin.core.*
+
 
 /**
  * modules/Common.js 的 Kotlin/JS 版本。
@@ -22,7 +25,7 @@ package ca.kotlin
  *
  * 本次按约束只新增本文件，不改 Pending.kt 与 main.js。接入时：
  *  - Pending.kt 增加 pending.installCommon = { installCommon() }；
- *  - main.js 用 CaKotlinPending.installCommon() 替代
+ *  - 由 CaKotlinPending.installAll() 统一安装
  *    Loader.fromFile("modules/Common.js")。
  */
 

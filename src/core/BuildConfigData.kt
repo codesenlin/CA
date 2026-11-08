@@ -1,4 +1,5 @@
-package ca.kotlin
+package ca.kotlin.core
+
 
 /** 构建期注入的 BuildConfig/UpdateSources，改为 Kotlin 安装时从生成的 JSON 读取。 */
 fun installBuildConfig() {

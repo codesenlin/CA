@@ -1,4 +1,7 @@
-package ca.kotlin
+package ca.kotlin.json
+
+import ca.kotlin.core.*
+
 
 /**
  * JSONLanguageService 迁移阶段 1 的 API 组装。

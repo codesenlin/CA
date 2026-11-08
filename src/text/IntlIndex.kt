@@ -1,4 +1,7 @@
-package ca.kotlin
+package ca.kotlin.text
+
+import ca.kotlin.core.*
+
 
 /** intl/index.js 的 Kotlin/JS 版本。语言资源仍由 Loader.fromFile 在构建期内联。 */
 private val intlZhLang: dynamic = js("({ language: 'zh', country: 'CN', ignoreCountry: true })")

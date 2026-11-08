@@ -1,4 +1,7 @@
-package ca.kotlin
+package ca.kotlin.ui.adapter
+
+import ca.kotlin.core.*
+
 
 /**
  * modules/listAdapter/RhinoListAdapter.js 的 Kotlin/JS 版本。

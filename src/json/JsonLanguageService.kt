@@ -1,4 +1,7 @@
-package ca.kotlin
+package ca.kotlin.json
+
+import ca.kotlin.core.*
+
 
 /** 阶段 4：用 Kotlin 实现注册 JSONLanguageService，替代 508KB vendor bundle。 */
 private val jsonLanguageServiceApi: dynamic = js("({})")

@@ -1,4 +1,7 @@
-package ca.kotlin
+package ca.kotlin.game
+
+import ca.kotlin.core.*
+
 
 /**
  * modules/NeteaseAdapter.js 的 Kotlin/JS 版本。

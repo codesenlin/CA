@@ -1,4 +1,7 @@
-package ca.kotlin
+package ca.kotlin.text
+
+import ca.kotlin.core.*
+
 
 /**
  * modules/Intl.js 的 Kotlin/JS 版本。

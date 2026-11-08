@@ -1,4 +1,5 @@
-package ca.kotlin
+package ca.kotlin.core
+
 
 /**
  * modules/utils/GlobalUtils.js 的 Kotlin/JS 版本。

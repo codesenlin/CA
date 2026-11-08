@@ -1,4 +1,7 @@
-package ca.kotlin
+package ca.kotlin.network
+
+import ca.kotlin.core.*
+
 
 /**
  * modules/network/PushService.js 的 Kotlin/JS 版本。

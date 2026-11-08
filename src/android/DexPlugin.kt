@@ -1,4 +1,7 @@
-package ca.kotlin
+package ca.kotlin.android
+
+import ca.kotlin.core.*
+
 
 /** modules/core/DexPlugin.js 的 Kotlin/JS 版本。 */
 private val dexApi: dynamic = js("({})")

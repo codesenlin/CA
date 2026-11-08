@@ -1,4 +1,7 @@
-package ca.kotlin
+package ca.kotlin.json
+
+import ca.kotlin.core.*
+
 
 /**
  * JSONLanguageService 迁移阶段 2：schema registry、schema 匹配与 JSON Schema 校验。

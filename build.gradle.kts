@@ -17,4 +17,10 @@ kotlin {
             useEsClasses = false
         }
     }
+    sourceSets {
+        val jsMain by getting {
+            // 源码直接放在 src/<分类>/ 下，避免 jsMain/kotlin/ca/kotlin 五层嵌套。
+            kotlin.setSrcDirs(listOf("src"))
+        }
+    }
 }

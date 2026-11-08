@@ -1,4 +1,7 @@
-package ca.kotlin
+package ca.kotlin.ui
+
+import ca.kotlin.core.*
+
 
 /**
  * modules/uiCore/PopupWindow.js 的 Kotlin/JS 版本。

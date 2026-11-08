@@ -1,10 +1,11 @@
-package ca.kotlin
+package ca.kotlin.core
+
 
 /**
  * modules/utils/Threads.js 的 Kotlin/JS 版本。
  *
  * Threads 必须在原来的加载位置安装，不能和 Internal 一起提前 onCreate；
- * 通过 CaKotlinPending.installThreads() 延迟注册。
+ * 由 CaKotlinPending.installAll() 在启动阶段统一安装。
  */
 private val threadsApi: dynamic = js("({})")
 private var executor: dynamic = js("null")

@@ -1,4 +1,7 @@
-package ca.kotlin
+package ca.kotlin.ca
+
+import ca.kotlin.core.*
+
 
 /**
  * modules/CA.js agreement/actions 组 Kotlin/JS 版本（原文件约 7934-8357 行，以成员名为准）。

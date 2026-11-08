@@ -1,4 +1,7 @@
-package ca.kotlin
+package ca.kotlin.json
+
+import ca.kotlin.core.*
+
 
 /**
  * JSON/JSONC 解析器（JSONLanguageService 迁移阶段 1）。

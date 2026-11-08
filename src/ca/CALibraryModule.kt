@@ -1,4 +1,7 @@
-package ca.kotlin
+package ca.kotlin.ca
+
+import ca.kotlin.core.*
+
 
 /**
  * modules/CA.Library.js 的 Kotlin/JS 迁移。
@@ -2486,4 +2489,3 @@ private fun clmVersionToString(v: dynamic): dynamic {
 }
 
 private fun clmPad2(n: dynamic): dynamic = clmString(clmAdd("0", n)).slice(-2)
-

@@ -1,4 +1,7 @@
-package ca.kotlin
+package ca.kotlin.core
+
+import ca.kotlin.ui.installUIHelp
+
 
 /**
  * modules/core/Internal.js 的 Kotlin/JS 版本。
@@ -68,6 +71,5 @@ fun main() {
     installMemSaver()
     installUIHelp()
     installGlobalUtils()
-    exposeLate()
     exposePending()
 }

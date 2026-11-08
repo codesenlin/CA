@@ -1,4 +1,7 @@
-package ca.kotlin
+package ca.kotlin.json
+
+import ca.kotlin.core.*
+
 
 /**
  * modules/JSONLanguageService.js 中 `TextDocument`（vscode-languageserver-textdocument）的
