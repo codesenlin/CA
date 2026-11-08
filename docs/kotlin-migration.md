@@ -25,7 +25,7 @@ Kotlin 源码
 
 Phase 0 已建立：
 
-- 根目录 Gradle Kotlin/JS 工程（`build.gradle.kts`、`src/`、`test/`）
+- 根目录 Gradle Kotlin/JS 工程（`build.gradle.kts`、`src/<分类>/`）
 - Kotlin 2.4.21 + Kotlin Multiplatform 的 `js()` 目标
 - ES5 目标
 - production webpack 单文件 bundle
@@ -99,32 +99,32 @@ cadroid 已在 Rhino scope 注入 `JavaBridge`（`com.xero.ca.script.KotlinJsBri
 
 `BuildConfig` / `UpdateSources` 是构建注入的数据，不作为代码模块迁移。
 
-已接入 `main.js` 的 `Loader.fromFile`；迁移完成的旧 JS 文件已删除，不再保留对照副本。
+已接入 `modules/main.js` 的 `Loader.fromFile`；迁移完成的旧 JS 文件已删除，不再保留对照副本。
 
 构建注入数据改为 assemble 阶段生成 `build/kotlin-data/*.json`，由 Kotlin 安装器读入。
 
-### Phase 2：模块注册与加载
+### Phase 2：模块注册与加载（已完成）
 
 - Kotlin 产物接入 `cabuildtools` 的 source assemble
 - 通过 `MapScript.loadModule` 注册模块
 - 保留 LOADER / postprocess 流程
 - 处理 `globalThis`、UMD、source map
 
-### Phase 3：Android 互操作
+### Phase 3：Android 互操作（已完成）
 
 - cadroid 增加 `JavaBridge`
 - 封装 `Runnable`、`Context`、`G.*`、`ScriptInterface`
 - 迁移 UI / 网络等有 Android 依赖的模块
 - 保留失败回退和异常栈可读性
 
-### Phase 4：入口与热更新
+### Phase 4：入口与热更新（部分完成）
 
-- `main.js` / 启动链
+- `modules/main.js` / 启动链
 - `core.js` 签名热更新
 - snapshot / debug source
 - 产物体积、启动耗时回归
 
-### Phase 5：生态边界
+### Phase 5：生态边界（已完成）
 
 - `.lib` 拓展包继续 JS
 - `Plugins.inject` 插件继续 JS
@@ -147,9 +147,8 @@ cadroid 已在 Rhino scope 注入 `JavaBridge`（`com.xero.ca.script.KotlinJsBri
 - `globalThis` / UMD 与现有 loader 的拼接
 - Java 互操作的可读性和性能
 - 热更新脚本必须继续可签名
-- 迁移期间两套构建并存
 
 ## 当前状态
 
-Phase 0 已完成；Phase 1/2 的模块已接入 `main.js`。
-JavaBridge、延迟安装和 cabuildtools 自动构建已补齐；全部业务模块（含 `CA.js` 和 `JSONLanguageService`）已完成 Kotlin/JS 迁移。CA 采用 9 组共享 caApi 的组装方式，真机启动、主界面、设置页、外观侧栏与常用页面验证通过。热更新和完整 CI 仍未完成。
+Phase 0-3 已完成，Phase 5 的生态边界保持不变；Phase 4 的入口/启动链已完成，热更新签名和完整 CI 仍未完成。
+全部业务模块（含 `CA.js` 和 `JSONLanguageService`）已迁移到 Kotlin/JS，旧 JS 已删除；CA 采用 9 组共享 caApi 的组装方式，真机启动、主界面、设置页、外观侧栏与 jsonPro 验证通过。

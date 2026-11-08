@@ -1,6 +1,6 @@
 # data/theme.json 主题配色
 
-所有风味共享的主题配色数据。构建时内联进脚本，`modules/builtinData.js` 读取后
+所有风味共享的主题配色数据。构建时内联进脚本，`src/core/BuiltinData.kt` 读取后
 生成 `Common.themelist`；风味只通过 `data/flavors/<名字>/flavor.json` 的 `theme`
 和 `themeOrder` 决定默认选中项与选择页顺序。
 
@@ -42,5 +42,5 @@
 颜色使用 `#RRGGBB`；`Common.loadTheme` 解析成 ARGB int。`light` 现在也显式给出
 全部颜色，`Common.loadTheme` 里的默认值只作为旧数据/缺字段兜底。
 
-配色来源：`Git/CA_reforged` 的 `pink_theme`（`modules/Common.js`）、
-`blue_theme` / `purple_theme`（`modules/builtinData.js`）。
+配色来源：`Git/CA_reforged` 的 `pink_theme`（当前 `src/ui/Common.kt`）、
+`blue_theme` / `purple_theme`（`src/core/BuiltinData.kt`）。

@@ -2,63 +2,38 @@
 
 CA 核心的 Kotlin/JS 迁移工程。
 
-## 当前阶段
+## 当前状态
 
-Phase 1 + Phase 2：
+迁移主体已完成：
 
-- Kotlin/JS（Kotlin Multiplatform 的 JS 目标）
-- 输出 ES5
-- webpack production bundle，单文件 UMD
-- 在 Rhino 1.9.2 中完成加载验证
-- `Internal` 已迁移到 Kotlin/JS，并与旧 JS 行为对比通过
-- bundle 已通过 `Loader.fromFile` 接入 `main.js`
-- `CaKotlinLate` / `CaKotlinPending` 支持按原位置安装
+- Kotlin/JS（Kotlin Multiplatform 的 JS 目标），输出 ES5
+- webpack production bundle，单文件 UMD，在 Rhino 1.9.2 中验证
+- 全部业务模块、CA 主对象和 JSONLanguageService 已迁移
+- 旧 JS 模块与 JSON vendor 已删除，仓库内只剩构建工具 JS
+- `modules/main.js` 拆成 `modules/bootstrap/`，Kotlin bundle 由 `Loader.fromFile` 在构建期内联
+- `CaKotlinPending.installAll()` 统一维护模块安装顺序
 - cadroid 已注入 `JavaBridge`
 - cabuildtools 的 assemble 任务会自动先构建 Kotlin bundle
-- Threads 已通过 pending installer 启用，真机启动验证通过
-- 热更新和完整 CI 接入尚未处理
+- 真机启动、主界面、设置页、外观侧栏与 jsonPro 已验证
+
+仍需处理：热更新签名链路和完整 CI。
 
 ## 模块
 
-已迁移：
+源码按职责分类，直接看目录即可：
 
-- `Internal`：`src/Internal.kt`
-- `EventSender`：`src/EventSender.kt`
-- `MemSaver`：`src/MemSaver.kt`
-- `UIHelp`：`src/UIHelp.kt`
-- `GlobalUtils`（`appendSSB` / `ES6Ex`）：`src/GlobalUtils.kt`
-- `LockClasses`：`src/LockClasses.kt`（延迟安装）
-- `Threads`：`src/Threads.kt`（延迟安装）
-- `IntColor`：`src/IntColor.kt`（延迟安装，JavaReflect 精确签名）
-- `SafeFileUtils`：`src/SafeFileUtils.kt`
-- `SettingsCompat`：`src/SettingsCompat.kt`
-- `JavaReflect`：`src/JavaReflect.kt`
-- `DexPlugin`：`src/DexPlugin.kt`
-- `LPlugins`：`src/LPlugins.kt`
-- `Accel`：`src/Accel.kt`
-- `QuickAccel`：`src/QuickAccel.kt`
-- `ExternalStorage`：`src/ExternalStorage.kt`
-- `DBSettings`：`src/DBSettings.kt`
-- `MCAdapter`：`src/MCAdapter.kt`
-- `NeteaseAdapter`：`src/NeteaseAdapter.kt`
-- `NetworkUtils` / `Updater` / `WSServer` / `PushService`
-- `Intl` / `FCString` / `ISegment`
-- `UserManager` / `IssueService` / `GiteeFeedback` / `AndroidBridge`
-- `ListAdapterBase` / `EmptyAdapter` / `RhinoListAdapter` / `FilterListAdapter`
-- `SimpleListAdapter` / `MultipleListAdapter` / `ExpandableListAdapter` / `MoreListAdapter`
-- `G` / `L` / `PWM` / `ConsolePanel`
-- `PopupWindow` / `PopupPage`
-- `NetworkUI` / `JSONEdit` / `DebugUtils`
-- `Common` / `Tutorial` / `EasterEgg` / `Plugins`
-- `CA`：`CA.kt` + CACore/CAIcon/CAMain/CAFavorite/CASettings/CALibrary/CAIdList/CABatch/CAAgreement
-
-构建：
-
-```bash
-npm run kotlin:js
+```text
+src/core/       运行时、互操作、线程、加速、安装器
+src/ui/         通用 UI、弹窗、页面与列表适配器
+src/android/    AndroidBridge、存储、设置、Dex、插件
+src/game/       MC / 网易适配
+src/network/    网络、更新、WebSocket、账号与反馈
+src/text/       多语言、样式文本、ISegment
+src/ca/         CA 主对象与 9 组共享 caApi 模块
+src/json/       JSONLanguageService
 ```
 
-旧的 JS parity 测试依赖已删除的旧模块，已随迁移结束移除。
+包名与目录对应（`ca.kotlin.core`、`ca.kotlin.ui` 等）。
 
 ## 构建
 
@@ -87,8 +62,7 @@ build/outputs/kotlin-js/Internal.kotlin.js
 
 ## 导出约定
 
-Kotlin 侧通过 `MapScript.loadModule("Internal", api)` 注册，保持现有 JS 调用方不变。
-`globalThis.CaKotlinInternal` 仅作为测试/调试入口，不是长期 API。
+Kotlin 侧通过 `MapScript.loadModule` 注册；`globalThis.CaKotlinInternal` 仅作为测试/调试入口，不是长期 API。
 
 ## 注意
 
@@ -100,7 +74,7 @@ Kotlin 侧通过 `MapScript.loadModule("Internal", api)` 注册，保持现有 J
 
 ## 源码分类
 
-`src/` 按职责分组；所有文件仍使用 `package ca.kotlin`，避免跨组 import 噪音：
+`src/` 按职责分组，包名与目录对应（`ca.kotlin.core`、`ca.kotlin.ui` 等）；跨组符号按需 import：
 
 ```text
 core/      Interop、Internal、EventSender、Threads、MemSaver、JavaReflect、

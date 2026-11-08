@@ -45,7 +45,7 @@ git merge origin/main                  # 在 dev 上合并官方改动
 git push origin dev:dev dev:canary dev:beta
 ```
 
-合并可能出现冲突——我们改过的地方（`modules/CA.js`、`modules/CA.Library.js`）
+合并可能出现冲突——我们改过的地方（`src/ca/CA.kt`、`src/ca/CALibrary.kt`）
 官方也在维护。冲突时**保留双方意图**，不要图省事直接 `--ours`。
 
 > 本地 `origin/main` 这个引用可能不是最新的（历史上 fork 的 main 被推过旧内容），

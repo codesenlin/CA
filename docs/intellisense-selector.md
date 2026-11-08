@@ -1,7 +1,7 @@
 # 选择器补全的返回值结构
 
 命令助手的智能补全里，`matchParam` 对选择器/参数类输入返回一个固定结构的对象。
-这份说明来自社区版 `modules/CA.IntelliSense.js` 旁边的笔记，用来对照每种输入阶段
+这份说明来自社区版 `src/ca/CAIntelliSenseModule.kt` 旁边的笔记，用来对照每种输入阶段
 `length` / `recommend` / `assist` / `menu` / `output` / `input` / `canFinish` 分别是什么。
 
 ## 示例 1：正在输入选择器类型（如 `@`）

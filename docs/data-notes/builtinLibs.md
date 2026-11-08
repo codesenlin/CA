@@ -1,14 +1,14 @@
 # data/builtinLibs.json 说明
 
 `data/builtinLibs.json` 是**内置拓展包清单**；拓展包本体是
-`data/idlibs/*.json`（构建时由 `modules/builtinData.js` 用 `Loader.fromFile`
+`data/idlibs/*.json`（构建时由 `src/core/BuiltinData.kt` 用 `Loader.fromFile`
 内联进脚本，注册成 `CA.Library.inner["<id>"]`）。这个目录只放拓展包，本文档说明清单。
 
 ## 字段
 
 | 字段 | 说明 |
 | --- | --- |
-| `libraries[].id` | 对应 `modules/builtinData.js` 里注册的 id |
+| `libraries[].id` | 对应 `src/core/BuiltinData.kt` 里注册的 id |
 | `libraries[].file` | 拓展包文件（`data/idlibs/` 下，给人和工具看的，加载不依赖它） |
 | `libraries[].name` | 显示名（保留给以后用） |
 | `libraries[].default` | `enabled` = 默认启用；`disabled` = 默认禁用（仍可在设置里手动开启） |
@@ -31,7 +31,7 @@
 ## 新增内置拓展包
 
 1. 把 `xxx.json` 放进 `data/idlibs/`
-2. `modules/builtinData.js` 里加一行
+2. `src/core/BuiltinData.kt` 里加一行
    `CA.Library.inner["xxx"] = Loader.fromFile("../data/idlibs/xxx.json");`
 3. `data/builtinLibs.json` 的 `libraries` 里登记
    `{"id":"xxx","file":"xxx.json","default":"enabled" 或 "disabled","name":"..."}`

@@ -1,5 +1,8 @@
 # 数据外置 + 高性能加速库：改造方案
 
+> 注：本文保留加速层的设计与实测；部分路径来自 Kotlin 迁移前的 JS 版本。
+> 当前实现分别在 `src/core/Accel.kt`、`src/core/QuickAccel.kt`、`src/ca/CAAssistModule.kt` 等 Kotlin 文件中。
+
 > 目标：把 CA 核心脚本里的「纯数据」和「高性能计算」从 JS 里剥出来，
 > 数据集中到一个目录、计算交给 Java 加速库；**构建产物行为不变**。
 
@@ -9,12 +12,12 @@
 
 | 位置 | 内容 | 大小 | 加载方式 |
 |---|---|---|---|
-| `modules/builtinLibrarys/*.json` | ID 表、状态表、实验表、教育版表、JSON Schema | 共 ~760 KB | `Loader.fromFile("builtinLibrarys/xxx.json")` |
-| `modules/builtinData.js` | 主题配置（`Common.themelist`）、内置库注册表 | 90 行 | JS 字面量内嵌 |
-| `modules/CA.js` | 大量配置/常量对象（约 580 处字面量） | 7396 行 | JS 字面量内嵌 |
-| `modules/NeteaseAdapter.js` | 版本映射表 | 76 处字面量 | JS 字面量内嵌 |
-| `modules/CA.IntelliSense.js` | 补全用的模式/参数表 | 47 处字面量 | JS 字面量内嵌 |
-| `modules/AndroidBridge.js` | 权限/API 映射 | 60 处字面量 | JS 字面量内嵌 |
+| `data/idlibs/*.json` | ID 表、状态表、实验表、教育版表、JSON Schema | 共 ~760 KB | `Loader.fromFile("data/idlibs/xxx.json")` |
+| `src/core/BuiltinData.kt` | 主题配置（`Common.themelist`）、内置库注册表 | 90 行 | JS 字面量内嵌 |
+| `src/ca/`（迁移前 CA.js） | 大量配置/常量对象（约 580 处字面量） | 7396 行 | JS 字面量内嵌 |
+| `src/game/NeteaseAdapter.kt` | 版本映射表 | 76 处字面量 | JS 字面量内嵌 |
+| `src/ca/CAIntelliSenseModule.kt` | 补全用的模式/参数表 | 47 处字面量 | JS 字面量内嵌 |
+| `src/android/AndroidBridge.kt` | 权限/API 映射 | 60 处字面量 | JS 字面量内嵌 |
 | `data/intl/**/*.json` | 多语言文案 | 若干 | `Loader.fromFile` |
 
 ### 1.2 注释在哪
@@ -22,8 +25,8 @@
 JSON 不能写注释，实际现状是：
 
 - `builtinLibrarys/*.json` 里的注释以 **`description` 字段**承载（每个库文件都有）
-- `builtinData.js` 的主题配置是**JS 对象 + 行内注释**（`//主题ID`、`//主界面背景色`），这是最典型的"注释与数据混在一起"
-- `CA.js` / `CA.IntelliSense.js` 里的常量块常带块注释说明字段含义
+- `src/core/BuiltinData.kt` 的主题配置来自 `data/theme.json`；迁移前它曾是 JS 对象 + 行内注释
+- 迁移前 `CA.js` / `CA.IntelliSense.js` 里的常量块常带块注释说明字段含义
 
 ### 1.3 高性能计算在哪
 
@@ -37,7 +40,7 @@ JSON 不能写注释，实际现状是：
 
 ### 1.4 构建机制
 
-`cabuildtools/loader-ast.js` 用 AST 把 `Loader.fromFile("xxx")` **在构建期内联成字面量**
+`cabuildtools/lib/loader-ast.js` 用 AST 把 `Loader.fromFile("xxx")` **在构建期内联成字面量**
 （另外兼容 `.json` 文本里的同名调用）：
 
 ```js
@@ -102,7 +105,7 @@ CA/
 JS 侧不直接 `new java 类`，而是通过一层薄封装，保证"没有 jar 也能跑"：
 
 ```js
-// modules/Accel.js
+// 迁移前 modules/Accel.js；当前 src/core/Accel.kt
 var Accel = (function() {
     var impl = null;
     try {
@@ -137,7 +140,7 @@ var Accel = (function() {
 
 ### P5 的效果
 
-`module/CA.IntelliSense.js` 的 `matchString` 是补全里唯一"元素数量随数据规模增长"的
+`src/ca/CAIntelliSenseModule.kt` 的 `matchString` 是补全里唯一"元素数量随数据规模增长"的
 O(n²) 去重（遍历整个候选表，3000 个 ID 级别）。搬到 Java 后：
 
 ```
@@ -154,7 +157,7 @@ O(n²) 去重（遍历整个候选表，3000 个 ID 级别）。搬到 Java 后�
 
 1. `caaccel/src/top/projectxero/ca/accel/Accel.java` 加 static 方法（保持无状态）
 2. `caaccel/test/` 加用例，跑 `npm run caaccel:test`
-3. `modules/Accel.js` 里加 JS 等价实现 + 分发分支
+3. `src/core/Accel.kt` 里加 JS 等价实现 + 分发分支
 4. 调用方加 `if (Accel.available()) return Accel.xxx(...)`
 5. **`cadroid/app/proguard-rules.pro` 确认有 keep 规则**（见下）
 6. 跑 `node cabuildtools/main.js buildRelease` 验证产物
@@ -226,7 +229,7 @@ Java 侧没有任何静态引用。release 构建时 R8 会把它整个裁掉—
 思路：Rhino 跑所有碰 Java 的代码，另起一个 QuickJS 虚拟机只做纯计算。
 **这个方案已落地**（为什么要这么做、性能前后对比、给后来者的验证清单见
 cadroid 仓库 [docs/quickjs-sidecar.md](https://github.com/codesenlin/cadroid/blob/main/docs/quickjs-sidecar.md)），
-实现见 cadroid 的 `QuickJsWorker` + 本仓库 `modules/utils/QuickAccel.js`：
+实现见 cadroid 的 `QuickJsWorker` + 本仓库 `src/core/QuickAccel.kt`：
 
 - worker 用 `io.github.dokar3:quickjs-kt-android:1.0.15`（`.so` 已 16KB page 对齐）
 - 协议：JSON 进 / JSON 出；大块数据（命令库）用 `quickWorkerSetVar` 只同步一次
@@ -284,7 +287,7 @@ desugaring 只是把 `java.util.Objects.requireNonNull` 换成
 | 补全字符串匹配 | `CA.IntelliSense.matchString` | `Accel.matchString`，O(n²) 去重 → O(n)；候选源按对象身份缓存（`setMatchSource` / `matchCached`）；JS 侧结果合并也用 `seen` 去重，最坏 1749 项全命中从 ~500ms 降到 ~107ms，再去掉 merge 里的 Java String 显式转换后约 60~99ms |
 | 批量生成/导出 | `CA.showBatchBuilder.export` | 可序列化的字符串/数组/`map`/`syncmap` 片段交给 QuickJS worker；含 `expr` 函数时回退原 JS。9216 行实测 Rhino ~1.0s → QuickJS ~120ms，complex=true |
 | 大文本搜索 | 暂无生产 UI | `QuickAccel.searchTexts` 已提供：12k 条文本首次同步 528ms，之后单次搜索 13ms（Rhino 427ms）；等搜索 UI 出现再接 |
-| ID 列表过滤 | `CA.Assist.js` 的 `setFilter` | `Accel.filter`，字符串查找一次算完，JS 侧只剩取下标 |
+| ID 列表过滤 | `src/ca/CAAssistModule.kt` 的 `setFilter` | `Accel.filter`，字符串查找一次算完，JS 侧只剩取下标 |
 | 数组 enum 匹配 | `CA.IntelliSense` 的 enum 数组分支 | `Accel.classifyArray`，Java 一次算完 flags/length/canFinish |
 | 命令名匹配（无参数补全） | `CA.IntelliSense` 命令列表 | `Accel.matchCommandNames`，缓存命令表；无 jar 时 QuickJS/JS 回退 |
 | ID 列表过滤（缓存） | `CA.showIDList.update` | `Accel.setIDTexts` + `filterIDTexts`，只传前缀；有 jar 时直接返回 Java `int[]` 给 readOnly 适配器，不再逐项转 JS 数组；空前缀复用构建时下标 |
@@ -338,5 +341,3 @@ desugaring 只是把 `java.util.Objects.requireNonNull` 换成
 见 `caaccel/README.md`。一句话：**每个 `Accel.xxx()` 都有等价的 JS 实现**，
 jar 在不在、方法有没有都不影响功能，只影响速度。业务代码直接调用，不判断 jar 是否存在。
 
-跨语言迁移候选（JS→Java/QuickJS、Java→JS/QuickJS、QuickJS→Java 的取舍）见
-[porting-candidates.md](porting-candidates.md)。

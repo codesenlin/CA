@@ -21,7 +21,7 @@
 {
 	"version": "1.2.16",
 	"versionCode": [1, 2, 17],
-	"date": "2026-11-02",
+	"date": "2026-11-08",
 	"licenceUpdate": "2019/9/21",
 	"description": "……"
 }
@@ -37,14 +37,14 @@
 
 使用方：
 
-- `cabuildtools/tasks/getBuildConfig.js` 读出来作为 `context.buildConfig`
-- 核心脚本的 `BuildConfig`（`modules/BuildConfig.js` 里的 LOADER 块注入）
+- `cabuildtools/tasks/config/getBuildConfig.js` 读出来作为 `context.buildConfig`
+- 核心脚本的 `BuildConfig`（`src/core/BuildConfigData.kt` 生成的 JSON 内联）
 - `writeUpdateRelease` / `writeUpdateSnapshot` 写 `update.json`
 - `shellUpdateGradle` 用 `date` 算 cadroid 的 versionCode，写回它的 `app/build.gradle` / `app/build.gradle.kts`
 
 `description` 支持换行（JSON 里写 `\n`），内容是给用户看的中文说明。
 
-风味（可选构建）不在 `build.json` 里，而是放在 `data/data/flavors/<名字>/`（default / huangyxHUTAO），见 [flavor-build.md](flavor-build.md)。
+风味（可选构建）不在 `build.json` 里，而是放在 `data/flavors/<名字>/`（default / huangyxHUTAO），见 [flavor-build.md](../docs/flavor-build.md)。
 
 ---
 
@@ -129,7 +129,7 @@
 ## shell.json
 
 壳子（cadroid）打包用。这里**只写和机器无关的默认值**，具体路径由
-`cabuildtools/shellconfig.js` 自动探测：cadroid 项目位置、Android SDK、
+`cabuildtools/lib/shellconfig.js` 自动探测：cadroid 项目位置、Android SDK、
 Build Tools、JDK。
 
 想覆盖不用改这个文件，用环境变量：
@@ -185,5 +185,5 @@ Build Tools、JDK。
 - `caclib/config/publish.json`：发布方式
 - `caclib/src/*/library.json`：每个命令库的 id / 名称 / 版本 / 入口
 
-那套原来是 `@key value` 的 txt 格式，已统一转成 JSON，由 `cabuildtools/clibspawn.js`
+那套原来是 `@key value` 的 txt 格式，已统一转成 JSON，由 `cabuildtools/lib/clibspawn.js`
 读取，**不要**和 `config/` 下的构建配置混在一起。

@@ -1,5 +1,7 @@
 # JSONLanguageService 迁移记录
 
+> 状态：已完成。旧 vendor 已删除，当前实现位于 `src/json/`。
+
 `modules/JSONLanguageService.js` 是 508KB 的 `vscode-json-languageservice` webpack bundle，
 不是普通业务模块。它不是“拆开一个对象”就能翻译的代码，因此单独作为迁移阶段处理。
 
@@ -25,18 +27,20 @@ service.doValidation(document, jsonDocument)
   - 参数校验：`doValidation`
   - 光标节点定位：`findNodeAtOffset`
 
-## 目标架构
+## 实现架构
 
-新增 Kotlin 实现：
+Kotlin 实现：
 
 ```text
 src/json/JsonTextDocument.kt
 src/json/JsoncParser.kt
 src/json/JsonSchemaService.kt
-src/json/JsonLanguageServiceCore.kt（阶段 1）
+src/json/JsonValidation.kt
+src/json/JsonCompletion.kt
+src/json/JsonLanguageService.kt
 ```
 
-最终由 Kotlin 注册 `MapScript.loadModule("JSONLanguageService", api)`，删除旧 vendor JS。
+由 `JsonLanguageService.kt` 注册 `MapScript.loadModule("JSONLanguageService", api)`；旧 vendor JS 已删除。
 
 ## 阶段
 

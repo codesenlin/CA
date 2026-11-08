@@ -45,7 +45,7 @@ data/flavors/
     └── flavor.json        # 风味元数据（默认主题 pink、themeOrder 等）
 ```
 
-- `data/data/data/flavors/<名字>/flavor.json`：风味元数据（必填，没有这个文件就不算一个风味）；
+- `data/flavors/<名字>/flavor.json`：风味元数据（必填，没有这个文件就不算一个风味）；
   `default` 也带一套默认参数，其它风味按字段覆盖它
 - 主题配色是公共数据 `data/theme.json`；风味只通过 `theme` / `themeOrder`
   决定默认主题和选择页顺序
@@ -142,12 +142,12 @@ data/flavors/
 - 主题列表顺序默认按 `data/theme.json` 的键顺序；风味仍可在 `flavor.json`
   里用 `themeOrder` 覆盖（可选，不是必填）
 
-构建时 `modules/builtinData.js` 用 `Loader.fromFile("../data/theme.json")`
+构建时 `src/core/BuiltinData.kt` 用 `Loader.fromFile("../data/theme.json")`
 生成 `Common.themelist`；风味再用 `theme` / `themeOrder` 覆盖默认值和顺序。
 
 ## 新增风味
 
-1. 新建 `data/data/data/flavors/<名字>/flavor.json`（至少写 `name`）
+1. 新建 `data/flavors/<名字>/flavor.json`（至少写 `name`）
 2. 用 `theme` 选择默认主题；需要特殊顺序可加可选的 `themeOrder`
 3. 构建时加 `-flavor <名字>`；`-huangyxHUTAO` 是社区版的快捷写法
 
@@ -169,7 +169,7 @@ data/flavors/
 社区版（命令助手 Reforged）的效果参考图在本地下载里（历史页、设置页、主题选择页），
 对应源码在 `Git/CA_reforged`。主题 id 的对应关系：
 
-- `pink` ← `pink_theme`（颜色定义在 `modules/Common.js`）
+- `pink` ← `pink_theme`（颜色定义在 `src/ui/Common.kt`）
 - `blue` ← `blue_theme`
 - `purple` ← `purple_theme`
 
@@ -179,11 +179,11 @@ data/flavors/
 # 只验证脚本内容（不跑 Gradle）
 node -e '
 const getBuildConfig = require("./cabuildtools/tasks/getBuildConfig");
-const loader = require("./cabuildtools/loader-ast");
+const loader = require("./cabuildtools/lib/loader-ast");
 for (const flavor of ["default", "huangyxHUTAO"]) {
   const ctx = {};
   getBuildConfig(ctx, ["release", "stable", flavor]);
-  const out = loader.load("./main.js", { buildConfig: ctx.buildConfig, updateSources: require("./config/update-sources.json") }, "utf-8", { transformAsync: true });
+  const out = loader.load("./modules/main.js", { buildConfig: ctx.buildConfig, updateSources: require("./config/update-sources.json") }, "utf-8", { transformAsync: true });
   console.log(flavor, out.includes("南鸢晨星社区版 喵喵喵"), out.includes("by ProjectXero&南鸢晨星"));
 }
 '

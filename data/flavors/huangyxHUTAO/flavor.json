@@ -8,6 +8,8 @@
 		"/say 命令助手 - 南鸢晨星社区版 喵喵喵~"
 	],
 	"aboutTitle": "命令助手 Reforged",
+	"communityMaintainer": "南鸢晨星",
+	"communityVersion": "命令助手 Reforged",
 	"communityInfo": [
 		{
 			"name": "社区官网",
@@ -30,7 +32,5 @@
 			"name": "关于命令助手",
 			"url": "https://ca.nycx.top/"
 		}
-	],
-	"communityVersion": "命令助手 Reforged",
-	"communityMaintainer": "南鸢晨星"
+	]
 }

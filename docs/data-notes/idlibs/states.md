@@ -63,4 +63,4 @@ UUID：`4145a166-7f9e-4ee6-969e-b3b0582ee94f`
 
 1. 新增方块：往 `states.block` 里加一项，`context` 写方块 id，`schema` 写它的状态
 2. 状态值有固定选项的用 `"type": "enum"` + `"list"`；自由输入用 `"type": "text"`
-3. 改完跑一次构建，`builtinData.js` 会把这份 JSON 内联进去
+3. 改完跑一次构建，`src/core/BuiltinData.kt` 会把这份 JSON 内联进去

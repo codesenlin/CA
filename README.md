@@ -2,7 +2,7 @@
 
 ## 简介
 
-一个支持对 Minecraft（基岩版）的命令进行补全与辅助输入的 App。本仓库为 App 的核心代码，逻辑用 JavaScript 编写，通过 Rhino 引擎在 Android 上执行。
+一个支持对 Minecraft（基岩版）的命令进行补全与辅助输入的 App。本仓库为 App 的核心代码，业务逻辑用 Kotlin/JS 编写，打包成单文件 JavaScript 后由 Android 上的 Rhino 引擎执行。
 
 App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)。
 
@@ -25,7 +25,8 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 
 ## 目录结构
 
-- `modules/` — CA 的核心模块（Kotlin/JS 生成 bundle + 构建注入/vendor 数据 JS，由 `main.js` 按顺序拼装）
+- `modules/` — 宿主入口与启动段：`main.js` 由 Loader AST 拼装，`bootstrap/` 提供钩子、MapScript、Loader 与加载顺序
+- `src/` — Kotlin/JS 业务源码，按 `core / ui / android / network / ca / json` 等分类
 - `data/` — 从代码里剥出来的公共数据：内置命令库（`idlibs/`）、提示语、主题配色（`theme.json`）等
   （每个数据文件都有对应说明，见 `docs/data-notes/`）
 - `data/intl/` — 界面文案（`zh_CN` / `en_US`）
@@ -63,7 +64,7 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
    排查问题时直接看这份就知道用了哪个 SDK / JDK / cadroid。要固定某个路径，改
    `config/shell.json` 里对应字段即可（填了就不再探测）。
 
-   配置一览（都在 `config/` 下，**全部是 JSON**；字段说明见 [docs/config.md](docs/config.md)）：
+   配置一览（都在 `config/` 下，**全部是 JSON**；字段说明见 [config/README.md](config/README.md)）：
 
    | 文件 | 内容 |
    | --- | --- |
@@ -76,7 +77,7 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
    `caclib/` 里还有 clib 自己的元数据：`config.json`（发布源设置）、`config/publish.json`
    （发布方式）、`src/*/library.json`（每个命令库的 id/名称/版本/entry）。
    `caclib/` 是作者的 git subtree；本仓库把它的元数据从 `@key txt` 统一转成了 JSON，
-   `clibspawn.js` 读取 JSON（兼容旧的 `.js` 回退）。
+   `cabuildtools/lib/clibspawn.js` 读取 JSON（兼容旧的 `.js` 回退）。
 
    > 注意：`caclib/signature/`（clib 签名私钥）和 `caclib/outputs/` 不入库，所以 `clibspawn`
    > 在全新检出的仓库里跑不起来，需要自己准备私钥后才会生成产物。
@@ -131,7 +132,7 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
     npm run build -- -huangyxHUTAO         # 南鸢晨星社区版风味：粉色主题 + 社区版欢迎语
     node ./cabuildtools/main.js shellBuildDebug -huangyxHUTAO
 
-风味定义在 `data/data/flavors/<名字>/flavor.json`：`theme`（默认主题）/ `startupText` /
+风味定义在 `data/flavors/<名字>/flavor.json`：`theme`（默认主题）/ `startupText` /
 `welcome` 等；主题配色本身是公共数据 `data/theme.json`，选择页顺序默认也按
 `data/theme.json` 的键顺序。
 `data/flavors/default` 是基线，其它风味在它上面合并，完整说明见
@@ -185,7 +186,7 @@ yarn / pnpm / CI 都可移植。本仓库的 deps.js 额外支持省略 `--`（�
 
 ## 内置命令库
 
-内置命令库只有一套来源：`data/idlibs/*.json`。由 `modules/builtinData.js` 用
+内置命令库只有一套来源：`data/idlibs/*.json`。由 `src/core/BuiltinData.kt` 用
 `Loader.fromFile` 直接内联成 `CA.Library.inner["default"]` 等对象，用户无需手动导入。
 
 默认启用/禁用的清单在 `data/builtinLibs.json`（`default` 字段：`enabled` 默认启用、
@@ -193,7 +194,7 @@ yarn / pnpm / CI 都可移植。本仓库的 deps.js 额外支持省略 `--`（�
 [`docs/data-notes/builtinLibs.md`](docs/data-notes/builtinLibs.md)。
 
 `caclib/` 不参与 App 构建——它是作者 **在线拓展包源**（clib）的工程仓库，通过
-`git subtree` 同步进来，由 `cabuildtools/clibspawn.js` 打包成 SIGNLIB01 发布到源站
+`git subtree` 同步进来，由 `cabuildtools/lib/clibspawn.js` 打包成 SIGNLIB01 发布到源站
 （对应 `pages/clib/` 的那套结构）。两者不要混：
 把 caclib 的库内嵌成内置包会导致同一份内容在列表里出现两次。
 
@@ -202,7 +203,7 @@ yarn / pnpm / CI 都可移植。本仓库的 deps.js 额外支持省略 `--`（�
 
 ## 打包与解包 .lib
 
-`cabuildtools/libtool.js` 提供三条命令，js / json 与 .lib 之间互转：
+`cabuildtools/cli/libtool.js` 提供三条命令，js / json 与 .lib 之间互转：
 
 ```bash
 # json 或 js → .lib（默认 LIBRARY 锁定包）
@@ -291,7 +292,7 @@ npm run unpack -- build/libwork/pack/foo.lib -o build/libwork/unpack
     node ./cabuildtools/js2signlib.js <源码.js> <私钥.pem> <输出.lib>
 
     # 本地格式（源站 uuid + App 公钥，公钥在 cadroid 的 Secret.HOTFIX_PUBLIC_KEY）
-    node ./cabuildtools/js2localib.js <输入.lib> <源站uuid> <输出.lib> [app公钥]
+    node ./cabuildtools/cli/js2localib.js <输入.lib> <源站uuid> <输出.lib> [app公钥]
 
 签名私钥必须是 **RSA 2048 位**（App 里验签段长度写死 256 字节）。`LIBSIGN01` 旁边的 `.hash`
 是 `SHA1(appVerifyKey || SHA1(payload))`，用 App 内置的公钥算——所以只有 App（或掌握其公钥的
