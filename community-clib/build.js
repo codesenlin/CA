@@ -31,7 +31,6 @@ const PACKS_PER_PAGE = 20;
 
 /** 不收录的包（文件名 → 原因），构建时跳过 */
 const EXCLUDES = {
-	"[苦力怕论坛]命令拓展 by JG 1.3.0.lib": "文件格式损坏（既不是 LIBRARY 也不是有效 JSON）",
 	"命令助手快照20190226130049.lib": "这是 2019 年的快照安装器，不是拓展包",
 	"内测组插件.lib": "作者内部测试插件，不对外分发"
 };
@@ -83,11 +82,53 @@ function verifyLib(buf, publicKey) {
 	return crypto.createVerify("RSA-SHA256").update(payload).verify(publicKey, signature);
 }
 
+/** 去掉 JSONC 注释与尾逗号，兼容社区里常见的 .json 写法。 */
+function stripJsonc(text) {
+	let out = "", i = 0, inString = false, escaped = false, lineComment = false, blockComment = false;
+	while (i < text.length) {
+		const c = text.charAt(i), n = text.charAt(i + 1);
+		if (lineComment) { if (c === "\n") { lineComment = false; out += c; } i++; continue; }
+		if (blockComment) { if (c === "*" && n === "/") { blockComment = false; i += 2; } else i++; continue; }
+		if (inString) {
+			out += c;
+			if (escaped) escaped = false;
+			else if (c === "\\") escaped = true;
+			else if (c === '"') inString = false;
+			i++; continue;
+		}
+		if (c === '"') { inString = true; out += c; i++; continue; }
+		if (c === "/" && n === "/") { lineComment = true; i += 2; continue; }
+		if (c === "/" && n === "*") { blockComment = true; i += 2; continue; }
+		out += c; i++;
+	}
+	return out.replace(/,\s*([}\]])/g, "$1");
+}
+
+function parsePluginMeta(body) {
+	const meta = {};
+	[["name", "name"], ["author", "author"], ["uuid", "uuid"], ["description", "description"]].forEach(function (pair) {
+		const m = body.match(new RegExp(pair[0] + '\\s*=\\s*"((?:[^"\\\\]|\\\\.)*)"'));
+		if (m) meta[pair[1]] = m[1];
+	});
+	const v = body.match(/version\s*=\s*\[([^\]]*)\]/);
+	meta.version = v ? v[1].split(",").map(function (x) { return parseInt(x, 10) || 0; }) : [0];
+	return meta;
+}
+
 /** 读一个源包，返回 {content, kind, meta} */
 function readPack(file) {
 	const raw = fs.readFileSync(file);
-	if (file.endsWith(".json")) {
-		const data = JSON.parse(raw.toString("utf-8"));
+	if (/\.json$/i.test(file)) {
+		const text = raw.toString("utf-8");
+		let data;
+		try {
+			data = JSON.parse(text);
+		} catch (first) {
+			if (/^\s*Plugins\.inject/.test(text)) {
+				return { content: text, kind: "plugin", meta: parsePluginMeta(text) };
+			}
+			data = JSON.parse(stripJsonc(text));
+		}
 		return { content: JSON.stringify(data, null, "\t"), kind: "json", meta: data };
 	}
 	if (raw.slice(0, 7).toString() === "LIBRARY") {
@@ -116,8 +157,12 @@ function normalizeMeta(meta, file) {
 	if (m.name) m.name = String(m.name).replace(/^\[锁定\]\s*/, "");
 	if (!Array.isArray(m.version)) m.version = [parseInt(m.version, 10) || 0];
 	if (!Array.isArray(m.require)) m.require = [];
+	if (!m.name) m.name = String(file).replace(/\.(json|lib)$/i, "");
 	if (!m.uuid) throw new Error("缺少 uuid：" + file);
+	m.uuid = String(m.uuid).trim();
+	if (!/^[A-Za-z0-9_-]+$/.test(m.uuid)) throw new Error("uuid 不是合法标识符：" + m.uuid);
 	if (!m.author) m.author = "未知作者";
+	else if (typeof m.author === "object") m.author = m.author.name || m.author.author || "未知作者";
 	return m;
 }
 
@@ -225,11 +270,38 @@ function build() {
 			skipped.push(item.name + "（解析失败：" + e.message + "）");
 			return;
 		}
-		items.push({ file: item, pack: pack, meta: normalizeMeta(pack.meta, item.name) });
+		try {
+			items.push({ file: item, pack: pack, meta: normalizeMeta(pack.meta, item.name) });
+		} catch (e) {
+			skipped.push(item.name + "（" + e.message + "）");
+		}
 	});
 
 	const curated = applyCuration(items, cfg.curation);
 	curated.drop.forEach(function (it) { skipped.push(it.meta.name + "（" + it.dropReason + "）"); });
+
+	// 同一 uuid 只留一份：版本高者优先，其次文件更新者优先。
+	const byUuid = {};
+	const unique = [];
+	curated.keep.forEach(function (entry) {
+		const meta = entry.meta;
+		const prev = byUuid[meta.uuid];
+		if (!prev) {
+			byUuid[meta.uuid] = entry;
+			unique.push(entry);
+			return;
+		}
+		const cmp = compareVersion(meta.version, prev.meta.version);
+		const mtime = fs.statSync(entry.file.path).mtimeMs;
+		const prevMtime = fs.statSync(prev.file.path).mtimeMs;
+		const better = cmp > 0 || (cmp === 0 && mtime > prevMtime) ? entry : prev;
+		const loser = better === entry ? prev : entry;
+		skipped.push(loser.meta.name + "（重复 UUID，保留 " + better.meta.name + "）");
+		byUuid[meta.uuid] = better;
+		const at = unique.indexOf(prev);
+		if (at >= 0) unique[at] = better;
+	});
+	curated.keep = unique;
 
 	curated.keep.forEach(function (entry) {
 		const item = entry.file, pack = entry.pack;
@@ -323,6 +395,7 @@ function build() {
 
 function verify() {
 	const cfg = loadConfig();
+	OUT = path.resolve(ROOT, cfg.outputDir || "dist");
 	const privateKey = readPrivateKey(cfg);
 	const publicKey = crypto.createPublicKey(privateKey);
 	const infoPath = path.join(OUT, "info.json");

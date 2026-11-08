@@ -18,6 +18,10 @@
 				"match": "execute"
 			},
 			{
+				"id": "新增命令 by JG",
+				"match": "^新增命令 by JG$"
+			},
+			{
 				"id": "JSON 文本插入",
 				"match": "json文本插入"
 			}

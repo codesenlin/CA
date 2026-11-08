@@ -1,0 +1,277 @@
+Plugins.inject(function(o) {
+o.name = "快照拓展包管理器";
+o.author = "ProjectXero";
+o.version = [1, 1, 2];
+o.uuid = "9a0ec4c7-2445-4e13-8b88-b6273160a0c8";
+o.description = "管理快照拓展包";
+o.init = function() {
+	Plugins.addMenu({
+		text : "快照拓展包管理器",
+		onclick : function() {
+			SnapshotLibraryManager.show();
+		}
+	});
+	if (CA.settings.enableAutoDebugging) {
+		DebugUtils.startInteractiveDebug(CA.settings.enableAutoDebugging, function(status, arg1, arg2) {
+			switch(status) {
+				case "disconnected":
+				Common.toast("[灵动调试] 连接已断开");
+				break;
+				case "remoteExec":
+				Common.toast("[灵动调试] 正在执行代码：" + arg1);
+				break;
+				case "log":
+				Common.toast("[灵动调试] [" + arg1 + "]" + arg2);
+				break;
+				case "error":
+				Common.toast("[灵动调试] 出错：" + arg1);
+				break;
+			}
+		})
+	}
+}
+
+var SnapshotLibraryManager = {
+	fetchSnapshotLibraryData: function() {
+		return JSON.parse(NetworkUtils.queryPage("https://ca.projectxero.top/clib/snapshot/index.json?" + Date.now()));
+	},
+	getLibraryLocalPath: function(data) {
+		return String(new java.io.File(ctx.getExternalFilesDir("libs"), data.uuid + "/" + data.name).getPath());
+	},
+	downloadLibrary: function(data) {
+		var libPath = this.getLibraryLocalPath(data);
+		Common.saveFile(libPath, NetworkUtils.queryPage(data.url));
+		return libPath;
+	},
+	isLibraryInstalled: function(data) {
+		var libPath = this.getLibraryLocalPath(data);
+		return CA.IntelliSense.library.info.some(function(libInfo) {
+			return libInfo.src == libPath;
+		});
+	},
+	showDownloadLibrary: function(data, invited, confirmed, callback) {
+		if (data.invitationCode && !invited) {
+			Common.showInputDialog({
+				title: "请输入邀请码",
+				callback: function(code) {
+					if (code == data.invitationCode) {
+						SnapshotLibraryManager.showDownloadLibrary(data, true, confirmed, callback);
+					} else {
+						Common.toast("邀请码错误" + (data.invitationPrompt ? "\n" + data.invitationPrompt : ""));
+					}
+				}
+			});
+		} else if (data.requirement && !confirmed) {
+			Common.showConfirmDialog({
+				title : "确定下载快照拓展包“" + data.name + "”？",
+				description : "使用要求: " + data.requirement,
+				callback : function(id) {
+					if (id != 0) return;
+					SnapshotLibraryManager.showDownloadLibrary(data, invited, true, callback);
+				}
+			});
+		} else {
+			Common.showProgressDialog(function(dia) {
+				var path;
+				dia.setText("正在下载拓展包文件: " + data.name);
+				try {
+					path = SnapshotLibraryManager.downloadLibrary(data);
+				} catch(e) {
+					Common.toast("下载拓展包“" + data.name + "”失败\n" + e);
+					return;
+				}
+				G.ui(function() {try {
+					if (callback) callback(data, path);
+				} catch(e) {erp(e)}});
+			});
+		}
+	},
+	showUpdateAll: function(libraries, callback) {
+		if (libraries.length == 0) {
+			if (callback) callback();
+		} else {
+			this.showDownloadLibrary(libraries[0], true, true, function() {
+				SnapshotLibraryManager.showUpdateAll(libraries.slice(1), callback);
+			});
+		}
+	},
+	show: function self() {G.ui(function() {try {
+		if (!self.popup) {
+			self.contextMenu = [{
+				text : "刷新",
+				onclick : function(v, tag) {
+					self.reload();
+				}
+			}, {
+				text : "更新全部",
+				onclick : function(v, tag) {
+					SnapshotLibraryManager.showUpdateAll(self.libraries.filter(function(e) {
+						return e.installed;
+					}), function() {
+						self.reload();
+					});
+				}
+			}, {
+				text : "自动灵动调试",
+				onclick : function(v, tag) {
+					Common.showInputDialog({
+						title: "灵动调试网址",
+						description: "请输入从开发者处得到的网址\n留空表示停用自动灵动调试",
+						defaultValue: CA.settings.enableAutoDebugging || "",
+						callback: function(uri) {
+							CA.settings.enableAutoDebugging = uri;
+							Common.toast("自动灵动调试已配置，将在下次启动时应用");
+						}
+					});
+				}
+			}];
+			self.itemMenu = [{
+				text : "下载最新版",
+				onclick : function(v, tag) {
+					var installed = tag.data.installed;
+					SnapshotLibraryManager.showDownloadLibrary(tag.data, installed, installed, function(data, path) {
+						self.enableLibrary(data, path);
+					});
+				}
+			}, {
+				text : "获取邀请码",
+				hidden: function(tag) {
+					return tag.data.installed || !tag.data.invitationPrompt;
+				},
+				onclick : function(v, tag) {
+					Common.showTextDialog(tag.data.invitationPrompt);
+				}
+			}, {
+				text : "查看安装说明",
+				hidden: function(tag) {
+					return !tag.data.installed || !tag.data.notice;
+				},
+				onclick : function(v, tag) {
+					Common.showTextDialog(tag.data.notice);
+				}
+			}];
+			self.reload = function() {
+				var progress = Common.showProgressDialog();
+				progress.setText("正在加载……");
+				progress.async(function() {
+					try {
+						var data = SnapshotLibraryManager.fetchSnapshotLibraryData();
+						G.ui(function() {try {
+							self.adapter.setArray(self.libraries = data.list.map(function(e) {
+								e.installed = SnapshotLibraryManager.isLibraryInstalled(e);
+								return e;
+							}));
+						} catch(e) {erp(e)}});
+					} catch(err) {
+						Common.toast("获取快照拓展包列表失败\n" + err);
+					}
+				});
+			}
+			self.enableLibrary = function(data, path) {
+				CA.Library.clearCache(path);
+				CA.Library.enableLibrary(path);
+				var progress = Common.showProgressDialog();
+				progress.setText("正在刷新命令库...");
+				CA.Library.initLibrary(function() {
+					progress.close();
+					Common.toast("拓展包“" + data.name + "”已下载并启用");
+					if (data.notice) {
+						Common.showTextDialog(data.notice);
+					}
+					data.installed = true;
+					G.ui(function() {try {
+						self.adapter.notifyChange(true);
+					} catch(e) {erp(e)}});
+				});
+			}
+			self.main = L.LinearLayout({
+				orientation: L.LinearLayout("vertical"),
+				padding: [15 * G.dp, 15 * G.dp, 15 * G.dp, 0],
+				style: "message_bg",
+				children: [
+					L.LinearLayout({
+						layout: { width: -1, height: -2 },
+						orientation: L.LinearLayout("horizontal"),
+						padding: [0, 0, 0, 10 * G.dp],
+						onClick: function(v) {try {
+							Common.showOperateDialog(self.contextMenu);
+						} catch(e) {erp(e)}},
+						children: [
+							L.TextView({
+								text: "快照拓展包",
+								layout: { width: 0, height: -2, weight: 1.0 },
+								gravity: L.Gravity("left|center"),
+								padding: [10 * G.dp, 0, 10 * G.dp, 0],
+								style: "textview_default",
+								fontSize: 4
+							}),
+							L.TextView({
+								text: "▼",
+								layout: { width: -2, height: -1 },
+								gravity: L.Gravity("center"),
+								padding: [10 * G.dp, 0, 10 * G.dp, 0],
+								style: "button_highlight",
+								fontSize: 3
+							})
+						]
+					}),
+					self.list = L.ListView({
+						layout: { width: -1, height: 0, weight: 1.0 },
+						adapter: L.SimpleAdapter(L.LinearLayout({
+							layout: { width: -1, height: -2 },
+							orientation: L.LinearLayout("vertical"),
+							padding: [15 * G.dp, 15 * G.dp, 15 * G.dp, 15 * G.dp],
+							children: [
+								L.TextView({
+									text: L.Value(function(e) {
+										return (e.installed ? "[已安装] " : "") + e.name
+									}),
+									layout: { width: -1, height: -2 },
+									ellipsize: L.TextUtils$TruncateAt("middle"),
+									singleLine: true,
+									style: "item_default",
+									fontSize: 3
+								}),
+								L.TextView({
+									text: L.Value(function(e) {
+										return "作者: " + e.author + (e.description ? "\n\n" + e.description : "");
+									}),
+									layout: { width: -1, height: -2 },
+									ellipsize: L.TextUtils$TruncateAt("middle"),
+									padding: [0, 5 * G.dp, 0, 0],
+									style: "textview_prompt",
+									fontSize: 1
+								})
+							]
+						}), function(controller) {
+							self.adapter = controller;
+						}, self.libraries = []),
+						onItemClick: function(parent, view, pos, id) {try {
+							var data = parent.getAdapter().getItem(pos);
+							Common.showOperateDialog(self.itemMenu, {
+								pos : parseInt(pos),
+								data : data
+							});
+						} catch(e) {erp(e)}}
+					}),
+					L.TextView({
+						text: "退出",
+						layout: { width: -1, height: -2 },
+						gravity: L.Gravity("center"),
+						padding: [10 * G.dp, 20 * G.dp, 10 * G.dp, 20 * G.dp],
+						style: "button_critical",
+						fontSize: 3,
+						onClick: function() {try {
+							self.popup.exit();
+						} catch(e) {erp(e)}}
+					})
+				]
+			});
+			self.popup = new PopupPage(self.main, "snapshot_clib.main");
+			PWM.registerResetFlag(self, "main");
+		}
+		self.popup.enter();
+		self.reload();
+	} catch(e) {erp(e)}})}
+}
+})

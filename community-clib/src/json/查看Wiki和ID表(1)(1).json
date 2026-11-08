@@ -1,0 +1,1 @@
+{"name":"查看Wiki及ID表","author":"工程师_多多","description":"更加方便的查询wiki和id,在命令输入栏输入wiki或ID右滑即可","uuid":"57d257g4-61ee-485a-947e-c7a52d8dbca9","version":[0,0,2],"require":[],"versionPack": {"base": {"commands": {"wiki":{"description":"输入后右滑查看wiki","help":"https://minecraft-zh.gamepedia.com/"},"id":{"description":"输入后右滑查看ID表","help":"https://ca.projectxero.top/idlist/"}}}}}

@@ -42,16 +42,17 @@ source-config.json 源配置（sourceId、线上地址、私钥路径）
 
 ## 整理规则
 
-原始包有 38 个，同一作者的不同版本、以及「副本」备份都不该全部列出来。
+原始包有 77 个，同一作者的不同版本、「副本」备份和同 UUID 重复包都不该全部列出来。
 规则写在 `source-config.json` 的 `curation` 里，构建时生效（不改动 `src/` 原件）：
 
 | 规则 | 内容 | 效果 |
 | --- | --- | --- |
-| `excludeNameRegex` | 名字命中 `的副本` 就丢掉 | 去掉 2 个备份包 |
-| `lineages` | 同一系列只留版本最高的一个 | Hiland/1.18 系列 6 个 → 只留 `Hiland拓展包6.1.10`；`execute` 两个 → 只留 `新execute拓展包`；`json文本插入` 两个 → 只留 `JSON文本插入` |
+| `excludeNameRegex` | 名字命中 `的副本` 就丢掉 | 去掉备份包 |
+| `lineages` | 同一系列只留版本最高的一个 | Hiland/1.18、execute、json文本插入、新增命令 by JG |
+  | 同 UUID 去重 | 同一 uuid 只留版本最高（同版本取较新文件） | 避免新旧文件重复签名 |
 | `renames` | uuid → 显示名 | `hasitem选择题器拓展(先凑合用)` → `hasitem 选择题器拓展` 等 |
 
-最终收录 **26 个包**，跳过 12 个（3 个格式/用途不符 + 2 个副本 + 7 个旧版本）。
+最终收录 **51 个包**，跳过 21 个（非完整包/副本/旧版本/重复 uuid 等）。
 构建时会打印完整的跳过原因。
 
 ## 更新流程
@@ -70,7 +71,7 @@ git add -A && git commit -m "add: 新包 xxx" && git push
 
 `build.js` 会把 `src/` 里所有包：
 
-1. 读出来（JSON 直接解析；`.lib` 先解 LIBRARY 头再 gunzip，插件包保持 JS 原样）
+1. 读出来（JSON 先直接解析，失败则按 JSONC 去注释/尾逗号；插件 `.json` 保持 JS；`.lib` 先解 LIBRARY 头再 gunzip）
 2. 用 `SIGNLIB01` 格式重新签名（私钥不在这份仓库里）
 3. 计算 SHA-1 写进清单
 4. 重新生成分页清单、info.json 和 verify.key
@@ -89,13 +90,16 @@ git add -A && git commit -m "add: 新包 xxx" && git push
 
 | 包 | 原因 |
 | --- | --- |
-| `[苦力怕论坛]命令拓展 by JG 1.3.0.lib` | 文件格式损坏，既不是 LIBRARY 也不是有效 JSON |
+| `Laohu拓展包(2)(1).json` | JSON 本身有非法转义，无法解析 |
+| `YHY实体事件.json`、`commands.json`、`molang_vocabulary.json` | 片段数据，缺少包元数据/uuid |
+| `网站转链.JSON` | uuid 字段是网址，不是合法标识符 |
 | `命令助手快照20190226130049.lib` | 2019 年的快照安装器，不是拓展包 |
 | `内测组插件.lib` | 作者内部测试插件，不对外分发 |
-| 名字带「的副本」的 2 个包 | 备份文件，内容与正本重复 |
-| Hiland / 1.18 系列的 5 个旧版本 | 同系列只保留最新的 `Hiland拓展包6.1.10` |
+| 名字带「的副本」的包 | 备份文件，内容与正本重复 |
+| Hiland / 1.18 系列旧版本 | 同系列只保留最新的 `Hiland拓展包6.1.10` |
 | `execute`（1.0.0） | 被同作者的 `新execute拓展包`（1.0.2）取代 |
 | `json文本插入`（1.0.2） | 被同作者的 `JSON文本插入`（1.1.3）取代 |
+| 同 uuid 的重复文件 | 去重后只签名一份 |
 
 ## 说明
 

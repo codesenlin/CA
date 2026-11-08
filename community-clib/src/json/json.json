@@ -1,0 +1,44 @@
+{
+    "Name": {
+        "text": "EnhancedCommandAssistant",
+        "color": "gold",
+        "bold": true,
+        "clickEvent": {
+            "action": "suggest_command",
+            "value": "/function enhanced_command_assistant:help"
+        },
+        "hoverEvent": {
+            "action": "show_text",
+            "value": {
+                "text": "点击获取帮助信息",
+                "color": "gray"
+            }
+        }
+    },
+    "author": {
+        "text": "Mark_CA_Exdook",
+        "color": "green",
+        "clickEvent": {
+            "action": "suggest_command",
+            "value": "/tell @s 感谢使用本扩展包！"
+        }
+    },
+    "description": {
+        "text": "增强版命令助手扩展包，提供更强大的JSON编辑和Minecraft功能集成",
+        "color": "yellow"
+    },
+    "uuid": "a3d8f7b2-4c5e-4f3a-b2d1-9e8c7a6b5d4e",
+    "version": [1, 2, 0],
+    "features": {
+        "jsonEditor": true,
+        "selectorTools": true,
+        "variableSystem": true,
+        "commandIntegration": true
+    },
+    "permissions": [
+        "json.edit",
+        "selector.use",
+        "variable.manage",
+        "command.execute"
+    ]
+}

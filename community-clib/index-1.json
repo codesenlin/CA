@@ -1,97 +1,308 @@
 {
 	"pageNo": 1,
 	"sourceId": "eaa81e22-1b06-4429-ba89-86b31b154ed3",
-	"nextPage": null,
+	"nextPage": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/index-2.json",
 	"content": [
 		{
-			"name": "JSON文本插入",
-			"author": "工程师_多多",
-			"description": "为Tellraw或Titleraw插入JSON文本\n请将本json置于有Tellraw或Titleraw命令的json之下(含默认命令库)\n\n支持的版本:1.9.0.0+",
-			"uuid": "d436a434-61ee-485a-947e-c7a52d8dbca9",
+			"name": "粒子翻译",
+			"author": "朽乱天机（Bilibili)",
+			"description": "粒子翻译（自测）",
+			"uuid": "b435da18-25c5-461d-8361-8c3c6fe5eb57",
 			"version": [
 				1,
-				1,
-				3
+				2,
+				5
 			],
-			"downloadurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/d436a434-61ee-485a-947e-c7a52d8dbca9.lib",
-			"updateurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/d436a434-61ee-485a-947e-c7a52d8dbca9.json",
-			"sha1": "NAAHxy/sAWSKd5pz2h6nHoVSujg=",
-			"mtime": 1793195168442
+			"downloadurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/b435da18-25c5-461d-8361-8c3c6fe5eb57.lib",
+			"updateurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/b435da18-25c5-461d-8361-8c3c6fe5eb57.json",
+			"sha1": "gJUdOhr6NSwK7Nxv8ChN/ObLKOw=",
+			"mtime": 1661838110000
 		},
 		{
-			"name": "Mooncell",
-			"author": "Tamamo",
-			"description": "该拓展包内置：\n1. 各种网站的转链链接\n2. hasitem选择器(有点小bug,但影响不大)\n3. scores选择器\n4. 槽位描述\n5. tellraw和titleraw的json插入",
-			"uuid": "060315b5-5c10-4e90-af4d-cdce36776e0d",
-			"version": [
-				1,
-				0,
-				1
-			],
-			"downloadurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/060315b5-5c10-4e90-af4d-cdce36776e0d.lib",
-			"updateurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/060315b5-5c10-4e90-af4d-cdce36776e0d.json",
-			"sha1": "7VxBpHGEcuTMbDIvi4AlCaNpKQU=",
-			"mtime": 1793195168434
-		},
-		{
-			"name": "name 拓展",
-			"author": "工程师_多多",
-			"description": "更新了item_lang文件",
-			"uuid": "a1b2c7de-b1ca-1347-9ab2-9ab56dc12492",
-			"version": [
-				0,
-				0,
-				1
-			],
-			"downloadurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/a1b2c7de-b1ca-1347-9ab2-9ab56dc12492.lib",
-			"updateurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/a1b2c7de-b1ca-1347-9ab2-9ab56dc12492.json",
-			"sha1": "IJkplHcRFUfDYjXqpefJTH41/QQ=",
-			"mtime": 1793195168442
-		},
-		{
-			"name": "tellraw插入json",
-			"author": "bvlv",
-			"description": "插入json,也可以把json复制到titleraw",
-			"uuid": "299168d4-61ee-485a-947e-c7a52d8dbca9",
-			"version": [
-				0,
-				0,
-				1
-			],
-			"downloadurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/299168d4-61ee-485a-947e-c7a52d8dbca9.lib",
-			"updateurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/299168d4-61ee-485a-947e-c7a52d8dbca9.json",
-			"sha1": "me0EOo368eXRzIhjLNdOEUpmd4Y=",
-			"mtime": 1793195168438
-		},
-		{
-			"name": "tellraw示例",
-			"author": "狙踢",
-			"description": "一个功能",
-			"uuid": "37f13ab9-6e83-4103-8199-faeabba3a3d9",
-			"version": [
-				0,
-				0,
-				1
-			],
-			"downloadurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/37f13ab9-6e83-4103-8199-faeabba3a3d9.lib",
-			"updateurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/37f13ab9-6e83-4103-8199-faeabba3a3d9.json",
-			"sha1": "Si3UdwVrrymbwpHGXvBgjW8xSMg=",
-			"mtime": 1793195168442
-		},
-		{
-			"name": "translate语言文件",
-			"author": "工程师_多多",
-			"description": "为tellraw或titleraw的translate填加可供参考的翻译文件\n请将本json放置于含有tellraw或titleraw的json组件的json之下\n\n支持的版本:1.19.10.05+",
-			"uuid": "5d28d1c7-3d53-46b5-9b0c-dd1f447d3ee7",
+			"name": "默认命令库_1.19.30.21",
+			"author": "CA制作组",
+			"description": "该命令库基于Minecraft PE 1.19.10.03 的命令，大部分由CA制作组成员ProjectXero整理。",
+			"uuid": "acf728c5-dd5d-4a38-b43d-7c4f18149fbd",
 			"version": [
 				1,
 				0,
 				0
 			],
-			"downloadurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/5d28d1c7-3d53-46b5-9b0c-dd1f447d3ee7.lib",
-			"updateurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/5d28d1c7-3d53-46b5-9b0c-dd1f447d3ee7.json",
-			"sha1": "+2NOtTaDEnfCwSrp+ZnGliVBWTg=",
-			"mtime": 1793195168438
+			"downloadurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/acf728c5-dd5d-4a38-b43d-7c4f18149fbd.lib",
+			"updateurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/acf728c5-dd5d-4a38-b43d-7c4f18149fbd.json",
+			"sha1": "HUivGJy9Lo4COfpF2WDtgIrSV+c=",
+			"mtime": 1661911984000
+		},
+		{
+			"name": "朴素粒子翻译",
+			"author": "乱杖先生|PosiedChoss",
+			"description": "日志:更新了1.16.*和1.17的粒子\n作者QQ:2381088817\n若在使用过程发现错误请联系作者\n翻译部分通过视觉观察总结而翻译\n催更:兔子快更新命令助手",
+			"uuid": "790ed57b-8c84-46a4-96c5-a7b6fc4e7e7b",
+			"version": [
+				1,
+				1,
+				7
+			],
+			"downloadurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/790ed57b-8c84-46a4-96c5-a7b6fc4e7e7b.lib",
+			"updateurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/790ed57b-8c84-46a4-96c5-a7b6fc4e7e7b.json",
+			"sha1": "zHnVfa3D83UbYAwOw9K1vKQlNus=",
+			"mtime": 1793200764920
+		},
+		{
+			"name": "群骑纷争增量包-锁定",
+			"author": "神鹰工作室",
+			"description": "群骑纷争增量追加包。新增生物、物品、魔咒、状态效果、粒子、声音、实体动画的 ID，并对部分中文进行补正。",
+			"uuid": "5bf1e9c5-76c2-4dc9-af95-0f681a9ec7f7",
+			"version": [
+				1,
+				2,
+				1
+			],
+			"downloadurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/5bf1e9c5-76c2-4dc9-af95-0f681a9ec7f7.lib",
+			"updateurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/5bf1e9c5-76c2-4dc9-af95-0f681a9ec7f7.json",
+			"sha1": "Hw6j/AQHJKaF3kbz4rEFYvQA7Kc=",
+			"mtime": 1794135968000
+		},
+		{
+			"name": "生物实体事件补充",
+			"author": "虾🦐",
+			"description": "适用于summon,event,ride等多个指令\n可在生物事件id里查看\n未经允许禁止篡改，搬运，二次发布！禁止抄袭！\nQQ:2147801978",
+			"uuid": "cd3db2b5-4ee8-4410-88da-9cede0e3fc41",
+			"version": [
+				1,
+				0,
+				0
+			],
+			"downloadurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/cd3db2b5-4ee8-4410-88da-9cede0e3fc41.lib",
+			"updateurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/cd3db2b5-4ee8-4410-88da-9cede0e3fc41.json",
+			"sha1": "LPYdwToF94zeivKxDkgSZmnKIMs=",
+			"mtime": 1655556532000
+		},
+		{
+			"name": "声音翻译拓展",
+			"author": "朽乱天机/乱杖先生",
+			"description": "声音翻译补全拓展包，B站cv6678280",
+			"uuid": "0c8d2c67-51c4-4b86-80cb-e7504d9a7f39",
+			"version": [
+				2,
+				3,
+				3
+			],
+			"downloadurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/0c8d2c67-51c4-4b86-80cb-e7504d9a7f39.lib",
+			"updateurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/0c8d2c67-51c4-4b86-80cb-e7504d9a7f39.json",
+			"sha1": "oG3BAvIQxP05GvS/YY9MFjy4ZVA=",
+			"mtime": 1793200764924
+		},
+		{
+			"name": "实体事件补充",
+			"author": "狙踢",
+			"description": "补充了原版没有的summon没有的实体事件\n顺便删除了一些我觉得，重复，没用的实体事件\n减少工作量",
+			"uuid": "3720ba6f-5d87-41cd-b3f2-f0bec325baae",
+			"version": [
+				0,
+				0,
+				1
+			],
+			"downloadurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/3720ba6f-5d87-41cd-b3f2-f0bec325baae.lib",
+			"updateurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/3720ba6f-5d87-41cd-b3f2-f0bec325baae.json",
+			"sha1": "k66+40+EM6U6REpUMnxsrE8nJc0=",
+			"mtime": 1661838110000
+		},
+		{
+			"name": "网易版版本识别",
+			"author": "MC老胡",
+			"description": "使命令助手能够识别最新版的我的世界中国版的版本\\n该拓展包采用o函数\\n所以请不要使用命令助手自带的json编辑器解析\\n否则可能会变为空包",
+			"uuid": "00f08d42-56fc-4f3e-90fb-4c6ca85456a3",
+			"version": [
+				0,
+				0,
+				3
+			],
+			"downloadurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/00f08d42-56fc-4f3e-90fb-4c6ca85456a3.lib",
+			"updateurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/00f08d42-56fc-4f3e-90fb-4c6ca85456a3.json",
+			"sha1": "ht6yTXb6YV5QPOsPf36fts9Htkk=",
+			"mtime": 1661838110000
+		},
+		{
+			"name": "网易的专属指令",
+			"author": "   ",
+			"description": "增加两条特有的指令removeedunpc和enableedunpc",
+			"uuid": "edd59559-689f-49b7-970f-3d13fa7300df",
+			"version": [
+				0,
+				0,
+				1
+			],
+			"downloadurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/edd59559-689f-49b7-970f-3d13fa7300df.lib",
+			"updateurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/edd59559-689f-49b7-970f-3d13fa7300df.json",
+			"sha1": "99M52Hw5ua3pP+qD7FlOiS5MZQ8=",
+			"mtime": 1794136014000
+		},
+		{
+			"name": "未知",
+			"author": "未知",
+			"description": "拓展包",
+			"uuid": "akd62414-dd5d-4a38-bd9d-7c4f16149fld",
+			"version": [
+				1,
+				0,
+				0
+			],
+			"downloadurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/akd62414-dd5d-4a38-bd9d-7c4f16149fld.lib",
+			"updateurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/akd62414-dd5d-4a38-bd9d-7c4f16149fld.json",
+			"sha1": "4MlUJoVFk4lhk612PEhDLqbERhY=",
+			"mtime": 1794135994000
+		},
+		{
+			"name": "物品(非方块)数据值补充",
+			"author": "俗子又（编辑补充）\nProjectXero（指导）",
+			"description": "感谢Xero的指导\n在搜索物品ID时，物品ID下会补充该物品下不同种类物品的数据值，物品ID选择完毕后，在数据值一栏填上相对应的数据值即可选定该物品下不同种类的物品\n[所有补充资料来源来自MinecraftWiki，部分易混淆的数据值补充已给予解释]\n注：大多数物品及方块都有一个固定数据值，这个数据值为0，适用于无其他数据值的物品及方块\n若需方块ID的数据值，可去CA官方群文件内寻找绿叶所制的“特殊值补充”\n\n最后，俗子又希望诸位，吃水勿忘挖井人",
+			"uuid": "d5eb69d8-f76b-4f18-8d26-889cda809734",
+			"version": [
+				1,
+				17,
+				1
+			],
+			"downloadurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/d5eb69d8-f76b-4f18-8d26-889cda809734.lib",
+			"updateurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/d5eb69d8-f76b-4f18-8d26-889cda809734.json",
+			"sha1": "tibb6ihmrDVPT2/xZEjD9Kgn3KU=",
+			"mtime": 1655556532000
+		},
+		{
+			"name": "新增命令 by JG",
+			"author": "Jouguzhilu",
+			"description": "对应MC国际版版本：1.19.30",
+			"uuid": "06c93fbf-3e37-4b4d-ad91-8f0f46478d7b",
+			"version": [
+				1,
+				3,
+				4
+			],
+			"downloadurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/06c93fbf-3e37-4b4d-ad91-8f0f46478d7b.lib",
+			"updateurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/06c93fbf-3e37-4b4d-ad91-8f0f46478d7b.json",
+			"sha1": "ZPBh3swm30Aahd2clDeLOBtKgs4=",
+			"mtime": 1793200764924
+		},
+		{
+			"name": "新execute拓展包",
+			"author": "工程师_多多",
+			"description": "将execute替换为1.19.10.20&1.19.40.20格式\n修复execute中subcommand导致的d问题。\n使用execute命令时，如要使用目标选择器参数，请删除空格并输入中括号。 \n请将本json放在默认命令库之下。\n\n请使用命令助手1.2.14版本打开。\n\n支持的版本:1.19.10.20+",
+			"uuid": "d436a565-61ee-485a-947e-c7a52d8dbca9",
+			"version": [
+				1,
+				0,
+				2
+			],
+			"downloadurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/d436a565-61ee-485a-947e-c7a52d8dbca9.lib",
+			"updateurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/d436a565-61ee-485a-947e-c7a52d8dbca9.json",
+			"sha1": "v9Go4Q7jr6IZxLOllKsJbJhQqAw=",
+			"mtime": 1793200764908
+		},
+		{
+			"name": "原神地图拓展",
+			"author": "乱杖先生",
+			"description": "该拓展包内置Projectxero构建的提瓦特大地图，标点与原神官方地图同步",
+			"uuid": "acd62444-dd5d-4a38-bd3d-7c4f18149fbd",
+			"version": [
+				1,
+				0,
+				0
+			],
+			"downloadurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/acd62444-dd5d-4a38-bd3d-7c4f18149fbd.lib",
+			"updateurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/acd62444-dd5d-4a38-bd3d-7c4f18149fbd.json",
+			"sha1": "WXid9nCdDaYKJECu83nG6N9ztkw=",
+			"mtime": 1661911986000
+		},
+		{
+			"name": "在线ID表",
+			"author": "热心网友[淡腾]",
+			"description": "内置网页版ID表\n助手输入'在线ID表'后左滑进入\n该拓展包纯属闲的淡腾\n在线网站:https://ca.projectxero.top/idlist/",
+			"uuid": "ac3d2444-dd5d-4a38-bd3d-fdh38149fbd",
+			"version": [
+				1,
+				0,
+				0
+			],
+			"downloadurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/ac3d2444-dd5d-4a38-bd3d-fdh38149fbd.lib",
+			"updateurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/ac3d2444-dd5d-4a38-bd3d-fdh38149fbd.json",
+			"sha1": "16KxTA2PQWKZWB4B8cZS+H7OJVk=",
+			"mtime": 1656666712000
+		},
+		{
+			"name": "注解命令库",
+			"author": "Tiby",
+			"description": "该命令库主要补充/完善默认命令库，\n适用于Beta-12版本。\n*物品/方块特殊值\n*实体事件\n2022年12月20日",
+			"uuid": "6ffde3c5-39c9-4f60-93ad-91fc9c64fb8a",
+			"version": [
+				0,
+				0,
+				1
+			],
+			"downloadurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/6ffde3c5-39c9-4f60-93ad-91fc9c64fb8a.lib",
+			"updateurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/6ffde3c5-39c9-4f60-93ad-91fc9c64fb8a.json",
+			"sha1": "TkitoMg+GAtzFFW3rMx1HCqyvzs=",
+			"mtime": 1793200764920
+		},
+		{
+			"name": "family修复及拓展包",
+			"author": "神鹰工作室",
+			"description": "修复默认命令库family描述错误的词条，补充了family族",
+			"uuid": "bf1971a2-36ae-44e9-a6d9905552c05ca5",
+			"version": [
+				0,
+				0,
+				1
+			],
+			"downloadurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/bf1971a2-36ae-44e9-a6d9905552c05ca5.lib",
+			"updateurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/bf1971a2-36ae-44e9-a6d9905552c05ca5.json",
+			"sha1": "dpe3egf0RRVRoLR6JOGKQ+E+W8I=",
+			"mtime": 1794136030000
+		},
+		{
+			"name": "hasitem",
+			"author": "工程师_多多",
+			"description": "增加hasitem",
+			"uuid": "acf56625-dd5d-4a38-b43d-7c4f1d239fcd",
+			"version": [
+				1,
+				0,
+				0
+			],
+			"downloadurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/acf56625-dd5d-4a38-b43d-7c4f1d239fcd.lib",
+			"updateurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/acf56625-dd5d-4a38-b43d-7c4f1d239fcd.json",
+			"sha1": "Fz903cFnlbeBjfABLzok5H6LNf8=",
+			"mtime": 1661911638000
+		},
+		{
+			"name": "hasitem 选择题器拓展",
+			"author": "吃瓜群猹",
+			"description": "由于命令助手部分原因停更,拓展包只能做成这个样。\n需要注意的是要在完成选择器参数过后再删除多余的符号或添加缺少的符号,如:删除符号“{”前面的逗号和补齐hasitem结束的符号“}”",
+			"uuid": "a1d7b506-0239-43a9-ba66-156a1c6f7b67",
+			"version": [
+				0,
+				0,
+				1
+			],
+			"downloadurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/a1d7b506-0239-43a9-ba66-156a1c6f7b67.lib",
+			"updateurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/a1d7b506-0239-43a9-ba66-156a1c6f7b67.json",
+			"sha1": "b6FeHDovs6rWxf5ErI3ykAQqk8k=",
+			"mtime": 1659709322000
+		},
+		{
+			"name": "Hiland拓展包6.1.10",
+			"author": "CA制作组 Tiby 多多",
+			"description": "该命令库有0.x-1.19.x全部指令；\n请关闭其他拓展包（包括内置）,使用1.2.14命令助手\n*更新gametest，新summon，exe分支\n2022年9月11日",
+			"uuid": "38214256-2ef0-4ffb-a2b8-1361750f2edf",
+			"version": [
+				6,
+				1,
+				10,
+				1
+			],
+			"downloadurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/38214256-2ef0-4ffb-a2b8-1361750f2edf.lib",
+			"updateurl": "https://raw.githubusercontent.com/codesenlin/CA/canary/community-clib/packs/38214256-2ef0-4ffb-a2b8-1361750f2edf.json",
+			"sha1": "VdRTkR0beWi68i2sjNKc6cByRBE=",
+			"mtime": 1793200764904
 		}
 	]
 }

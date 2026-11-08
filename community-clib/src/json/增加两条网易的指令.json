@@ -1,0 +1,35 @@
+{
+    "name": "网易的专属指令",
+    "author": "   ",
+    "description": "增加两条特有的指令removeedunpc和enableedunpc",
+    "uuid": "edd59559-689f-49b7-970f-3d13fa7300df",
+    "require": [],
+    "version": [
+        0,
+        0,
+        1
+    ],
+    "commands": {
+        "enableedunpc": {
+            "description": "是否允许地图内生成NPC",
+            "patterns": {
+                "default": {
+                    "description": "true允许，false禁止",
+                    "params": [
+                        {
+                            "type": "enum",
+                            "name": "值",
+                            "list": [
+                                "true",
+                                "false"
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        "removeedunpc": {
+            "description": "删除加载区域内所有NPC"
+        }
+    }
+}

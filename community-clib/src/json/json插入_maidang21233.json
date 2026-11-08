@@ -1,0 +1,163 @@
+{
+  "author": "maidang2233",
+  "description": "插入json方法",
+  "uuid": "4b9a48f7-2f58-4ec1-b2a6-1a06c95b3733",
+  "version": [0,
+    0,
+    1],
+  "require": [],
+  "versionPack": {
+    "base": {
+      "commands": {
+        "tellraw": {
+          "patterns": {
+            "new": {
+              "params": [{
+                "type": "selector",
+                "name": "目标",
+                "target": "player"
+              },
+                {
+                  "type": "json",
+                  "name": "JSON文本",
+                  "component": "tellraw"
+                }],
+              "description": "向指定玩家发送一条JSON消息"
+            }
+          },
+          "help": "https://minecraft-zh.gamepedia.com/%E5%91%BD%E4%BB%A4/tellraw"
+        },
+        "titleraw": {
+          "patterns": {
+            "title": {
+              "params": [{
+                "type": "selector",
+                "name": "目标",
+                "target": "player"
+              },
+                {
+                  "type": "plain",
+                  "name": "title",
+                  "prompt": "显示标题"
+                },
+                {
+                  "type": "json",
+                  "name": "JSON文本",
+                  "component": "titleraw"
+                }],
+              "description": "显示json标题"
+            },
+            "subtitle": {
+              "params": [{
+                "type": "selector",
+                "name": "目标",
+                "target": "player"
+              },
+                {
+                  "type": "plain",
+                  "name": "subtitle",
+                  "prompt": "显示副标题"
+                },
+                {
+                  "type": "json",
+                  "name": "JSON文本",
+                  "component": "titleraw"
+                }],
+              "description": "显示json副标题"
+            },
+            "actionbar": {
+              "params": [{
+                "type": "selector",
+                "name": "目标",
+                "target": "player"
+              },
+                {
+                  "type": "plain",
+                  "name": "actionbar",
+                  "prompt": "在活动栏上显示文字"
+                },
+                {
+                  "type": "json",
+                  "name": "JSON文本",
+                  "component": "titleraw"
+                }],
+              "description": "在活动栏上显示json文字"
+            }
+          },
+          "help": "https://minecraft.wiki/w/Titleraw"
+        }
+
+      },
+    }
+  },
+  "json": {
+    "tellraw": {
+      "type": "object",
+      "name": "文本组件",
+      "children": {
+        "rawtext": {
+          "name": "原始文本(rawtext)",
+          "extends": "text",
+          "translate": "translate"
+        }
+      }
+    },
+    "titleraw": {
+      "type": "object",
+      "name": "文本组件",
+      "children": {
+        "rawtext": {
+          "name": "原始文本(rawtext)",
+          "extends": "text",
+          "translate": "translate"
+        }
+      }
+    },
+    "text": {
+      "type": "array",
+      "name": "文本",
+      "children": {
+        "name": "样式",
+        "type": "object",
+        "children": {
+          "text": {
+            "name": "要发送的文本(text)"
+          },
+          "translate": {
+            "type": "plain",
+            "name": "%%2",
+            "description": "显示可活动文本(translate)"
+          },
+          "with": {
+            "type": "object",
+            "name": "与translate并用",
+            "children": {
+              "rawtext": {
+                "name": "原始文本(rawtext)",
+                "extends": "text",
+                "type": "array"
+              }
+            }
+          },
+          "selector": {
+            "name": "玩家选择器(selector)",
+            "type": "player"
+          },
+          "score": {
+            "type": "object",
+            "name": "显示计分板分数(score)",
+            "children": {
+              "objective": {
+                "name": "计分板名字"
+              },
+              "name": {
+                "name": "玩家选择器"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "name": "插入json"
+}

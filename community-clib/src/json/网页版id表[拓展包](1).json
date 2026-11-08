@@ -1,0 +1,1 @@
+{"name":"在线ID表","author":"热心网友[淡腾]","description":"内置网页版ID表\n助手输入'在线ID表'后左滑进入\n该拓展包纯属闲的淡腾\n在线网站:https://ca.projectxero.top/idlist/","uuid":"ac3d2444-dd5d-4a38-bd3d-fdh38149fbd","version":[1,0,0],"require":[],"commands":{"在线ID表":{"description":"左滑进入网页版在线ID表","help":"https://ca.projectxero.top/idlist/"}},"minSupportVer":"1.11.0.3"}

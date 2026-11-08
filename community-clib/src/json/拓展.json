@@ -1,0 +1,42 @@
+{
+    "name": "未知",
+    "author": "未知",
+    "description": "拓展包",
+    "uuid": "akd62414-dd5d-4a38-bd9d-7c4f16149fld",
+    "version": [
+        1,
+        0,
+        0
+    ],
+    "require": [],
+    "commands": {},
+    "versionPack": {
+        "base": {
+            "minSupportVer": "1.2",
+            "enums": {
+                "item": "block"
+            },
+            "commands": {},
+            "selectors": {},
+            "help": {}
+        },
+        "idtable": {
+            "mode": "overwrite",
+            "maxSupportVer": "1.1.*",
+            "enums": {
+                "item": {},
+                "block": {},
+                "entity": {}
+            }
+        },
+        "0.16.0": {
+            "commands": {
+                "扩展包": {
+                    "description": "左滑",
+                    "help": "https://www.mc.js.cool/mc/1.8touch/"
+                }
+            },
+            "minSupportVer": "1.11.0.3"
+        }
+    }
+}
