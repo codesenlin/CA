@@ -46,19 +46,29 @@ const OUTPUT_DESC = [
 ];
 
 function listCliTasks() {
-	const dir = __dirname;
-	const names = fs.readdirSync(dir)
-		.filter(function (f) { return f.endsWith(".js") && f !== "index.js" && f !== "help.js"; })
-		.map(function (f) { return path.basename(f, ".js"); })
+	const found = [];
+	function walk(dir) {
+		fs.readdirSync(dir).forEach(function (f) {
+			const p = path.join(dir, f);
+			if (fs.statSync(p).isDirectory()) {
+				walk(p);
+			} else if (f.endsWith(".js") && f !== "index.js" && f !== "help.js") {
+				found.push({ name: path.basename(f, ".js"), path: p });
+			}
+		});
+	}
+	walk(__dirname);
+	return found
+		.filter(function (item) {
+			try {
+				const task = require(item.path);
+				return task && task.input === "cli";
+			} catch (e) {
+				return false;
+			}
+		})
+		.map(function (item) { return item.name; })
 		.sort();
-	return names.filter(function (name) {
-		try {
-			const task = require(path.join(dir, name + ".js"));
-			return task && task.input === "cli";
-		} catch (e) {
-			return false;
-		}
-	});
 }
 
 function readScripts() {

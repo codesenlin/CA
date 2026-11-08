@@ -6,7 +6,7 @@
 const fs = require("fs");
 const path = require("path");
 const assert = require("assert");
-const loader = require("../loader-ast");
+const loader = require("../lib/loader-ast");
 const parser = require("@babel/parser");
 
 // 测试辅助函数
@@ -198,7 +198,7 @@ var loaded = true;
         console.log("测试 7: 完整项目编译...");
         loader.reset();
 
-        const mainPath = path.join(__dirname, "../../main.js");
+        const mainPath = path.join(__dirname, "../../modules/main.js");
 
         try {
             const result = loader.load(mainPath, {});

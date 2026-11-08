@@ -8,18 +8,18 @@
 1. 纯 Java，不依赖 Android、不依赖 Rhino —— 可以单独在 JVM 上跑单测
 2. 所有方法都是 static；除 `setIDTexts` 的 ID 列表缓存外无状态，Rhino 直接
    Callable 调用（列表重建时 JS 侧会重新 `setIDTexts`，不依赖跨列表状态）
-3. **每个方法在 `modules/Accel.js` 里都有一份语义等价的 JS 实现**
+3. **每个方法在 `src/core/Accel.kt` 里都有一份语义等价的 JS 实现**
 
 ## 契约：谁负责什么
 
 ```
-modules/CA.Assist.js       业务逻辑：决定"要过滤"
+src/ca/CAAssistModule.kt       业务逻辑：决定"要过滤"
         │  Accel.filter(list, s)
         ▼
-modules/Accel.js           决策层：jar 在不在？方法有没有？
+src/core/Accel.kt           决策层：jar 在不在？方法有没有？
         │                  有 → 调 Java；没有 → 跑自己的 JS 实现
         ▼
-caaccel/Accel.java         加速层：可选。下载代码的人想快就在这里实现
+caaccel/src/top/projectxero/ca/accel/Accel.java         加速层：可选。下载代码的人想快就在这里实现
 ```
 
 **想让某个操作变快**：在 `Accel.java` 里实现对应方法，重新 `npm run caaccel`，把 jar 放进
@@ -50,7 +50,7 @@ caaccel/Accel.java         加速层：可选。下载代码的人想快就在�
 ## 构建
 
 ```sh
-npm run caaccel        # 产出 build/caaccel.jar
+npm run caaccel        # 产出 build/caaccel/caaccel.jar
 npm run caaccel:test   # 单测（test/ 下每个 *Test 都会跑）
 npm run caaccel:bench  # 与 Rhino 的对比基准（需要 Rhino 1.9.2 jar）
 
@@ -82,6 +82,6 @@ node ./caaccel/cli.js build|test|bench
 
 1. `Accel.java` 加 static 方法（无状态）
 2. `caaccel/test/` 加用例，跑 `npm run caaccel:test`
-3. `modules/Accel.js` 加同名包装 + **JS 等价实现**（关键：没人实现 Java 时靠它）
+3. `src/core/Accel.kt` 加同名包装 + **JS 等价实现**（关键：没人实现 Java 时靠它）
 4. 业务代码直接 `Accel.xxx(...)`，不需要判断 jar 在不在
 5. `app/proguard-rules.pro` 的 keep 规则已覆盖整个包，不用改

@@ -6,7 +6,7 @@
 const fs = require("fs");
 const path = require("path");
 const assert = require("assert");
-const loader = require("../loader-ast");
+const loader = require("../lib/loader-ast");
 const parser = require("@babel/parser");
 
 // 测试辅助函数

@@ -1,13 +1,13 @@
 {
   "name": "cabuildtools",
   "version": "1.1.2",
-  "description": "",
+  "description": "命令助手构建工具：脚本打包、APK、签名、发布与拓展包",
   "main": "main.js",
   "bin": {
     "cabuild": "./main.js"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node tests/async-transform.test.js && node tests/loader-ast.test.js"
   },
   "repository": {
     "type": "git",

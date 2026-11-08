@@ -1,12 +1,12 @@
 # ===== 依赖 =====
-node_modules/
+/node_modules/
 
 # ===== 构建产物 =====
-build/
-# 加速库的编译输出（源码 caaccel/src/ 入库，jar 不入库）
-caaccel/build/
-# 跑基准时从 Gradle 缓存复制过来的 Rhino
-caaccel/test/rhino-*.jar
+/build/
+
+# ===== Kotlin/Gradle =====
+/.gradle/
+/.kotlin/
 
 # ===== 日志 =====
 *.log
@@ -20,6 +20,7 @@ desktop.ini
 # ===== 编辑器 / IDE =====
 .idea/
 .vscode/
+.fleet/
 *.iml
 *.swp
 *~
@@ -28,8 +29,5 @@ desktop.ini
 *.bak
 *.backup
 *.tmp
-
-# ===== Kotlin/Gradle =====
-.gradle/
-.kotlin/
-kotlin-js-store/
+*.orig
+*.rej

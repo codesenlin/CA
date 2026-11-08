@@ -20,12 +20,10 @@ build/libwork/
 └── unpack/    lib/ 里 .lib 解包出的 .json / .js
 ```
 
-`libwork/src`、`libwork/lib` 的文件可以按需入库；**`libwork/keys` 全部内容
-不入库**（见 `libwork/keys/.gitignore`），避免把私钥/证书提交上去。
-
-git 不跟踪空目录，所以 `src/`、`lib/` 里放 `.gitkeep` 占位、`keys/` 里用
-`.gitignore`（内容 `*` + `!.gitignore`）占位——这样三个目录都能进仓库，
-同时 keys 的内容仍然全部忽略。
+`libwork/src`、`libwork/lib`、`libwork/keys` 都是本地工作区，**内容默认不入库**：
+每个目录用 `.gitignore`（内容 `/*` + `!.gitignore`）占位，这样目录能进仓库，
+本地放进去的源码、包和密钥都不会被误提交。需要长期保留的包请放到 `data/` 或
+`community-clib/src/` 等正式位置。
 
 
 ## 目标写法

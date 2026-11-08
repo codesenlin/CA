@@ -1,0 +1,2 @@
+# 跑基准时从 Gradle 缓存复制过来的 Rhino
+rhino-*.jar

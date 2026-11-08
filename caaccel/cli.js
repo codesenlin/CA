@@ -2,7 +2,7 @@
 /**
  * caaccel（加速库）的构建 / 测试 / 基准脚本。
  *
- *   node ./caaccel/cli.js build          # 构建 build/caaccel.jar
+ *   node ./caaccel/cli.js build          # 构建 build/caaccel/caaccel.jar
  *   node ./caaccel/cli.js test           # 跑 caaccel/test 下的单测
  *   node ./caaccel/cli.js bench          # matchString 的 Java vs Rhino 基准
  *
@@ -14,7 +14,7 @@ const path = require("path");
 const { spawnSync } = require("child_process");
 
 const ROOT = __dirname;
-const BUILD = path.join(ROOT, "build");
+const BUILD = path.join(ROOT, "..", "build", "caaccel");
 
 /** 删目录/文件（兼容没有 fs.rmSync 的旧 Node） */
 function rm(target) {
@@ -169,7 +169,7 @@ try {
 		console.log([
 			"用法：node ./caaccel/cli.js <命令>",
 			"",
-			"  build   构建 build/caaccel.jar（纯 javac + jar）",
+			"  build   构建 build/caaccel/caaccel.jar（纯 javac + jar）",
 			"  test    跑 caaccel/test 下的单测",
 			"  bench   matchString 的 Java vs Rhino 基准（需要 Rhino 1.9.2 jar）",
 			"",
