@@ -19,8 +19,8 @@
 
 ```json
 {
-	"version": "1.2.15",
-	"versionCode": [1, 2, 16],
+	"version": "1.2.16",
+	"versionCode": [1, 2, 17],
 	"date": "2026-11-02",
 	"licenceUpdate": "2019/9/21",
 	"description": "……"
@@ -44,7 +44,7 @@
 
 `description` 支持换行（JSON 里写 `\n`），内容是给用户看的中文说明。
 
-风味（可选构建）不在 `build.json` 里，而是放在 `flavors/<名字>/`（default / huangyxHUTAO），见 [flavor-build.md](flavor-build.md)。
+风味（可选构建）不在 `build.json` 里，而是放在 `data/data/flavors/<名字>/`（default / huangyxHUTAO），见 [flavor-build.md](flavor-build.md)。
 
 ---
 

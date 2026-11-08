@@ -1,6 +1,6 @@
 {
   "name": "ca",
-  "version": "1.2.15",
+  "version": "1.2.16",
   "private": true,
   "workspaces": [
     "cabuildtools"
@@ -22,6 +22,8 @@
     "caaccel:bench": "node ./caaccel/cli.js bench",
     "test": "node ./cabuildtools/tests/async-transform.test.js && node ./cabuildtools/tests/loader-ast.test.js",
     "update": "node ./cabuildtools/deps.js check",
-    "upgrade": "node ./cabuildtools/deps.js update"
+    "upgrade": "node ./cabuildtools/deps.js update",
+    "kotlin:js": "node ./scripts/build-kotlin-js.js",
+    "pretest": "node ./scripts/build-kotlin-js.js"
   }
 }
