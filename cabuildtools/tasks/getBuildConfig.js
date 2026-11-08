@@ -17,9 +17,9 @@ module.exports = function (context, args) {
 	}
 	if (!channel) channel = variants == "release" || variants == "snapshot" ? "stable" : variants;
 	var config = Object.assign({}, require(path.resolve("./config/build.json")));
-	// 风味定义在 flavors/<名字>/：flavor.json 是元数据，data/*.json 是风味专属数据。
-	// flavors/default 是基线：所有风味都会先带上 default 的数据，再用自己的数据覆盖/合并。
-	var flavorRoot = path.resolve("./flavors");
+	// 风味定义在 data/flavors/<名字>/：flavor.json 是元数据，data/*.json 是风味专属数据。
+	// data/flavors/default 是基线：所有风味都会先带上 default 的数据，再用自己的数据覆盖/合并。
+	var flavorRoot = path.resolve("./data/flavors");
 	function isPlainObject(value) {
 		return value !== null && typeof value === "object" && !Array.isArray(value);
 	}
@@ -51,7 +51,7 @@ module.exports = function (context, args) {
 		return fs.existsSync(path.join(flavorRoot, name, "flavor.json"));
 	}).sort() : [];
 	var baseFlavor = readFlavor("default");
-	if (!baseFlavor) throw new Error("缺少默认风味 flavors/default/flavor.json");
+	if (!baseFlavor) throw new Error("缺少默认风味 data/flavors/default/flavor.json");
 	if (flavors.indexOf(flavor) < 0) {
 		throw new Error("未知的风味构建：" + flavor + "（可用：" + flavors.join(" / ") + "）");
 	}

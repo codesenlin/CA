@@ -36,7 +36,7 @@ const CHANNEL_DESC = [
 
 const FLAVOR_DESC = [
 	["-huangyxHUTAO", "南鸢晨星社区版风味（可选）：粉色主题 + 社区欢迎语"],
-	["-flavor <名字>", "自定义风味（需在 flavors/<名字>/ 下定义）"]
+	["-flavor <名字>", "自定义风味（需在 data/flavors/<名字>/ 下定义）"]
 ];
 
 const OUTPUT_DESC = [

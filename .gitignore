@@ -28,3 +28,8 @@ desktop.ini
 *.bak
 *.backup
 *.tmp
+
+# ===== Kotlin/Gradle =====
+.gradle/
+.kotlin/
+kotlin-js-store/

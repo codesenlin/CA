@@ -208,7 +208,7 @@ function loadFileAsAST(filePath, parentDef) {
         // 根据文件类型处理
         if (ext === '.json') {
             // JSON/JSONC 文件：支持注释和宽松语法
-            // 额外兼容：本项目的 intl/*.json 里用了 Loader.fromFile("...") 做文本拼接，
+            // 额外兼容：本项目的 data/intl/*.json 里用了 Loader.fromFile("...") 做文本拼接，
             // 这招只在旧的文本替换加载器下有效。这里先把这类调用就地展开，再当 JSON 解析。
             let jsonSource = source;
             if (jsonSource.indexOf("Loader.fromFile(") >= 0) {

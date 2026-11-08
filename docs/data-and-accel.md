@@ -15,7 +15,7 @@
 | `modules/NeteaseAdapter.js` | 版本映射表 | 76 处字面量 | JS 字面量内嵌 |
 | `modules/CA.IntelliSense.js` | 补全用的模式/参数表 | 47 处字面量 | JS 字面量内嵌 |
 | `modules/AndroidBridge.js` | 权限/API 映射 | 60 处字面量 | JS 字面量内嵌 |
-| `intl/**/*.json` | 多语言文案 | 若干 | `Loader.fromFile` |
+| `data/intl/**/*.json` | 多语言文案 | 若干 | `Loader.fromFile` |
 
 ### 1.2 注释在哪
 

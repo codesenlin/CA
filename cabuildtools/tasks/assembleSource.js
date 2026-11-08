@@ -1,8 +1,12 @@
 const fs = require("fs");
 const loader = require("../loader-ast");
 const postprocess = require("../postprocess");
+const buildKotlinJs = require("./buildKotlinJs");
+const kotlinData = require("../kotlin-data");
 
 module.exports = function (context, args) {
+	buildKotlinJs();
+	kotlinData(context);
 	var result = loader.load("./main.js", {
 		buildConfig: context.buildConfig,
 		// 更新源配置（config/update-sources.json），注入成核心里的 UpdateSources

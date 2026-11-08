@@ -1,7 +1,7 @@
 # data/theme.json 主题配色
 
 所有风味共享的主题配色数据。构建时内联进脚本，`modules/builtinData.js` 读取后
-生成 `Common.themelist`；风味只通过 `flavors/<名字>/flavor.json` 的 `theme`
+生成 `Common.themelist`；风味只通过 `data/flavors/<名字>/flavor.json` 的 `theme`
 和 `themeOrder` 决定默认选中项与选择页顺序。
 
 ## 当前主题
@@ -16,8 +16,8 @@
 
 默认主题：
 
-- `flavors/default/flavor.json`：`theme = light`
-- `flavors/huangyxHUTAO/flavor.json`：`theme = pink`
+- `data/flavors/default/flavor.json`：`theme = light`
+- `data/flavors/huangyxHUTAO/flavor.json`：`theme = pink`
 
 主题选择页顺序默认按本文件的键顺序（pink/blue/purple/light/dark）；风味可以用
 可选的 `themeOrder` 覆盖。

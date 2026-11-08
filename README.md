@@ -25,18 +25,18 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 
 ## 目录结构
 
-- `modules/` — CA 的核心 JS 模块（`main.js` 里用 `Loader.fromFile` 按顺序拼装）
+- `modules/` — CA 的核心模块（Kotlin/JS 生成 bundle + 构建注入/vendor 数据 JS，由 `main.js` 按顺序拼装）
 - `data/` — 从代码里剥出来的公共数据：内置命令库（`idlibs/`）、提示语、主题配色（`theme.json`）等
   （每个数据文件都有对应说明，见 `docs/data-notes/`）
-- `intl/` — 界面文案（`zh_CN` / `en_US`）
+- `data/intl/` — 界面文案（`zh_CN` / `en_US`）
 - `cabuildtools/` — 构建工具（git subtree），AST 加载器、签名打包、壳子任务都在这里
 - `config/` — 构建配置（版本号、渠道、发布方式等，见下一节）
 - `caclib/` — 作者的 clib 源码（git subtree，**保持原样不要手改**）：在线拓展包源的工程，
   由 `clibspawn` 打包发布，**不参与 App 构建**
-- `caaccel/` — Java 加速库源码（配合 `modules/Accel.js`）
+- `caaccel/` — Java 加速库源码（配合 Kotlin/JS `Accel.kt`）
 - `docs/` — 开发文档：索引见 [`docs/README.md`](docs/README.md)，包含分支约定、构建配置、
   数据外置与加速方案、`data/` 各文件说明、风味构建、去重/LOADER 清理记录、
-  跨语言迁移候选、Kotlin 化路线、QuickJS 计划等
+  跨语言迁移候选、Kotlin/JS 迁移路线、QuickJS 计划等
 - `community-clib/` — 社区拓展包源：`src/` 放原始包，`build.js` 解包重签后生成
   `info.json` / 索引 / `packs/*.lib` / `verify.key`，GitHub 上直接对外提供（见该目录 README）
 - `build/` — 构建产物（不入版本库）
@@ -126,15 +126,15 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 ### 风味构建（可选：-huangyxHUTAO / -flavor <名字>）
 
 在渠道参数之外还可以叠一个**风味**，只改脚本内容（默认主题、初始欢迎语、启动文字）和产物名，
-不改构建形态/渠道；不会写更新清单。风味参数**可选**，不写时使用 `flavors/default` 基线数据。
+不改构建形态/渠道；不会写更新清单。风味参数**可选**，不写时使用 `data/flavors/default` 基线数据。
 
     npm run build -- -huangyxHUTAO         # 南鸢晨星社区版风味：粉色主题 + 社区版欢迎语
     node ./cabuildtools/main.js shellBuildDebug -huangyxHUTAO
 
-风味定义在 `flavors/<名字>/flavor.json`：`theme`（默认主题）/ `startupText` /
+风味定义在 `data/data/flavors/<名字>/flavor.json`：`theme`（默认主题）/ `startupText` /
 `welcome` 等；主题配色本身是公共数据 `data/theme.json`，选择页顺序默认也按
 `data/theme.json` 的键顺序。
-`flavors/default` 是基线，其它风味在它上面合并，完整说明见
+`data/flavors/default` 是基线，其它风味在它上面合并，完整说明见
 [`docs/flavor-build.md`](docs/flavor-build.md)。
 
 ### 生成 APP

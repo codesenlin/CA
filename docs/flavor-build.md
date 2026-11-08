@@ -8,7 +8,7 @@
 - 启动加载文字
 - 产物名后缀；并且**不写** update.json 等更新清单，避免和正式版更新源混在一起
 
-风味参数是**可选的**：不写时使用 `flavors/default`（基线数据），行为与之前完全一致。
+风味参数是**可选的**：不写时使用 `data/flavors/default`（基线数据），行为与之前完全一致。
 
 ## 用法
 
@@ -33,23 +33,23 @@ build/outputs/debugApk/app-debug-huangyxHUTAO.apk
 
 ## 目录结构
 
-风味定义和数据都放在 `flavors/` 下，一个风味一个文件夹：
+风味定义和数据都放在 `data/flavors/` 下，一个风味一个文件夹：
 
 ```
 data/
 └── theme.json             # 公共主题配色：light / dark / pink / blue / purple
-flavors/
+data/flavors/
 ├── default/               # 基线风味（默认）：先加载，其它风味在它上面覆盖
 │   └── flavor.json        # 默认参数（name/theme/startupText/aboutText/welcome）
 └── huangyxHUTAO/          # 南鸢晨星社区版
     └── flavor.json        # 风味元数据（默认主题 pink、themeOrder 等）
 ```
 
-- `flavors/<名字>/flavor.json`：风味元数据（必填，没有这个文件就不算一个风味）；
+- `data/data/data/flavors/<名字>/flavor.json`：风味元数据（必填，没有这个文件就不算一个风味）；
   `default` 也带一套默认参数，其它风味按字段覆盖它
 - 主题配色是公共数据 `data/theme.json`；风味只通过 `theme` / `themeOrder`
   决定默认主题和选择页顺序
-- **`flavors/default` 是基线**：构建时先取 default 的数据，再用所选风味的数据
+- **`data/flavors/default` 是基线**：构建时先取 default 的数据，再用所选风味的数据
   按文件名深度合并（对象逐键合并、数组/标量直接覆盖）
 - 公共数据仍在 `data/`（例如 `data/tips.json`），不参与风味合并
 
@@ -68,7 +68,7 @@ flavors/
 }
 ```
 
-`flavors/default/flavor.json` 也写全这些参数（作为默认值，不是空对象）：
+`data/flavors/default/flavor.json` 也写全这些参数（作为默认值，不是空对象）：
 
 ```json
 {
@@ -138,7 +138,7 @@ flavors/
 - `light` 主题现在也显式给出全部颜色；`Common.loadTheme` 的默认值只作为旧数据兜底
 - 颜色必须是 `#RRGGBB` 形式，`loadTheme` 会解析成 ARGB int
 - 新增主题时在 `data/theme.json` 加一项，并在
-  `intl/<lang>/main.json` 的 `common.theme` 下补名称
+  `data/intl/<lang>/main.json` 的 `common.theme` 下补名称
 - 主题列表顺序默认按 `data/theme.json` 的键顺序；风味仍可在 `flavor.json`
   里用 `themeOrder` 覆盖（可选，不是必填）
 
@@ -147,7 +147,7 @@ flavors/
 
 ## 新增风味
 
-1. 新建 `flavors/<名字>/flavor.json`（至少写 `name`）
+1. 新建 `data/data/data/flavors/<名字>/flavor.json`（至少写 `name`）
 2. 用 `theme` 选择默认主题；需要特殊顺序可加可选的 `themeOrder`
 3. 构建时加 `-flavor <名字>`；`-huangyxHUTAO` 是社区版的快捷写法
 

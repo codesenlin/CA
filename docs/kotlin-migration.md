@@ -1,120 +1,155 @@
-# CA Kotlin 化路线
+# CA Kotlin/JS 迁移路线
 
-> 状态：纳入规划，未开工。目标是先把边界和迁移顺序定下来，避免把“能转”误做成“整体重写”。
+> 目标：把 CA 核心逐步迁移到 Kotlin/JS。
+>
+> 运行时仍是 Rhino / QuickJS；迁移的是源码语言和构建链，不是换掉 JS 引擎。
 
-## 结论
+## 基本原则
 
-CA 不整体重写成 Kotlin，采用分层迁移：
+- Kotlin/JS 产物仍是 JS，继续走现有 `core.js`、热更新和脚本加载
+- `MapScript.loadModule`、`Plugins.inject`、`Loader.fromFile` 的调用方保持兼容
+- `.lib` 拓展包、社区插件继续使用 JS，不强制迁移
+- `java.*` / `android.*` / `com.*` 互操作集中封装，不散落在业务代码里
+- 先迁叶子模块，再碰 UI、网络和入口
+- 每个迁移模块都必须能在 Rhino 上跑通，再谈 QuickJS
+
+## 技术方案
 
 ```text
-cadroid 壳 / Android 宿主     Kotlin（已是）
-caaccel 性能热点              Java（保留）
-cabuildtools 编排与发布       Kotlin 优先迁移
-CA 核心、命令库、拓展包 JS    Rhino / QuickJS（保留）
+Kotlin 源码
+  → Kotlin Multiplatform JS target
+  → ES5 输出
+  → webpack production bundle（单文件 UMD）
+  → Rhino / QuickJS
 ```
 
-核心 JS 和 `.lib` 拓展包是 CA 的脚本生态与热更新基础，不应为了语言统一先动它。
+Phase 0 已建立：
 
-## 目标
+- 根目录 Gradle Kotlin/JS 工程（`build.gradle.kts`、`src/`、`test/`）
+- Kotlin 2.4.21 + Kotlin Multiplatform 的 `js()` 目标
+- ES5 目标
+- production webpack 单文件 bundle
+- `npm run kotlin:js` 构建入口
+- 产物复制到 `build/outputs/kotlin-js/`
+- Rhino 1.9.2 语法加载验证
 
-- 减少 `cabuildtools` 对 Node 编排逻辑的依赖
-- 用 Kotlin/Gradle 承载版本、风味、签名、发布、APK 流程
-- 保持现有产物、命令库格式、热更新和拓展包生态不变
-- 让构建流程有类型检查、IDE 跳转和统一测试入口
+## Java 互操作
 
-## 非目标
+Kotlin/JS 没有 JVM 的 `java.lang` 类型系统，但 Rhino 作用域里有 Java 包入口。
 
-- 不立刻用 Kotlin 重写 CA 核心 JS
-- 不改变 `core.js` 签名热更新协议
-- 不改变 `.lib`（`LIBRARY` / `SIGNLIB01` / `LIBSIGN01`）格式
-- 不改变 `MapScript.loadModule` / `Plugins.inject` 的现有契约
-- 不把 Babel 的 JS AST 处理硬改成 Kotlin 自研实现
+cadroid 已在 Rhino scope 注入 `JavaBridge`（`com.xero.ca.script.KotlinJsBridge`）：
+
+- `newInstance(className, argsJson)`
+- `callStatic(className, method, argsJson)`
+- `newArray(className, length)`
+- `classOf(className)`
+- `context()`
+
+约定：
+
+- 简单调用仍可直接用 `js("new java.lang.Runnable(...)")`
+- 复杂构造、反射、内部类、数组走 `JavaBridge`
+- 参数用 JSON 数组传递，避免 Rhino 对 Kotlin vararg/Array 的适配差异
+- 现有 JS 继续直接使用 Rhino 的 Java 互操作，不经过桥
 
 ## 阶段
 
-### P0：边界与兼容性
+### Phase 0：工具链（已完成）
 
-- 梳理 `cabuildtools` 任务依赖图
-- 标记必须依赖 Node/Babel 的步骤：
-  - `loader-ast.js`
-  - `postprocess.js`
-  - `clibspawn.js` 的 JS 打包部分
-- 确定 Kotlin 与 Node 的调用边界和退出码/日志约定
-- 产物校验基线：同配置下文件列表、SHA-1、APK 签名结果一致
+- Kotlin/JS 子工程
+- ES5 + production bundle
+- Rhino 加载验证
+- `npm run kotlin:js`
+- `cabuildtools` 的 assemble 任务会自动先构建 Kotlin bundle
+- 单 bundle + `CaKotlinPending` 延迟安装，支持按原位置注册
 
-### P1：cabuildtools 编排 Kotlin 化
+### Phase 1：业务模块迁移（已完成）
 
-优先迁移不依赖 Babel 的部分：
+已完成 Kotlin/JS 迁移并通过行为对比：
 
-- `main.js` 任务分发
-- `config/build.json`、flavor、channel 读取
-- `.lib` 打包、签名、SHA-1 计算
-- APK 签名、对齐、导出
-- Gradle 调用
-- SFTP 发布
-- 文件复制、压缩、清理
+- `Internal`：`getKey` / `onCreate` / `initialize` / `add` / `get` / `once`
+- `EventSender`：`init` / `on` / `off` / `trigger` / `clearListeners`
+- `MemSaver`：LRU 缓存接口
+- `UIHelp`：`settingItem`
+- `GlobalUtils`：`appendSSB` / `ES6Ex`
+- `LockClasses`：延迟安装，保持最后执行的时序
+- `Threads`：延迟安装，保留原线程池初始化时序
+- `IntColor`：使用 JavaReflect 精确选择 int/long 重载（避免 Paint.setColor 落到 long 分支）
+- `SafeFileUtils`：文件读写、JSON、GZIP 与安全回退
+- `SettingsCompat`：悬浮窗权限与各厂商 ROM 设置页
+- `JavaReflect`：反射构造/方法/数组/字段与原版 API 兼容
+- `DexPlugin`：DexClassLoader 与类缓存
+- `LPlugins`：L 插件方法注入与 SimpleAdapter
+- `Accel`：caaccel.jar / QuickJS / 纯 JS 三层回退
+- `QuickAccel`：QuickJS worker 注册、缓存变量与命令匹配桥
+- `ExternalStorage`：文件、URI、SAF 与临时文件
+- `DBSettings`：SQLite 设置存储、事务与 Proxy 命名空间
+- `MCAdapter`：基岩版/网易版适配与版本检测
+- `NeteaseAdapter`：包名表、版本与发布者识别
+- `NetworkUtils` / `Updater`：网络请求、更新检查与下载
+- `WSServer` / `PushService`：WebSocket 服务、推送与通知
+- `Intl` / `FCString` / `ISegment`：语言资源、样式文本、流解析
+- `UserManager` / `IssueService` / `GiteeFeedback`：账号、问题反馈、Gitee 反馈
+- `AndroidBridge`：Android 侧 Java/UI/通知/悬浮窗桥
+- `listAdapter/*`：列表工厂、过滤、多选、展开与更多菜单
+- `G` / `L` / `PWM` / `ConsolePanel`：UI 底层、布局模板、弹窗管理与控制台
+- `PopupWindow` / `PopupPage`：浮动窗口、页面栈、对话框与侧栏
+- `NetworkUI` / `JSONEdit` / `DebugUtils`：网络 UI、JSON 编辑器、调试面板
+- `Common` / `Tutorial` / `EasterEgg` / `Plugins`：主题、通用 UI、教程、彩蛋、插件系统
 
-实现形态：
+`BuildConfig` / `UpdateSources` 是构建注入的数据，不作为代码模块迁移。
 
-- Kotlin/JVM CLI，或 Gradle 插件 + `buildSrc`
-- Kotlin 进程内调用 Node 执行 Babel 相关脚本
-- 统一日志和失败退出码，保证 CI 行为不变
+已接入 `main.js` 的 `Loader.fromFile`；迁移完成的旧 JS 文件已删除，不再保留对照副本。
 
-### P2：宿主与原生能力
+构建注入数据改为 assemble 阶段生成 `build/kotlin-data/*.json`，由 Kotlin 安装器读入。
 
-- 新的 Android 原生能力优先用 Kotlin 写在壳里
-- 通过 `ScriptInterface` / `AndroidBridge` 暴露给 JS
-- `caaccel` 保持 Java，不为语言统一重写热点代码
-- QuickJS worker 继续走现有 native 绑定
+### Phase 2：模块注册与加载
 
-### P3：脚本生态保持 JS
+- Kotlin 产物接入 `cabuildtools` 的 source assemble
+- 通过 `MapScript.loadModule` 注册模块
+- 保留 LOADER / postprocess 流程
+- 处理 `globalThis`、UMD、source map
 
-- 核心模块继续 `MapScript.loadModule`
-- 插件库继续 `Plugins.inject`
-- 拓展包继续 `.lib` + 源签名
-- 热更新继续 `core.js` + `core.sign`
+### Phase 3：Android 互操作
 
-### P4：核心迁移评估（可选，需单独决策）
+- cadroid 增加 `JavaBridge`
+- 封装 `Runnable`、`Context`、`G.*`、`ScriptInterface`
+- 迁移 UI / 网络等有 Android 依赖的模块
+- 保留失败回退和异常栈可读性
 
-只有同时满足以下条件才考虑：
+### Phase 4：入口与热更新
 
-- P1–P3 稳定运行至少一个发布周期
-- 已设计出 Kotlin 插件 ABI、签名和热更新方案
-- 有明确的性能或维护收益，而不是单纯“统一语言”
-- 接受拓展包/命令库生态的迁移成本
+- `main.js` / 启动链
+- `core.js` 签名热更新
+- snapshot / debug source
+- 产物体积、启动耗时回归
 
-否则核心保持 Rhino / QuickJS。
+### Phase 5：生态边界
 
-## 技术选型
-
-| 需求 | 方案 |
-| --- | --- |
-| 构建编排 | Kotlin/JVM + Gradle |
-| 配置序列化 | kotlinx.serialization 或现有 JSON |
-| 压缩/解压 | `java.util.zip` |
-| 签名/哈希 | JCA（RSA / SHA-1 / SHA-256） |
-| SFTP | JSch 或现有发布接口 |
-| JS AST / 压缩 | 保留 Node + Babel，Kotlin 子进程调用 |
-| 产物校验 | Kotlin 测试 + 现有 Node 测试并行 |
+- `.lib` 拓展包继续 JS
+- `Plugins.inject` 插件继续 JS
+- 只迁核心，不破坏社区生态
 
 ## 验收标准
 
-每个阶段都要满足：
+每个迁移模块：
 
-- 相同输入下产物内容一致（除时间戳等既有可变字段）
-- `npm test` 与现有命令继续通过
-- `buildRelease` / `buildSnapshot` / `shellBuildDebug` 行为不变
-- 失败时退出码、错误信息和日志可定位
-- 不要求用户额外安装第二套构建环境；JVM 由 Android/Gradle 提供
+- `npm test` 通过
+- `buildRelease` / `buildSnapshot` 通过
+- Rhino 真机启动无异常
+- 对外 API 和错误行为一致
+- 包体积和启动耗时不明显回退
 
 ## 风险
 
-- **Babel 依赖**：AST 改写和压缩仍必须 Node，完全去 Node 不现实
-- **双工具链**：过渡期同时维护 Kotlin 编排和 Node 子进程
-- **产物漂移**：签名、对齐、压缩参数变化会导致 APK 不一致
-- **拓展包兼容**：任何加载器/签名改动都可能破坏社区源
-- **收益不明确**：如果只迁移编排层，代码量下降有限，主要收益是类型和 Gradle 集成
+- Kotlin/JS stdlib 体积
+- ES5 兼容和 Rhino 语法限制
+- `globalThis` / UMD 与现有 loader 的拼接
+- Java 互操作的可读性和性能
+- 热更新脚本必须继续可签名
+- 迁移期间两套构建并存
 
-## 第一步
+## 当前状态
 
-从 P1 的任务分发和配置读取开始，保持 Node 的 `loader-ast` / `postprocess` 不动；先做可并行的 Kotlin CLI 脚手架，不替换现有 `npm run build`。
+Phase 0 已完成；Phase 1/2 的模块已接入 `main.js`。
+JavaBridge、延迟安装和 cabuildtools 自动构建已补齐；全部业务模块（含 `CA.js` 和 `JSONLanguageService`）已完成 Kotlin/JS 迁移。CA 采用 9 组共享 caApi 的组装方式，真机启动、主界面、设置页、外观侧栏与常用页面验证通过。热更新和完整 CI 仍未完成。

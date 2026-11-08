@@ -1,4 +1,9 @@
 "ui";
+
+// Kotlin/JS bundle 的 UMD 包装使用 globalThis；Rhino 没有该全局时补一个。
+if (typeof globalThis === "undefined") {
+	var globalThis = this;
+}
 /*
 	Command Assistant (命令助手)
 	Copyright (C) 2017-2019  ProjectXero
@@ -608,120 +613,128 @@ MapScript.loadModule("Loader", {
 
 Loader.load(function () {
 
-	Loader.fromFile("modules/BuildConfig.js")
 
-	Loader.fromFile("modules/test/FileLogger.js")
 
-	Loader.fromFile("modules/core/Internal.js")
+	Loader.fromFile("build/outputs/kotlin-js/Internal.kotlin.js")
 
-	Loader.fromFile("modules/uiCore/G.js")
+	CaKotlinPending.installBuildConfig();
 
-	Loader.fromFile("modules/utils/JavaReflect.js")
+	// FileLogger 已迁移到 Kotlin/JS（需要 bundle 先加载）
+	CaKotlinPending.installFileLogger();
 
-	Loader.fromFile("modules/utils/IntColor.js")
+	CaKotlinPending.installG();
 
-	Loader.fromFile("modules/core/EventSender.js")
+	// JavaReflect 已迁移到 Kotlin/JS，在原来的加载位置安装
+	CaKotlinPending.installJavaReflect();
 
-	Loader.fromFile("modules/uiCore/L.js")
+	// IntColor 已迁移到 Kotlin/JS，在原来的加载位置安装
+	CaKotlinPending.installIntColor();
 
-	Loader.fromFile("modules/uiCore/PWM.js")
 
-	Loader.fromFile("modules/uiCore/PopupPage.js")
+	CaKotlinPending.installL();
 
-	Loader.fromFile("modules/core/MemSaver.js")
+	CaKotlinPending.installPWM();
 
-	Loader.fromFile("modules/Intl.js")
-	Loader.fromFile("modules/Accel.js")
+	CaKotlinPending.installPopupPage();
+
+
+	CaKotlinPending.installIntl();
+
+	// Accel 已迁移到 Kotlin/JS，在原来的加载位置安装
+	CaKotlinPending.installAccel();
 
 	// JSON 补全引擎（jsonPro 参数用）：体积大，放在 CA.js 之前单独加载
-	Loader.fromFile("modules/JSONLanguageService.js")
+	CaKotlinPending.installJSONLanguageService();
 
-	Loader.fromFile("modules/uiCore/UIHelp.js")
 
-	Loader.fromFile("modules/CA.js")
+	// CA 已迁移到 Kotlin/JS，按原位置安装组装好的 caApi
+	CaKotlinPending.installCA();
 
-	Loader.fromFile("modules/uiCore/PopupWindow.js")
+	CaKotlinPending.installPopupWindow();
 
-	Loader.fromFile("modules/utils/Threads.js")
+	// Threads 已迁移到 Kotlin/JS，在原来的加载位置安装
+	CaKotlinPending.installThreads();
 
-	// QuickJS 侧载加速 worker 的基准/桥接
-	Loader.fromFile("modules/utils/QuickAccel.js")
+	// QuickJS 侧载加速 worker 的基准/桥接（已迁移到 Kotlin/JS）
+	CaKotlinPending.installQuickAccel();
 
-	Loader.fromFile("modules/Common.js")
+	CaKotlinPending.installCommon();
 
-	Loader.fromFile("modules/core/Plugins.js")
+	CaKotlinPending.installPlugins();
 
-	Loader.fromFile("modules/utils/GlobalUtils.js")
 
-	Loader.fromFile("modules/sense/FCString.js")
+	CaKotlinPending.installFCString();
 
-	Loader.fromFile("modules/Tutorial.js")
+	CaKotlinPending.installTutorial();
 
-	Loader.fromFile("modules/listAdapter/ListAdapterBase.js")
+	CaKotlinPending.installListAdapterBase();
 
-	Loader.fromFile("modules/listAdapter/EmptyAdapter.js")
+	CaKotlinPending.installEmptyAdapter();
 
-	Loader.fromFile("modules/listAdapter/RhinoListAdapter.js")
+	CaKotlinPending.installRhinoListAdapter();
 
-	Loader.fromFile("modules/listAdapter/FilterListAdapter.js")
+	CaKotlinPending.installFilterListAdapter();
 
-	Loader.fromFile("modules/listAdapter/SimpleListAdapter.js")
+	CaKotlinPending.installSimpleListAdapter();
 
-	Loader.fromFile("modules/listAdapter/MultipleListAdapter.js")
+	CaKotlinPending.installMultipleListAdapter();
 
-	Loader.fromFile("modules/listAdapter/ExpandableListAdapter.js")
+	CaKotlinPending.installExpandableListAdapter();
 
-	Loader.fromFile("modules/listAdapter/MoreListAdapter.js")
+	CaKotlinPending.installMoreListAdapter();
 
-	Loader.fromFile("modules/uiCore/ConsolePanel.js")
+	CaKotlinPending.installConsolePanel();
 
-	Loader.fromFile("modules/network/NetworkUI.js")
+	CaKotlinPending.installNetworkUI();
 
-	Loader.fromFile("modules/network/NetworkUtils.js")
+	CaKotlinPending.installNetworkUtils();
 
-	Loader.fromFile("modules/UpdateSources.js")
+	CaKotlinPending.installUpdateSources();
 
-	Loader.fromFile("modules/network/Updater.js")
+	CaKotlinPending.installUpdater();
 
-	Loader.fromFile("modules/sense/ISegment.js")
+	CaKotlinPending.installISegment();
 
-	Loader.fromFile("modules/JSONEdit.js")
+	CaKotlinPending.installJSONEdit();
 
-	Loader.fromFile("modules/utils/SettingsCompat.js")
+	// SettingsCompat 已迁移到 Kotlin/JS，在原来的加载位置安装
+	CaKotlinPending.installSettingsCompat();
 
-	Loader.fromFile("modules/EasterEgg.js")
+	CaKotlinPending.installEasterEgg();
 
-	Loader.fromFile("modules/MCAdapter.js")
+	CaKotlinPending.installMCAdapter();
 
-	Loader.fromFile("modules/AndroidBridge.js")
+	CaKotlinPending.installAndroidBridge();
 
-	Loader.fromFile("modules/utils/ExternalStorage.js")
+	CaKotlinPending.installExternalStorage();
 
-	Loader.fromFile("modules/core/DexPlugin.js")
+	CaKotlinPending.installDexPlugin();
 
-	Loader.fromFile("modules/NeteaseAdapter.js")
+	CaKotlinPending.installNeteaseAdapter();
 
-	Loader.fromFile("modules/network/WSServer.js")
+	CaKotlinPending.installWSServer();
 
-	Loader.fromFile("modules/network/UserManager.js")
+	CaKotlinPending.installUserManager();
 
-	Loader.fromFile("modules/network/IssueService.js")
+	CaKotlinPending.installIssueService();
 
-	Loader.fromFile("modules/network/GiteeFeedback.js")
+	CaKotlinPending.installGiteeFeedback();
 
-	Loader.fromFile("modules/network/PushService.js")
+	CaKotlinPending.installPushService();
 
-	Loader.fromFile("modules/uiCore/LPlugins.js")
+	CaKotlinPending.installLPlugins();
 
-	Loader.fromFile("modules/utils/SafeFileUtils.js")
+	// SafeFileUtils 已迁移到 Kotlin/JS，在原来的加载位置安装
+	CaKotlinPending.installSafeFileUtils();
 
-	Loader.fromFile("modules/DebugUtils.js")
+	CaKotlinPending.installDebugUtils();
 
-	Loader.fromFile("intl/index.js")
+	CaKotlinPending.installIntlIndex();
 
-	Loader.fromFile("modules/builtinData.js")
+	CaKotlinPending.installBuiltinData();
 
-	Loader.fromFile("modules/LockClasses.js")
+	// LockClasses 已迁移到 Kotlin/JS，必须在所有模块加载后执行
+	CaKotlinLate.installLockClasses();
 
-	Loader.fromFile("modules/utils/DBSettings.js")
+	CaKotlinPending.installDBSettings();
 });
