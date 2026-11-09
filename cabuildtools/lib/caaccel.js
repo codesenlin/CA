@@ -1,10 +1,9 @@
-#!/usr/bin/env node
 /**
  * caaccel（加速库）的构建 / 测试 / 基准脚本。
  *
- *   node ./caaccel/cli.js build          # 构建 build/caaccel/caaccel.jar
- *   node ./caaccel/cli.js test           # 跑 caaccel/test 下的单测
- *   node ./caaccel/cli.js bench          # matchString 的 Java vs Rhino 基准
+ *   node ./cabuildtools/main.js caaccel build   # 构建 build/caaccel/caaccel.jar
+ *   node ./cabuildtools/main.js caaccel test    # 跑 caaccel/test 下的单测
+ *   node ./cabuildtools/main.js caaccel bench   # matchString 的 Java vs Rhino 基准
  *
  * 原来对应 caaccel/build.sh、test.sh、bench.sh 三个 shell 脚本，项目是 Node，
  * 统一成这一个入口，也方便挂 npm 脚本。
@@ -13,8 +12,9 @@ const fs = require("fs");
 const path = require("path");
 const { spawnSync } = require("child_process");
 
-const ROOT = __dirname;
-const BUILD = path.join(ROOT, "..", "build", "caaccel");
+const ROOT = path.resolve(__dirname, "../..");       // CA 根目录
+const CAACCEL_ROOT = path.join(ROOT, "caaccel");     // 加速库源码 / 测试 / 基准
+const BUILD = path.join(ROOT, "build", "caaccel");   // 统一输出到 CA/build/caaccel
 
 /** 删目录/文件（兼容没有 fs.rmSync 的旧 Node） */
 function rm(target) {
@@ -53,7 +53,7 @@ function findJdk() {
 /** 执行命令，失败直接退出（和 shell 里 set -e 一致） */
 function run(command, args, options) {
 	log("$ " + path.basename(command) + " " + args.join(" "));
-	const result = spawnSync(command, args, Object.assign({ stdio: "inherit", cwd: ROOT }, options));
+	const result = spawnSync(command, args, Object.assign({ stdio: "inherit", cwd: CAACCEL_ROOT }, options));
 	if (result.error) fail(result.error.message);
 	if (result.status !== 0) fail(path.basename(command) + " 退出码 " + result.status);
 }
@@ -79,7 +79,7 @@ function build(quiet) {
 	rm(outJar);
 	fs.mkdirSync(classes, { recursive: true });
 
-	const sources = listJava(path.join(ROOT, "src"));
+	const sources = listJava(path.join(CAACCEL_ROOT, "src"));
 	if (!sources.length) fail("src/ 下没有找到 .java 文件");
 	const listFile = path.join(BUILD, "sources.txt");
 	fs.writeFileSync(listFile, sources.join("\n") + "\n");
@@ -120,7 +120,7 @@ function findRhino() {
 	}
 
 	for (let i = 0; i < targets.length; i++) {
-		const candidate = path.join(ROOT, "test", targets[i]);
+		const candidate = path.join(CAACCEL_ROOT, "test", targets[i]);
 		if (fs.existsSync(candidate)) return candidate;
 	}
 	fail("找不到 Rhino jar（rhino-1.9.2.jar）：先跑一次 cadroid 的构建（会下载到 Gradle 缓存），或放一份到 caaccel/test/rhino-1.9.2.jar");
@@ -133,7 +133,7 @@ function test() {
 	rm(classes);
 	fs.mkdirSync(classes, { recursive: true });
 
-	const sources = listJava(path.join(ROOT, "test"));
+	const sources = listJava(path.join(CAACCEL_ROOT, "test"));
 	if (!sources.length) fail("test/ 下没有找到 .java 文件");
 	const listFile = path.join(BUILD, "test-sources.txt");
 	fs.writeFileSync(listFile, sources.join("\n") + "\n");
@@ -153,31 +153,8 @@ function bench() {
 	fs.mkdirSync(classes, { recursive: true });
 
 	const cp = [outJar, rhino].join(path.delimiter);
-	run(jdk.javac, ["-encoding", "UTF-8", "-cp", cp, "-d", classes, path.join(ROOT, "bench", "BenchMatchString.java")]);
+	run(jdk.javac, ["-encoding", "UTF-8", "-cp", cp, "-d", classes, path.join(CAACCEL_ROOT, "bench", "BenchMatchString.java")]);
 	run(jdk.java, ["-cp", cp + path.delimiter + classes, "BenchMatchString"]);
 }
 
-const command = process.argv[2] || "build";
-try {
-	if (command === "build") {
-		build(false);
-	} else if (command === "test") {
-		test();
-	} else if (command === "bench") {
-		bench();
-	} else if (command === "-h" || command === "--help" || command === "help") {
-		console.log([
-			"用法：node ./caaccel/cli.js <命令>",
-			"",
-			"  build   构建 build/caaccel/caaccel.jar（纯 javac + jar）",
-			"  test    跑 caaccel/test 下的单测",
-			"  bench   matchString 的 Java vs Rhino 基准（需要 Rhino 1.9.2 jar）",
-			"",
-			"JDK 优先用 $JAVA_HOME/bin，没有就用 PATH 里的 javac/jar/java。"
-		].join("\n"));
-	} else {
-		fail("未知命令：" + command);
-	}
-} catch (e) {
-	fail(e && e.message ? e.message : String(e));
-}
+module.exports = { build, test, bench };

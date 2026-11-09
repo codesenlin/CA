@@ -55,10 +55,10 @@ npm run caaccel:test   # 单测（test/ 下每个 *Test 都会跑）
 npm run caaccel:bench  # 与 Rhino 的对比基准（需要 Rhino 1.9.2 jar）
 
 # 等价的直接调用（不经过 npm）
-node ./caaccel/cli.js build|test|bench
+node ./cabuildtools/main.js caaccel build|test|bench
 ```
 
-`cli.js` 需要 javac/jar/java：优先用 `$JAVA_HOME/bin`，没有就用 PATH 里的。
+`cabuildtools/main.js caaccel` 需要 javac/jar/java：优先用 `$JAVA_HOME/bin`，没有就用 PATH 里的。
 `caaccel:bench` 会自动在 Gradle 缓存里找 `rhino-1.9.2.jar`（与 cadroid 当前依赖一致）。
 
 ## 接入 Android（可选）

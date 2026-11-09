@@ -176,7 +176,7 @@ Java 侧没有任何静态引用。release 构建时 R8 会把它整个裁掉—
 
 ### 接入 Android（已完成的步骤，留档）
 
-1. `CA/caaccel/cli.js`（`npm run caaccel`）产出 `caaccel.jar`
+1. `cabuildtools/main.js caaccel build`（`npm run caaccel`）产出 `caaccel.jar`
 2. 复制到 `cadroid/app/libs/`
 3. cadroid 的 `app/build.gradle` / `app/build.gradle.kts`：`implementation(files("libs/caaccel.jar"))`
 4. proguard keep 规则

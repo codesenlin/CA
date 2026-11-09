@@ -38,6 +38,7 @@ tasks/
   shell/              Android APK、签名、对齐、Gradle 与热更新
   publish/            SFTP / 发布流水线
   clib/               内置命令库
+  caaccel/            CA 加速库构建 / 测试 / 基准
   config/             构建配置、目录初始化、import 索引
   help.js             帮助
 cli/                  CLI 入口（deps / gradlew / libtool / js2localib）

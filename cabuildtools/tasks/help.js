@@ -18,6 +18,7 @@ const TASK_DESC = {
 	shellBuildDebug: "打包调试版 APK（debuggable，走 R8）",
 	shellBuildReleaseHotfix: "生成热更新包（core.js + 签名）",
 	buildCLib: "构建内置命令库（caclib）",
+	caaccel: "构建 / 测试 / 基准加速库（build|test|bench）",
 	publishRelease: "发布正式版到配置的发布端",
 	publishSnapshot: "发布快照版",
 	publishHotfix: "发布热更新包",
