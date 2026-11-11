@@ -1,5 +1,7 @@
 # 命令助手
 
+[![](https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/deepseek-ai/deepseek-harness)
+
 ## 简介
 
 一个支持对 Minecraft（基岩版）的命令进行补全与辅助输入的 App。本仓库为 App 的核心代码，业务逻辑用 Kotlin/JS 编写，打包成单文件 JavaScript 后由 Android 上的 Rhino 引擎执行。
