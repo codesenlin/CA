@@ -875,8 +875,8 @@ private fun caSecurityMenuItem(self: dynamic, api: dynamic): dynamic {
     details["1"] = level1
 
     val level2 = caObject()
-    level2.text = "中（推荐）"
-    level2.summary = "只加载签名包：官方 + 社区"
+    level2.text = "中"
+    level2.summary = "(推荐) 只加载签名包：官方 + 社区"
     level2.confirm = "「中」会加载社区签名的拓展包，它们的来源由各自拓展包源保证，没有官方背书。是否继续？"
     details["2"] = level2
 
@@ -912,7 +912,8 @@ private fun caSecurityLevelClick(self: dynamic, api: dynamic, item: dynamic) {
     o.max = caSub(caLength(item.secLevels), 1)
     o.progress = if (caLt(t, 0)) 2 else t
     o.prompt = { progress: dynamic ->
-        item.secLevelDetails[item.secLevels[progress]].summary
+        val d = item.secLevelDetails[item.secLevels[progress]]
+        if (caTruthy(d)) caAdd(caAdd(d.text, "\n\n"), d.summary) else "未知安全级别"
     }
     o.callback = caThis1Js { thisObj: dynamic, progress: dynamic ->
         caSecurityLevelCallback(self, api, item, thisObj, progress)
@@ -966,7 +967,7 @@ private fun caSecurityLevelRefresh(self: dynamic, api: dynamic, item: dynamic, p
 private fun caSecurityLevelHidden(api: dynamic, item: dynamic): Boolean {
     val d = item.secLevelDetails[api.settings.securityLevel]
     item.description = if (caTruthy(d)) {
-        caAdd(caAdd("当前：", d.text), caAdd(" —— ", d.summary))
+        caAdd("当前安全级别 ", d.text)
     } else {
         "当前安全级别未知"
     }
