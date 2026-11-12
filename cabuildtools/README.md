@@ -17,7 +17,7 @@ npm install
 ## 常用命令
 
 ```bash
-node ./cabuildtools/main.js help
+node ./cabuildtools/main.mjs help
 
 npm run build        # 正式版脚本 + 安装器 .lib
 npm run snapshot     # 快照版
@@ -27,12 +27,12 @@ npm run pack         # 打包 .lib
 npm run unpack       # 解包 .lib
 ```
 
-任务参数、渠道和风味说明直接看 `npm run help`。
+任务参数、渠道和风味说明用 `npm run help -- <任务>` 查看。
 
 ## 目录
 
 ```text
-main.js               CLI 与任务加载器
+main.mjs              CLI 与任务加载器
 tasks/
   build/              脚本/Kotlin 构建、源码拼装、产物写入
   shell/              Android APK、签名、对齐、Gradle 与热更新
@@ -40,7 +40,7 @@ tasks/
   clib/               内置命令库
   caaccel/            CA 加速库构建 / 测试 / 基准
   config/             构建配置、目录初始化、import 索引
-  help.js             帮助
+  help.mjs            帮助
 cli/                  CLI 入口（deps / gradlew / libtool / js2localib）
 lib/                  构建库（loader、签名、lib 格式、发布、配置等）
 tests/                Loader AST / async 转换测试
