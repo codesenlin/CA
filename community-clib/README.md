@@ -6,7 +6,7 @@ ID 表、翻译、命令拓展和插件包，整理成源站结构，App 里填�
 > 这个目录跟着 CA 仓库走（canary 分支）：推上去以后由 GitHub 直接对外提供。
 > 它是社区拓展包的源，和 `pages/clib/`（官方源）无关。
 > 生成物（info.json / index-*.json / packs/ / verify.key）和源文件（src/）放在一起，
-> 改了包之后跑一次 `node build.js` 再提交即可。
+> 改了包之后跑一次 `node build.mjs` 再提交即可。
 
 ## 在命令助手里添加
 
@@ -36,7 +36,7 @@ dist/              构建产物，GitHub 上直接提供的就是这里
   packs/<uuid>.lib 签名后的包（SIGNLIB01）
   packs/<uuid>.json 更新信息（uuid/version/url/source/sha1，updateurl 指向这里）
   verify.key       验签公钥（DER）
-build.js           构建脚本
+build.mjs          构建脚本
 source-config.json 源配置（sourceId、线上地址、私钥路径）
 ```
 
@@ -60,16 +60,16 @@ source-config.json 源配置（sourceId、线上地址、私钥路径）
 ```bash
 # 1. 把新包放进 src/json/ 或 src/lib/（LIBRARY 格式 .lib 也行，构建时会解包重签）
 # 2. 重新生成 dist/
-node build.js
+node build.mjs
 
-# 3. 校验签名和 sha1（build.js 默认会顺带校验一次）
-node build.js --verify
+# 3. 校验签名和 sha1（build.mjs 默认会顺带校验一次）
+node build.mjs --verify
 
 # 4. 提交
 git add -A && git commit -m "add: 新包 xxx" && git push
 ```
 
-`build.js` 会把 `src/` 里所有包：
+`build.mjs` 会把 `src/` 里所有包：
 
 1. 读出来（JSON 先直接解析，失败则按 JSONC 去注释/尾逗号；插件 `.json` 保持 JS；`.lib` 先解 LIBRARY 头再 gunzip）
 2. 用 `SIGNLIB01` 格式重新签名（私钥不在这份仓库里）

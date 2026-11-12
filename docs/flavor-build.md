@@ -15,8 +15,8 @@
 ```bash
 npm run build -- -huangyxHUTAO                  # 正式版 + 南鸢晨星社区版风味
 npm run snapshot -- -huangyxHUTAO          # 快照版 + 社区版风味
-node ./cabuildtools/main.js shellBuildRelease -huangyxHUTAO
-node ./cabuildtools/main.js shellBuildDebug -huangyxHUTAO
+node ./cabuildtools/main.mjs shellBuildRelease -huangyxHUTAO
+node ./cabuildtools/main.mjs shellBuildDebug -huangyxHUTAO
 
 # 自定义风味（需先在 config/build.json 的 flavors 里定义）
 npm run build -- -flavor <名字>
@@ -183,13 +183,13 @@ const loader = require("./cabuildtools/lib/loader-ast");
 for (const flavor of ["default", "huangyxHUTAO"]) {
   const ctx = {};
   getBuildConfig(ctx, ["release", "stable", flavor]);
-  const out = loader.load("./modules/main.js", { buildConfig: ctx.buildConfig, updateSources: require("./config/update-sources.json") }, "utf-8", { transformAsync: true });
+  const out = loader.load("./modules/main.cjs", { buildConfig: ctx.buildConfig, updateSources: require("./config/update-sources.json") }, "utf-8", { transformAsync: true });
   console.log(flavor, out.includes("南鸢晨星社区版 喵喵喵"), out.includes("by ProjectXero&南鸢晨星"));
 }
 '
 
 # 真机
-node ./cabuildtools/main.js shellBuildDebug -huangyxHUTAO
+node ./cabuildtools/main.mjs shellBuildDebug -huangyxHUTAO
 adb install -r build/outputs/debugApk/app-debug-huangyxHUTAO.apk
 ```
 

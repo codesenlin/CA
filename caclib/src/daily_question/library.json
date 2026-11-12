@@ -2,7 +2,7 @@
 	"id": "dailyexam",
 	"name": "每日问题",
 	"author": "ProjectXero",
-	"source": "main.js",
+	"source": "main.cjs",
 	"uuid": "9ab8c0af-8749-4758-9e96-c25d340c9ee3",
 	"version": "1.0.1",
 	"versionCode": [

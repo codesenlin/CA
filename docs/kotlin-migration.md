@@ -99,7 +99,7 @@ cadroid 已在 Rhino scope 注入 `JavaBridge`（`com.xero.ca.script.KotlinJsBri
 
 `BuildConfig` / `UpdateSources` 是构建注入的数据，不作为代码模块迁移。
 
-已接入 `modules/main.js` 的 `Loader.fromFile`；迁移完成的旧 JS 文件已删除，不再保留对照副本。
+已接入 `modules/main.cjs` 的 `Loader.fromFile`；迁移完成的旧 JS 文件已删除，不再保留对照副本。
 
 构建注入数据改为 assemble 阶段生成 `build/kotlin-data/*.json`，由 Kotlin 安装器读入。
 
@@ -119,7 +119,7 @@ cadroid 已在 Rhino scope 注入 `JavaBridge`（`com.xero.ca.script.KotlinJsBri
 
 ### Phase 4：入口与热更新（部分完成）
 
-- `modules/main.js` / 启动链
+- `modules/main.cjs` / 启动链
 - `core.js` 签名热更新
 - snapshot / debug source
 - 产物体积、启动耗时回归

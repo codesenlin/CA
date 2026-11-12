@@ -1,5 +1,5 @@
 (function () {/*LOADER
-postprocessor = require("./encrypt.js");
+postprocessor = require("./encrypt.cjs");
 */
 	function random(seed) {
 		return (seed[0] = (seed[0] * 9301 + 49297) % 233280) / 233280;
@@ -202,7 +202,7 @@ postprocessor = require("./encrypt.js");
 		arr.push(s.slice(i));
 		return arr;
 	}
-	var questions = Loader.fromFile("./questions.js");
+	var questions = Loader.fromFile("./questions.cjs");
 	var i = questions.length, j, t, seed = [questions.length];
 	while (i > 0) {
 		j = Math.floor(random(seed) * i--);

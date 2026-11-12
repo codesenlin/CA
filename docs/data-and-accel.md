@@ -40,7 +40,7 @@ JSON 不能写注释，实际现状是：
 
 ### 1.4 构建机制
 
-`cabuildtools/lib/loader-ast.js` 用 AST 把 `Loader.fromFile("xxx")` **在构建期内联成字面量**
+`cabuildtools/lib/loader-ast.mjs` 用 AST 把 `Loader.fromFile("xxx")` **在构建期内联成字面量**
 （另外兼容 `.json` 文本里的同名调用）：
 
 ```js
@@ -156,11 +156,11 @@ O(n²) 去重（遍历整个候选表，3000 个 ID 级别）。搬到 Java 后�
 ### 加一个加速点
 
 1. `caaccel/src/top/projectxero/ca/accel/Accel.java` 加 static 方法（保持无状态）
-2. `caaccel/test/` 加用例，跑 `npm run caaccel:test`
+2. `caaccel/test/` 加用例，跑 `npm run caaccel -- test`
 3. `src/core/Accel.kt` 里加 JS 等价实现 + 分发分支
 4. 调用方加 `if (Accel.available()) return Accel.xxx(...)`
 5. **`cadroid/app/proguard-rules.pro` 确认有 keep 规则**（见下）
-6. 跑 `node cabuildtools/main.js buildRelease` 验证产物
+6. 跑 `node cabuildtools/main.mjs buildRelease` 验证产物
 
 ### 必须注意：R8 会裁掉加速库
 
@@ -176,7 +176,7 @@ Java 侧没有任何静态引用。release 构建时 R8 会把它整个裁掉—
 
 ### 接入 Android（已完成的步骤，留档）
 
-1. `cabuildtools/main.js caaccel build`（`npm run caaccel`）产出 `caaccel.jar`
+1. `cabuildtools/main.mjs caaccel build`（`npm run caaccel`）产出 `caaccel.jar`
 2. 复制到 `cadroid/app/libs/`
 3. cadroid 的 `app/build.gradle` / `app/build.gradle.kts`：`implementation(files("libs/caaccel.jar"))`
 4. proguard keep 规则

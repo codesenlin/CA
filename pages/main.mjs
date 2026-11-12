@@ -1,8 +1,8 @@
-var http = require('http');
-var os = require('os');
-var fs = require('fs');
-var url = require('url');
-var process = require('process');
+import http from "node:http";
+import os from "node:os";
+import fs from "node:fs";
+import url from "node:url";
+import process from "node:process";
 
 var server = http.createServer((request, response) => {
 	var path = url.parse(request.url);

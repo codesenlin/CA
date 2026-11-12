@@ -12,17 +12,20 @@
  *   dist/verify.key         验签公钥（DER）
  *
  * 用法：
- *   node build.js                       # 用 source-config.json 里的 baseUrl
- *   node build.js --base=<URL>          # 临时指定线上根地址
- *   node build.js --verify              # 只校验已生成的 dist
+ *   node build.mjs                       # 用 source-config.json 里的 baseUrl
+ *   node build.mjs --base=<URL>          # 临时指定线上根地址
+ *   node build.mjs --verify              # 只校验已生成的 dist
  *
  * 私钥不会被提交：默认读 CADROID 的 app/signatures/privateKey.pem，
  * 也可以用环境变量 CA_SIGN_KEY 指定。
  */
-const fs = require("fs");
-const path = require("path");
-const zlib = require("zlib");
-const crypto = require("crypto");
+import fs from "node:fs";
+import path from "node:path";
+import zlib from "node:zlib";
+import crypto from "node:crypto";
+import process from "node:process";
+import { fileURLToPath } from "node:url";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const ROOT = __dirname;
 const SRC = path.join(ROOT, "src");
@@ -220,7 +223,7 @@ function applyCuration(items, curation) {
 
 /**
  * 清理上一次的生成物。OUT 可能就是仓库根（community-clib/），这种时候只能删
- * 已知的生成物，不能整个目录 rm —— 否则会把 src/、build.js 一起删掉。
+ * 已知的生成物，不能整个目录 rm —— 否则会把 src/、build.mjs 一起删掉。
  */
 function clearOutput(out) {
 	if (path.resolve(out) !== path.resolve(ROOT)) {
@@ -399,7 +402,7 @@ function verify() {
 	const privateKey = readPrivateKey(cfg);
 	const publicKey = crypto.createPublicKey(privateKey);
 	const infoPath = path.join(OUT, "info.json");
-	if (!fs.existsSync(infoPath)) throw new Error("dist 还没有生成，先跑 node build.js");
+	if (!fs.existsSync(infoPath)) throw new Error("dist 还没有生成，先跑 node build.mjs");
 	const info = JSON.parse(fs.readFileSync(infoPath, "utf-8"));
 	const keyFile = fs.readFileSync(path.join(OUT, "verify.key"));
 	const publicKeyFromFile = crypto.createPublicKey({ key: keyFile, format: "der", type: "spki" });

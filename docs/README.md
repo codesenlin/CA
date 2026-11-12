@@ -31,7 +31,7 @@
 ## 运行时代码位置
 
 ```text
-modules/main.js          宿主入口（Loader AST 的构建根）
+modules/main.cjs          宿主入口（Loader AST 的构建根）
 modules/bootstrap/       钩子、MapScript、ctx、Log、Loader、启动顺序
 src/<分类>/              Kotlin/JS 业务源码
 build/outputs/kotlin-js/ 构建产物（不提交）

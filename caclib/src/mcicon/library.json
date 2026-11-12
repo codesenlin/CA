@@ -2,7 +2,7 @@
 	"id": "mcicon",
 	"name": "MC图标",
 	"author": "ProjectXero",
-	"source": "main.js",
+	"source": "main.cjs",
 	"uuid": "06b2fb31-668e-4693-92ad-c0ac8da3e7a9",
 	"version": "2.0.0",
 	"versionCode": [

@@ -51,15 +51,15 @@ caaccel/src/top/projectxero/ca/accel/Accel.java         加速层：可选。下
 
 ```sh
 npm run caaccel        # 产出 build/caaccel/caaccel.jar
-npm run caaccel:test   # 单测（test/ 下每个 *Test 都会跑）
-npm run caaccel:bench  # 与 Rhino 的对比基准（需要 Rhino 1.9.2 jar）
+npm run caaccel -- test    # 单测（test/ 下每个 *Test 都会跑）
+npm run caaccel -- bench   # 与 Rhino 的对比基准（需要 Rhino 1.9.2 jar）
 
 # 等价的直接调用（不经过 npm）
-node ./cabuildtools/main.js caaccel build|test|bench
+node ./cabuildtools/main.mjs caaccel build|test|bench
 ```
 
-`cabuildtools/main.js caaccel` 需要 javac/jar/java：优先用 `$JAVA_HOME/bin`，没有就用 PATH 里的。
-`caaccel:bench` 会自动在 Gradle 缓存里找 `rhino-1.9.2.jar`（与 cadroid 当前依赖一致）。
+`cabuildtools/main.mjs caaccel` 需要 javac/jar/java：优先用 `$JAVA_HOME/bin`，没有就用 PATH 里的。
+`npm run caaccel -- bench` 会自动在 Gradle 缓存里找 `rhino-1.9.2.jar`（与 cadroid 当前依赖一致）。
 
 ## 接入 Android（可选）
 
@@ -81,7 +81,7 @@ node ./cabuildtools/main.js caaccel build|test|bench
 ## 新增加速点
 
 1. `Accel.java` 加 static 方法（无状态）
-2. `caaccel/test/` 加用例，跑 `npm run caaccel:test`
+2. `caaccel/test/` 加用例，跑 `npm run caaccel -- test`
 3. `src/core/Accel.kt` 加同名包装 + **JS 等价实现**（关键：没人实现 Java 时靠它）
 4. 业务代码直接 `Accel.xxx(...)`，不需要判断 jar 在不在
 5. `app/proguard-rules.pro` 的 keep 规则已覆盖整个包，不用改

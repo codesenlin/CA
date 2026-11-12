@@ -27,7 +27,7 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 
 ## 目录结构
 
-- `modules/` — 宿主入口与启动段：`main.js` 由 Loader AST 拼装，`bootstrap/` 提供钩子、MapScript、Loader 与加载顺序
+- `modules/` — 宿主入口与启动段：`main.cjs` 由 Loader AST 拼装，`bootstrap/` 提供钩子、MapScript、Loader 与加载顺序
 - `src/` — Kotlin/JS 业务源码，按 `core / ui / android / network / ca / json` 等分类
 - `data/` — 从代码里剥出来的公共数据：内置命令库（`idlibs/`）、提示语、主题配色（`theme.json`）等
   （每个数据文件都有对应说明，见 `docs/data-notes/`）
@@ -40,7 +40,7 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 - `docs/` — 开发文档：索引见 [`docs/README.md`](docs/README.md)，包含分支约定、构建配置、
   数据外置与加速方案、`data/` 各文件说明、风味构建、去重/LOADER 清理记录、
   跨语言迁移候选、Kotlin/JS 迁移路线、QuickJS 计划等
-- `community-clib/` — 社区拓展包源：`src/` 放原始包，`build.js` 解包重签后生成
+- `community-clib/` — 社区拓展包源：`src/` 放原始包，`build.mjs` 解包重签后生成
   `info.json` / 索引 / `packs/*.lib` / `verify.key`，GitHub 上直接对外提供（见该目录 README）
 - `build/` — 构建产物（不入版本库）
 
@@ -79,14 +79,15 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
    `caclib/` 里还有 clib 自己的元数据：`config.json`（发布源设置）、`config/publish.json`
    （发布方式）、`src/*/library.json`（每个命令库的 id/名称/版本/entry）。
    `caclib/` 是作者的 git subtree；本仓库把它的元数据从 `@key txt` 统一转成了 JSON，
-   `cabuildtools/lib/clibspawn.js` 读取 JSON（兼容旧的 `.js` 回退）。
+   `cabuildtools/lib/clibspawn.mjs` 读取 JSON（兼容旧的 `.js` 回退）。
 
    > 注意：`caclib/signature/`（clib 签名私钥）和 `caclib/outputs/` 不入库，所以 `clibspawn`
    > 在全新检出的仓库里跑不起来，需要自己准备私钥后才会生成产物。
 
 ### 构建代码
 
-    npm run help               # 列出所有任务、渠道参数与产物位置
+    npm run help               # 简版任务列表
+    npm run help -- buildRelease  # 查看某个任务的详细参数
 
     npm run build              # 正式版
     npm run snapshot      # 快照版
@@ -97,8 +98,8 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
     npm run build -- -canary    # 前沿渠道
 
     # 等价于直接调用构建脚本
-    node ./cabuildtools/main.js buildRelease
-    node ./cabuildtools/main.js buildSnapshot
+    node ./cabuildtools/main.mjs buildRelease
+    node ./cabuildtools/main.mjs buildSnapshot
 
 产物导出至 `build/outputs/release/main.js` 与 `build/outputs/snapshot/main.js`。
 
@@ -106,11 +107,11 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 
 构建命令可以附加渠道参数，产物名会带上渠道名，一眼能看出是什么构建物：
 
-    node ./cabuildtools/main.js buildRelease            # 命令助手(2026-10-15) stable.js + 命令助手stable<日期>.lib
-    node ./cabuildtools/main.js buildRelease -beta      # 命令助手(2026-10-15) beta.js + 命令助手beta<日期>.lib
-    node ./cabuildtools/main.js buildSnapshot           # build/outputs/snapshot/snapshot.js + 命令助手snapshot<日期>.lib
-    node ./cabuildtools/main.js buildSnapshot -dev      # dev.js + 命令助手dev<日期>.lib
-    node ./cabuildtools/main.js buildSnapshot -canary   # canary.js + 命令助手canary<日期>.lib
+    node ./cabuildtools/main.mjs buildRelease            # 命令助手(2026-10-15) stable.js + 命令助手stable<日期>.lib
+    node ./cabuildtools/main.mjs buildRelease -beta      # 命令助手(2026-10-15) beta.js + 命令助手beta<日期>.lib
+    node ./cabuildtools/main.mjs buildSnapshot           # build/outputs/snapshot/snapshot.js + 命令助手snapshot<日期>.lib
+    node ./cabuildtools/main.mjs buildSnapshot -dev      # dev.js + 命令助手dev<日期>.lib
+    node ./cabuildtools/main.mjs buildSnapshot -canary   # canary.js + 命令助手canary<日期>.lib
 
 渠道名和构建形态是分开的两个概念：
 
@@ -132,7 +133,7 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
 不改构建形态/渠道；不会写更新清单。风味参数**可选**，不写时使用 `data/flavors/default` 基线数据。
 
     npm run build -- -huangyxHUTAO         # 南鸢晨星社区版风味：粉色主题 + 社区版欢迎语
-    node ./cabuildtools/main.js shellBuildDebug -huangyxHUTAO
+    node ./cabuildtools/main.mjs shellBuildDebug -huangyxHUTAO
 
 风味定义在 `data/flavors/<名字>/flavor.json`：`theme`（默认主题）/ `startupText` /
 `welcome` 等；主题配色本身是公共数据 `data/theme.json`，选择页顺序默认也按
@@ -146,8 +147,8 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
     npm run gradlew -- -debug     # 调试版 APK
 
     # 等价于
-    node ./cabuildtools/main.js shellBuildRelease
-    node ./cabuildtools/main.js shellBuildDebug
+    node ./cabuildtools/main.mjs shellBuildRelease
+    node ./cabuildtools/main.mjs shellBuildDebug
 
 正式版产物在 `build/dist/`，调试版在 `build/outputs/debugApk/app-debug.apk`。
 壳子的 Gradle 任务由 `shellGradle` 内部调用，不需要手动执行。
@@ -161,8 +162,8 @@ App 工程参见 [命令助手Android版](https://gitee.com/projectxero/cadroid)
     npm test
 
     # 等价于
-    node ./cabuildtools/tests/async-transform.test.js
-    node ./cabuildtools/tests/loader-ast.test.js
+    node ./cabuildtools/tests/async-transform.test.mjs
+    node ./cabuildtools/tests/loader-ast.test.mjs
 
 ### 检查 / 更新依赖
 
@@ -196,7 +197,7 @@ yarn / pnpm / CI 都可移植。本仓库的 deps.js 额外支持省略 `--`（�
 [`docs/data-notes/builtinLibs.md`](docs/data-notes/builtinLibs.md)。
 
 `caclib/` 不参与 App 构建——它是作者 **在线拓展包源**（clib）的工程仓库，通过
-`git subtree` 同步进来，由 `cabuildtools/lib/clibspawn.js` 打包成 SIGNLIB01 发布到源站
+`git subtree` 同步进来，由 `cabuildtools/lib/clibspawn.mjs` 打包成 SIGNLIB01 发布到源站
 （对应 `pages/clib/` 的那套结构）。两者不要混：
 把 caclib 的库内嵌成内置包会导致同一份内容在列表里出现两次。
 
@@ -205,7 +206,7 @@ yarn / pnpm / CI 都可移植。本仓库的 deps.js 额外支持省略 `--`（�
 
 ## 打包与解包 .lib
 
-`cabuildtools/cli/libtool.js` 提供三条命令，js / json 与 .lib 之间互转：
+`cabuildtools/cli/libtool.mjs` 提供三条命令，js / json 与 .lib 之间互转：
 
 ```bash
 # json 或 js → .lib（默认 LIBRARY 锁定包）
@@ -291,10 +292,10 @@ npm run unpack -- build/libwork/pack/foo.lib -o build/libwork/unpack
 > 那行小字是**包作者自己写的**说明，不是 App 生成的结论，别把它当成安全背书。
 
     # 分发格式
-    node ./cabuildtools/js2signlib.js <源码.js> <私钥.pem> <输出.lib>
+    node ./cabuildtools/lib/js2signlib.mjs <源码.js> <私钥.pem> <输出.lib>
 
     # 本地格式（源站 uuid + App 公钥，公钥在 cadroid 的 Secret.HOTFIX_PUBLIC_KEY）
-    node ./cabuildtools/cli/js2localib.js <输入.lib> <源站uuid> <输出.lib> [app公钥]
+    node ./cabuildtools/cli/js2localib.mjs <输入.lib> <源站uuid> <输出.lib> [app公钥]
 
 签名私钥必须是 **RSA 2048 位**（App 里验签段长度写死 256 字节）。`LIBSIGN01` 旁边的 `.hash`
 是 `SHA1(appVerifyKey || SHA1(payload))`，用 App 内置的公钥算——所以只有 App（或掌握其公钥的

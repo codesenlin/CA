@@ -1,6 +1,6 @@
 # Bootstrap
 
-`modules/main.js` 是宿主入口，构建期由 `cabuildtools` 的 Loader AST 按顺序展开：
+`modules/main.cjs` 是宿主入口，构建期由 `cabuildtools` 的 Loader AST 按顺序展开：
 
 | 文件 | 作用 |
 |---|---|

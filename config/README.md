@@ -115,7 +115,7 @@
 | `sftp` | 通过 SFTP 上传到 `remoteRoot` | `remoteRoot`、`sshConfig`（`ssh2.Client.connect` 的参数） |
 
 多套发布目标：在 `preparePublish` 里支持「名字 → 配置文件名」的映射，
-运行时 `node ./cabuildtools/main.js publish <名字>` 选择，例如另建
+运行时 `node ./cabuildtools/main.mjs publish <名字>` 选择，例如另建
 `config/publish.sftp.json`：
 
 ```json

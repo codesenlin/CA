@@ -15,7 +15,7 @@ Plugins.inject(function (host) {
 			}
 		});
 	}
-	var Verify = Loader.fromFile("./verify.js");
+	var Verify = Loader.fromFile("./verify.cjs");
 	var contentView = {}, popup, ans, curq;
 	function initView() {
 		contentView.main = L.ScrollView({
