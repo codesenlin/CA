@@ -10,7 +10,7 @@ CA 核心的 Kotlin/JS 迁移工程。
 - webpack production bundle，单文件 UMD，在 Rhino 1.9.2 中验证
 - 全部业务模块、CA 主对象和 JSONLanguageService 已迁移
 - 旧 JS 模块与 JSON vendor 已删除，仓库内只剩构建工具 JS
-- `modules/main.js` 拆成 `modules/bootstrap/`，Kotlin bundle 由 `Loader.fromFile` 在构建期内联
+- `modules/main.cjs` 拆成 `modules/bootstrap/`，Kotlin bundle 由 `Loader.fromFile` 在构建期内联
 - `CaKotlinPending.installAll()` 统一维护模块安装顺序
 - cadroid 已注入 `JavaBridge`
 - cabuildtools 的 assemble 任务会自动先构建 Kotlin bundle
@@ -44,7 +44,7 @@ src/json/       JSONLanguageService
 产物：
 
 ```text
-build/ca-kotlin/kotlin-webpack/js/productionExecutable/ca-kotlin.js
+build/ca-kotlin/kotlin-webpack/js/productionExecutable/ca-kotlin.cjs
 ```
 
 也可以从 CA 根目录运行：
@@ -56,8 +56,8 @@ npm run kotlin:js
 会把产物复制到：
 
 ```text
-build/outputs/kotlin-js/ca-kotlin.js
-build/outputs/kotlin-js/Internal.kotlin.js
+build/outputs/kotlin-js/ca-kotlin.cjs
+build/outputs/kotlin-js/Internal.kotlin.cjs
 ```
 
 ## 导出约定
