@@ -38,8 +38,8 @@ private val wssNewConcurrentHashMapJs: dynamic = js(
 private val wssNewCopyOnWriteArrayListJs: dynamic = js(
     "function () { return new java.util.concurrent.CopyOnWriteArrayList(); }"
 )
-private val wssCreateWebSocketHelperJs: dynamic = js(
-    "function (p, l) { return ScriptInterface.createWebSocketHelper(p, l); }"
+private val wssCreatePewsBridgeJs: dynamic = js(
+    "function (p, l) { return ScriptInterface.createPewsWebSocketBridge(p, l); }"
 )
 private val wssNewTextViewJs: dynamic = js("function (c) { return new G.TextView(c); }")
 private val wssNewAbsListViewParamsJs: dynamic = js(
@@ -67,23 +67,23 @@ private fun wssToInt(v: dynamic): Int = wssToIntJs(v)
 
 private fun wssIsAvailable(): Boolean = wssApi.server != null && wssTruthy(wssApi.running)
 
-private fun wssIsConnected(): Boolean = wssApi.conn != null && wssTruthy(wssApi.conn.isOpen())
+private fun wssIsConnected(): Boolean = wssTruthy(wssApi.server) && wssTruthy(wssApi.server.isConnected())
 
 private fun wssUnload() {
     if (wssIsAvailable()) wssStop()
 }
 
-private fun wssOnError(self: dynamic, err: dynamic) {
+private fun wssOnError(message: dynamic, bindFailure: Boolean) {
     try {
-        if (wssIsBindException(err) && wssApi.port < wssApi.endPort) {
-            js("Log").e(err)
+        if (bindFailure && wssApi.port < wssApi.endPort) {
+            js("Log").e(message)
             js("Common").toast("在端口" + wssApi.port + "上建立服务器失败，正在尝试其他端口")
             wssApi.port = wssApi.port + 1
             wssApi.start()
         } else {
-            js("Common").toast("WebSocket服务器出错，连接已终止\n" + err)
-            js("erp")(err, true)
-            if (wssTruthy(self.server)) wssStop()
+            js("Common").toast("WebSocket服务器出错，连接已终止\n" + message)
+            js("erp")(message, true)
+            if (wssTruthy(wssApi.server)) wssStop()
         }
     } catch (e: dynamic) {
         js("erp")(e)
@@ -92,50 +92,63 @@ private fun wssOnError(self: dynamic, err: dynamic) {
 
 private fun wssBuild(port: dynamic) {
     val handler = js("({})")
-    handler.onOpen = { conn: dynamic, handshake: dynamic ->
-        try {
-            wssApi.onOpen(conn, handshake)
-        } catch (e: dynamic) {
-            js("erp")(e)
-        }
-        js("undefined")
-    }
-    handler.onClose = { conn: dynamic, code: dynamic, reason: dynamic, remote: dynamic ->
-        try {
-            wssApi.onClose(conn, code, reason, remote)
-        } catch (e: dynamic) {
-            js("erp")(e)
-        }
-        js("undefined")
-    }
-    handler.onMessage = { conn: dynamic, message: dynamic ->
-        try {
-            wssApi.onMessage(conn, message)
-        } catch (e: dynamic) {
-            js("erp")(e)
-        }
-        js("undefined")
-    }
-    handler.onError = wssThis2Js { self: dynamic, _conn: dynamic, err: dynamic ->
-        wssOnError(self, err)
-        js("undefined")
-    }
     handler.onStart = {
         try {
-            wssApi.onStart()
+            wssOnStart()
         } catch (e: dynamic) {
             js("erp")(e)
         }
         js("undefined")
     }
-    wssApi.server = wssCreateWebSocketHelperJs(port, handler)
+    handler.onOpen = { address: dynamic ->
+        try {
+            wssOnOpen(address)
+        } catch (e: dynamic) {
+            js("erp")(e)
+        }
+        js("undefined")
+    }
+    handler.onClose = {
+        try {
+            wssOnClose()
+        } catch (e: dynamic) {
+            js("erp")(e)
+        }
+        js("undefined")
+    }
+    handler.onEvent = { json: dynamic ->
+        try {
+            wssOnEvent(json)
+        } catch (e: dynamic) {
+            js("erp")(e)
+        }
+        js("undefined")
+    }
+    handler.onResponse = { id: dynamic, json: dynamic ->
+        try {
+            wssOnResponse(wssToInt(id), json)
+        } catch (e: dynamic) {
+            js("erp")(e)
+        }
+        js("undefined")
+    }
+    handler.onError = { message: dynamic, bindFailure: dynamic ->
+        try {
+            wssOnError(message, wssTruthy(bindFailure))
+        } catch (e: dynamic) {
+            js("erp")(e)
+        }
+        js("undefined")
+    }
+    wssApi.server = wssCreatePewsBridgeJs(port, handler)
     wssApi.server.setConnectionLostTimeout(-1)
     wssApi.server.setTcpNoDelay(true)
 }
 
 private fun wssStart(silent: dynamic) {
     if (!wssTruthy(wssApi.port)) wssApi.port = wssApi.startPort
-    wssApi.conn = null
+    wssApi.connected = false
+    wssApi.remoteAddress = null
     wssApi.silent = silent
     wssApi.build(wssApi.port)
     wssApi.server.start()
@@ -150,6 +163,7 @@ private fun wssStop() {
     }
     wssApi.server = null
     wssApi.running = false
+    wssApi.connected = false
     js("AndroidBridge").notifySettings()
 }
 
@@ -159,55 +173,33 @@ private fun wssOnStart() {
     js("AndroidBridge").notifySettings()
 }
 
-private fun wssOnOpen(conn: dynamic, handshake: dynamic) {
-    if (wssApi.conn != null) {
-        conn.close(1003, "A client has been binded to CA.")
-        js("Common").toast(
-            "WebSocket服务器已拒绝设备" + conn.getRemoteSocketAddress() +
-                "连接，因为本设备已经和其他设备连接"
-        )
-    } else {
-        wssApi.conn = conn
-        wssApi.events.clear()
-        wssApi.responsers.clear()
-        js("Common").toast("设备" + conn.getRemoteSocketAddress() + "已连接")
-        js("AndroidBridge").notifySettings()
-        js("Plugins").emit("WSServer", "connectionOpen")
-        js("MCAdapter").initWSServer()
-    }
+private fun wssOnOpen(address: dynamic) {
+    wssApi.connected = true
+    wssApi.remoteAddress = address
+    wssApi.events.clear()
+    wssApi.responsers.clear()
+    js("Common").toast("设备" + address + "已连接")
+    js("AndroidBridge").notifySettings()
+    js("Plugins").emit("WSServer", "connectionOpen")
+    js("MCAdapter").initWSServer()
 }
 
-private fun wssOnClose(conn: dynamic, code: dynamic, reason: dynamic, remote: dynamic) {
-    wssApi.conn = null
+private fun wssOnClose() {
+    wssApi.connected = false
+    wssApi.remoteAddress = null
     js("Common").toast("设备已断开")
     js("AndroidBridge").notifySettings()
     if (wssTruthy(wssApi.showConsole.onClose)) wssApi.showConsole.onClose()
     js("Plugins").emit("WSServer", "connectionClose")
 }
 
-private fun wssOnMessage(conn: dynamic, message: dynamic) {
-    try {
-        val json = wssJsonParseJs(message)
-        val header = json.header
-        val purpose = header.messagePurpose
-        if (purpose == "event") {
-            wssOnEvent(json)
-        } else if (purpose == "commandResponse") {
-            wssOnResponse(json)
-        } else if (purpose == "error") {
-            wssOnErrorJson(json)
-        }
-    } catch (e: dynamic) {
-        js("erp")(e, true, message)
-    }
-}
-
 private fun wssOnEvent(json: dynamic) {
-    val listeners = wssApi.events.get(json.body.eventName)
+    val parsed = wssJsonParseJs(json)
+    val listeners = wssApi.events.get(parsed.body.eventName)
     if (listeners != null) {
         wssForEachIteratorJs(listeners) { e: dynamic ->
             try {
-                e(json.body, json)
+                e(parsed.body, parsed)
             } catch (err: dynamic) {
                 js("erp")(err, true)
             }
@@ -216,19 +208,15 @@ private fun wssOnEvent(json: dynamic) {
     }
 }
 
-private fun wssOnResponse(json: dynamic) {
-    val callback = wssApi.responsers.remove(json.header.requestId)
+private fun wssOnResponse(callbackId: Int, json: dynamic) {
+    val callback = wssApi.responsers.remove(callbackId)
     if (callback != null) {
         try {
-            callback(json.body, json)
+            callback.body(wssJsonParseJs(json))
         } catch (e: dynamic) {
             js("erp")(e, true)
         }
     }
-}
-
-private fun wssOnErrorJson(json: dynamic) {
-    js("Common").toast("出现错误！错误代码：" + json.body.statusCode + "\n" + json.body.statusMessage)
 }
 
 private fun wssHowToUse() {
@@ -260,66 +248,41 @@ private fun wssGetConnectCommands(): dynamic {
     })
 }
 
-private fun wssUuid(): dynamic {
-    return wssString(js("java.util.UUID").randomUUID().toString())
-}
-
-private fun wssBuildHeader(purpose: dynamic): dynamic {
-    val header = js("({})")
-    header.version = 1
-    header.requestId = wssApi.uuid()
-    header.messagePurpose = purpose
-    header.messageType = "commandRequest"
-    return header
-}
-
 private fun wssSubscribeEvent(name: dynamic, callback: dynamic): Boolean {
-    if (!wssTruthy(wssApi.conn) || !wssTruthy(wssApi.conn.isOpen())) return false
+    if (!wssIsConnected()) return false
+    if (!wssTruthy(wssApi.server.subscribeEvent(name))) return false
     var listeners = wssApi.events.get(name)
     if (listeners == null) {
         listeners = wssNewCopyOnWriteArrayListJs()
         wssApi.events.put(name, listeners)
     }
     listeners.add(callback)
-    val msg = js("({})")
-    msg.header = wssApi.buildHeader("subscribe")
-    val body = js("({})")
-    body.eventName = name
-    msg.body = body
-    wssApi.conn.send(wssJsonStringifyJs(msg))
     return true
 }
 
 private fun wssUnsubscribeEvent(name: dynamic, callback: dynamic): Boolean {
-    if (!wssTruthy(wssApi.conn) || !wssTruthy(wssApi.conn.isOpen())) return false
+    if (!wssIsConnected()) return false
     val listeners = wssApi.events.get(name)
-    if (listeners != null) {
-        listeners.remove(callback)
-        if (wssTruthy(listeners.isEmpty())) {
-            wssApi.events.remove(name, listeners)
-            val msg = js("({})")
-            msg.header = wssApi.buildHeader("unsubscribe")
-            val body = js("({})")
-            body.eventName = name
-            msg.body = body
-            wssApi.conn.send(wssJsonStringifyJs(msg))
+    if (listeners != null && listeners.remove(callback)) {
+        if (listeners.size() == 0) {
+            wssApi.events.remove(name)
+            wssApi.server.unsubscribeEvent(name)
         }
+        return true
     }
-    return true
+    return false
 }
 
 private fun wssSendCommand(cmd: dynamic, callback: dynamic): dynamic {
-    if (!wssTruthy(wssApi.conn) || !wssTruthy(wssApi.conn.isOpen())) return null
-    val json = js("({})")
-    json.header = wssApi.buildHeader("commandRequest")
-    val body = js("({})")
-    body.version = 1
-    body.commandLine = cmd
-    body.origin = "player"
-    json.body = body
-    wssApi.responsers.put(json.header.requestId, callback)
-    wssApi.conn.send(wssJsonStringifyJs(json))
-    return json.header.requestId
+    if (!wssIsConnected()) return null
+    val id = wssApi.nextCallbackId
+    wssApi.nextCallbackId = id + 1
+    wssApi.responsers.put(id, callback)
+    if (!wssTruthy(wssApi.server.sendCommand(cmd, id))) {
+        wssApi.responsers.remove(id)
+        return null
+    }
+    return id
 }
 
 private fun wssCls() {
@@ -509,7 +472,9 @@ private fun wssShowConsole() {
 fun installWSServer() {
     wssApi.startPort = 19134
     wssApi.endPort = 19165
-    wssApi.conn = null
+    wssApi.connected = false
+    wssApi.remoteAddress = null
+    wssApi.nextCallbackId = 1
     wssApi.events = wssNewConcurrentHashMapJs(8, 0.75, 4)
     wssApi.responsers = wssNewConcurrentHashMapJs(32, 0.75, 16)
 
@@ -535,28 +500,24 @@ fun installWSServer() {
         wssOnStart()
         js("undefined")
     }
-    wssApi.onOpen = { conn: dynamic, handshake: dynamic ->
-        wssOnOpen(conn, handshake)
+    wssApi.onOpen = { address: dynamic ->
+        wssOnOpen(address)
         js("undefined")
     }
-    wssApi.onClose = { conn: dynamic, code: dynamic, reason: dynamic, remote: dynamic ->
-        wssOnClose(conn, code, reason, remote)
-        js("undefined")
-    }
-    wssApi.onMessage = { conn: dynamic, message: dynamic ->
-        wssOnMessage(conn, message)
+    wssApi.onClose = {
+        wssOnClose()
         js("undefined")
     }
     wssApi.onEvent = { json: dynamic ->
         wssOnEvent(json)
         js("undefined")
     }
-    wssApi.onResponse = { json: dynamic ->
-        wssOnResponse(json)
+    wssApi.onResponse = { id: dynamic, json: dynamic ->
+        wssOnResponse(wssToInt(id), json)
         js("undefined")
     }
-    wssApi.onError = { json: dynamic ->
-        wssOnErrorJson(json)
+    wssApi.onError = { message: dynamic, bindFailure: dynamic ->
+        wssOnError(message, wssTruthy(bindFailure))
         js("undefined")
     }
     wssApi.howToUse = {
@@ -564,8 +525,6 @@ fun installWSServer() {
         js("undefined")
     }
     wssApi.getConnectCommands = { wssGetConnectCommands() }
-    wssApi.uuid = { wssUuid() }
-    wssApi.buildHeader = { purpose: dynamic -> wssBuildHeader(purpose) }
     wssApi.subscribeEvent = { name: dynamic, callback: dynamic ->
         wssSubscribeEvent(name, callback)
     }
