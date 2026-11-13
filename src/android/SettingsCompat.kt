@@ -169,7 +169,7 @@ private fun show360(): Boolean {
 }
 
 fun installSettingsCompat() {
-    settingsApi.SYSVER = js("android.os.Build.VERSION.SDK_INT")
+    settingsApi.SYSVER = js("ScriptInterface").getAndroidSdk()
     settingsApi.ensureCanFloat = { silent: dynamic ->
         var ok = canDrawOverlays() || setMode(js("ctx"), 24, true)
         if (!ok && !silent) {

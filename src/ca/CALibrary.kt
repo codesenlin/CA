@@ -2321,7 +2321,7 @@ private fun caCustomIcon(api: dynamic, path: dynamic, size: dynamic, preview: dy
     val frm = caNewFrameLayout()
     val view = caNewImageView()
     var drawable: dynamic = js("null")
-    if (js("android.os.Build.VERSION.SDK_INT") >= 28) {
+    if (js("ScriptInterface").isAndroidSdkAtLeast(28)) {
         try {
             drawable = js("G.ImageDecoder").decodeDrawable(
                 js("G.ImageDecoder").createSource(caNewFile1(path)),
@@ -2649,13 +2649,9 @@ private fun caDonateGetImage(self: dynamic, api: dynamic, width: dynamic, o: dyn
     )
     val drawable: dynamic
     if (caLooseEq(js("MapScript").host, "Android")) {
-        if (js("android.os.Build.VERSION.SDK_INT") >= 21) {
-            drawable = caCtx().getResources().getDrawable(
-                js("com.xero.ca.R.drawable.icon"), caCtx().getTheme()
+        drawable = caCtx().getResources().getDrawable(
+            js("com.xero.ca.R.drawable.icon"), caCtx().getTheme()
             )
-        } else {
-            drawable = caCtx().getResources().getDrawable(js("com.xero.ca.R.drawable.icon"))
-        }
     } else {
         drawable = caNewColorDrawable(js("G.Color.BLACK"))
     }

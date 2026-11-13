@@ -65,7 +65,7 @@ private fun pushString(v: dynamic): dynamic = pushStringJs(v)
 private fun pushLength(v: dynamic): Int = pushLengthJs(v)
 private fun pushParseInt(v: dynamic): dynamic = pushParseIntJs(v)
 private fun pushIsNaN(v: dynamic): Boolean = pushIsNaNNs(v)
-private fun pushSdkInt(): Int = js("android.os.Build.VERSION.SDK_INT")
+private fun pushSdkInt(): Int = js("ScriptInterface").getAndroidSdk()
 
 private fun pushOnCreate() {
     if (js("MapScript").host != "Android") return

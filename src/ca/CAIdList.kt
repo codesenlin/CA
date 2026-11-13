@@ -410,13 +410,9 @@ private fun caIdGetDonateImage(api: dynamic, self: dynamic, width: dynamic, o: d
     )
     var drawable: dynamic
     if (caIdLooseEq(MapScript.host, "Android")) {
-        if (android.os.Build.VERSION.SDK_INT >= 21) {
-            drawable = js("ctx").getResources().getDrawable(
+        drawable = js("ctx").getResources().getDrawable(
                 com.xero.ca.R.drawable.icon, js("ctx").getTheme()
             )
-        } else {
-            drawable = js("ctx").getResources().getDrawable(com.xero.ca.R.drawable.icon)
-        }
     } else {
         drawable = js("new G.ColorDrawable(G.Color.BLACK)")
     }

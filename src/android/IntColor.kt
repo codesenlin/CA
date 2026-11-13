@@ -60,7 +60,7 @@ fun installIntColor() {
         sweep.buildFromEnds = JavaReflect.constructor("android.graphics.SweepGradient", argTypes("float", "float", "int", "int"))
         intColorApi.SweepGradient = sweep
 
-        val sdk = js("android.os.Build.VERSION.SDK_INT")
+        val sdk = js("ScriptInterface").getAndroidSdk()
         if (sdk >= 26) {
             color.alphaLong = JavaReflect.staticMethod("android.graphics.Color", "alpha", argTypes("long"))
             color.argbFloat = JavaReflect.staticMethod("android.graphics.Color", "argb", argTypes("float", "float", "float", "float"))

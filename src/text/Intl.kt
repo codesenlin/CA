@@ -79,7 +79,7 @@ private fun intlNewArray(n: dynamic): dynamic = intlNewArrayJs(n)
 private fun intlIsPrototypeOf(ns: dynamic, v: dynamic): Boolean = intlIsPrototypeOfJs(ns, v)
 
 private fun intlGetLocales(): dynamic {
-    if (js("android.os.Build.VERSION.SDK_INT") >= 24) {
+    if (js("ScriptInterface").isAndroidSdkAtLeast(24)) {
         val a = js("ctx").getResources().getConfiguration().getLocales()
         val r = intlNewArray(a.size())
         val n = intlLength(r)

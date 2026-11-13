@@ -33,7 +33,7 @@ private val ppIsNaNJ: dynamic = js("function (v) { return isNaN(v); }")
 private val ppBooleanJs: dynamic = js("function (v) { return Boolean(v); }")
 private val ppDpJs: dynamic = js("function (n) { return n * G.dp; }")
 private fun ppDp(n: Int): dynamic = ppDpJs(n)
-private val ppSdkJs: dynamic = js("function () { return android.os.Build.VERSION.SDK_INT; }")
+private val ppSdkJs: dynamic = js("function () { return ScriptInterface.getAndroidSdk(); }")
 private val ppThisJs: dynamic = js("function (f) { return function () { return f(this, arguments); }; }")
 private val ppMakeCtorJs: dynamic = js(
     "function (init) { return function (mainView, name, modal) { init(this, mainView, name, modal); }; }"

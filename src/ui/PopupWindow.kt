@@ -64,7 +64,7 @@ private val pwIsActivityJs: dynamic = js(
 )
 private val pwDpJs: dynamic = js("function (n) { return n * G.dp; }")
 private fun pwDp(n: Int): dynamic = pwDpJs(n)
-private val pwSdkJs: dynamic = js("function () { return android.os.Build.VERSION.SDK_INT; }")
+private val pwSdkJs: dynamic = js("function () { return ScriptInterface.getAndroidSdk(); }")
 private val pwGravityStartTopJs: dynamic = js(
     "function () { return G.Gravity.START | G.Gravity.TOP; }"
 )
