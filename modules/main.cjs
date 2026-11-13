@@ -25,7 +25,7 @@ if (typeof globalThis === "undefined") {
 
 // 宿主入口：按顺序展开 bootstrap 段，最后执行模块加载与生命周期。
 // 这些 Loader.fromFile 由 cabuildtools 的 Loader AST 在构建期展开；
-// 生成后的 assets/script.js 里就是完整脚本，不再依赖运行时 Loader。
+// 生成后的 assets/script.cjs 里就是完整脚本，不再依赖运行时 Loader。
 Loader.fromFile("./bootstrap/hooks.cjs")
 Loader.fromFile("./bootstrap/mapscript.cjs")
 Loader.fromFile("./bootstrap/context.cjs")
