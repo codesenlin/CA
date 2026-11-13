@@ -4,9 +4,6 @@
 # ===== 构建产物 =====
 /build/
 
-# Kotlin/JS 生成的 Yarn 锁；开发期依赖不参与 GitHub 依赖图
-/kotlin-js-store/
-
 # ===== Kotlin/Gradle =====
 /.gradle/
 /.kotlin/
