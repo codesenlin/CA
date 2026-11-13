@@ -590,7 +590,7 @@ private fun cApplyStyle(self: dynamic, v: dynamic, style: dynamic, size: dynamic
 
 private fun cApplyPopup(popup: dynamic): dynamic {
     if (cTruthy(js("G.supportFloat"))) {
-        if (js("ScriptInterface").isAndroidSdkAtLeast(26)) {
+        if (js("ScriptInterface").isOverlayWindowTypeSupported()) {
             popup.setWindowLayoutType(js("G.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY"))
         } else {
             popup.setWindowLayoutType(js("G.WindowManager.LayoutParams.TYPE_PHONE"))

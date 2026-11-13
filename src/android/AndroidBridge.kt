@@ -810,7 +810,7 @@ private fun abShowSettings(title: dynamic) {
         val tile = abEmptyObject()
         tile.name = "快捷设置开关"
         tile.type = "custom"
-        tile.hidden = { !js("ScriptInterface").isAndroidSdkAtLeast(24) }
+        tile.hidden = { !js("ScriptInterface").isTileServiceSupported() }
         tile.get = {
             val tileService = abApi.getTileService()
             tileService.service.name
@@ -1177,9 +1177,9 @@ private fun abCreatePendingIntent(type: dynamic, intent: dynamic, flagList0: dyn
     var requestCode = requestCode0
     if (!abIsArray(flagList)) flagList = abEmptyArray()
     if (abIsNaN(requestCode)) requestCode = 0
-    if (js("ScriptInterface").isAndroidSdkAtLeast(23)) {
+    if (js("ScriptInterface").isPendingIntentFlagsSupported()) {
         if (flagList.includes("mutable")) {
-            if (js("ScriptInterface").isAndroidSdkAtLeast(31)) {
+            if (js("ScriptInterface").isMutablePendingIntentSupported()) {
                 flags = abOr(flags, js("android.app.PendingIntent").FLAG_MUTABLE)
             }
         } else {
@@ -1197,7 +1197,7 @@ private fun abCreatePendingIntent(type: dynamic, intent: dynamic, flagList0: dyn
         flags = abOr(flags, js("android.app.PendingIntent").FLAG_ONE_SHOT)
     }
     if (type == "service" || type == "foregroundService") {
-        if (js("ScriptInterface").isAndroidSdkAtLeast(27) && type == "foregroundService") {
+        if (js("ScriptInterface").isForegroundServicePendingIntentSupported() && type == "foregroundService") {
             return js("android.app.PendingIntent").getForegroundService(js("ctx"), requestCode, intent, flags)
         }
         return js("android.app.PendingIntent").getService(js("ctx"), requestCode, intent, flags)
@@ -1342,7 +1342,7 @@ private fun abViewUri(uri: dynamic): dynamic {
 }
 
 private fun abCreateShortcut(intent: dynamic, name: dynamic, icon: dynamic) {
-    if (js("ScriptInterface").isAndroidSdkAtLeast(26)) {
+    if (js("ScriptInterface").isShortcutSupported()) {
         abApi.doCreateShortcut(js("ctx"), intent, name, icon)
     } else {
         val i = abNewIntent1Js("com.android.launcher.action.INSTALL_SHORTCUT")

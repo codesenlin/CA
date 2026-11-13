@@ -111,7 +111,7 @@ private fun isegParseAlign(v: dynamic): dynamic {
 }
 
 private fun isegParseHtml(v: dynamic): dynamic {
-    if (js("ScriptInterface").isAndroidSdkAtLeast(24)) return isegNewHtmlJs(v)
+    if (js("ScriptInterface").isHtmlSegmentSupported()) return isegNewHtmlJs(v)
     return isegNewHtmlLegacyJs(v)
 }
 

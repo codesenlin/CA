@@ -110,12 +110,12 @@ private fun esInitialize() {
 }
 
 private fun esGetStorageAccessLevel(): dynamic {
-    if (js("ScriptInterface").isAndroidSdkAtLeast(30)) { // Android 11 (R)
+    if (js("ScriptInterface").isManageExternalStorageSupported()) { // Android 11 (R)
         if (esTruthy(js("android.os.Environment").isExternalStorageManager())) {
             return "storage"
         }
     }
-    if (js("ScriptInterface").isAndroidSdkAtLeast(29)) { // Android 10 (Q)
+    if (js("ScriptInterface").isScopedStorageSupported()) { // Android 10 (Q)
         if (esTruthy(js("android.os.Environment").isExternalStorageLegacy())) {
             val canReadStorage = js("AndroidBridge").requestPermissions(
                 js("['android.permission.READ_EXTERNAL_STORAGE']"), "", null, 3
@@ -134,7 +134,7 @@ private fun esGetStorageAccessLevel(): dynamic {
 }
 
 private fun esGetExternalStorageRoot(): dynamic {
-    if (js("ScriptInterface").isAndroidSdkAtLeast(30)) {
+    if (js("ScriptInterface").isManageExternalStorageSupported()) {
         val storageManager = js("ctx").getSystemService(js("ctx").STORAGE_SERVICE)
         val primaryVolume = storageManager.getPrimaryStorageVolume()
         return primaryVolume.getDirectory()
@@ -190,7 +190,7 @@ private fun esReleaseEmptyDirectory(file: dynamic, root: dynamic) {
 
 private fun esAfterEnsureConfirm(callback: dynamic, id: dynamic) {
     if (id != 0) return
-    if (js("ScriptInterface").isAndroidSdkAtLeast(30)) {
+    if (js("ScriptInterface").isManageExternalStorageSupported()) {
         esApi.requestManageStoragePermission(callback)
     } else {
         esApi.requestStoragePermission(callback)
@@ -570,7 +570,7 @@ private fun esGetParentDirectory(uri: dynamic): dynamic {
             return esApi.toUri(parentFile)
         }
     } else if (esTruthy(js("android.provider.DocumentsContract").isDocumentUri(js("ctx"), uri))) {
-        if (js("ScriptInterface").isAndroidSdkAtLeast(26)) {
+        if (js("ScriptInterface").isDocumentPathSupported()) {
             try {
                 val resolver = js("ctx").getContentResolver()
                 val path = js("android.provider.DocumentsContract").findDocumentPath(resolver, uri)
@@ -984,7 +984,7 @@ private fun esRequestAdditionalPermissions(type: dynamic, callback: dynamic) {
         })
     } else if (type == "androidData" || type == "androidObb") {
         var requestDirectory: dynamic = if (type == "androidData") "Android/data" else "Android/obb"
-        if (js("ScriptInterface").isAndroidSdkAtLeast(33)) { // Android 13 (Tiramisu)
+        if (js("ScriptInterface").isStorageByPackageSupported()) { // Android 13 (Tiramisu)
             esApi.listAppExternalPath(requestDirectory, { pkg: dynamic ->
                 requestDirectory = requestDirectory + "/" + pkg
                 esApi.requestDocumentTreeAccess(requestDirectory, callback)

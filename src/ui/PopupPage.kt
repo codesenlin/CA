@@ -33,7 +33,7 @@ private val ppIsNaNJ: dynamic = js("function (v) { return isNaN(v); }")
 private val ppBooleanJs: dynamic = js("function (v) { return Boolean(v); }")
 private val ppDpJs: dynamic = js("function (n) { return n * G.dp; }")
 private fun ppDp(n: Int): dynamic = ppDpJs(n)
-private val ppSdkJs: dynamic = js("function () { return ScriptInterface.getAndroidSdk(); }")
+private val ppSdkJs: dynamic = js("function () { return ScriptInterface.isOverlayWindowTypeSupported(); }")
 private val ppThisJs: dynamic = js("function (f) { return function () { return f(this, arguments); }; }")
 private val ppMakeCtorJs: dynamic = js(
     "function (init) { return function (mainView, name, modal) { init(this, mainView, name, modal); }; }"
@@ -602,7 +602,7 @@ private fun ppBuildLayoutParams(view: dynamic, x: dynamic, y: dynamic, width: dy
         ppOrFlags(p.FLAG_NOT_TOUCH_MODAL, p.FLAG_WATCH_OUTSIDE_TOUCH)
     )
     p.type = if (ppTruthyJs(js("G.supportFloat"))) {
-        if (ppSdkJs() >= 26) {
+        if (ppSdkJs()) {
             js("G.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY")
         } else {
             js("G.WindowManager.LayoutParams.TYPE_PHONE")
@@ -1035,7 +1035,7 @@ private fun ppOtherInit(self: dynamic): dynamic {
     self.popup.setSoftInputMode(js("G.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE"))
     self.popup.setWindowLayoutType(
         if (ppTruthyJs(js("G.supportFloat"))) {
-            if (ppSdkJs() >= 26) {
+            if (ppSdkJs()) {
                 js("G.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY")
             } else {
                 js("G.WindowManager.LayoutParams.TYPE_PHONE")

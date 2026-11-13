@@ -60,8 +60,7 @@ fun installIntColor() {
         sweep.buildFromEnds = JavaReflect.constructor("android.graphics.SweepGradient", argTypes("float", "float", "int", "int"))
         intColorApi.SweepGradient = sweep
 
-        val sdk = js("ScriptInterface").getAndroidSdk()
-        if (sdk >= 26) {
+        if (js("ScriptInterface").isExtendedColorApiSupported()) {
             color.alphaLong = JavaReflect.staticMethod("android.graphics.Color", "alpha", argTypes("long"))
             color.argbFloat = JavaReflect.staticMethod("android.graphics.Color", "argb", argTypes("float", "float", "float", "float"))
             color.blueLong = JavaReflect.staticMethod("android.graphics.Color", "blue", argTypes("long"))
@@ -71,7 +70,7 @@ fun installIntColor() {
             color.valueOf = JavaReflect.staticMethod("android.graphics.Color", "valueOf", argTypes("int"))
             color.valueOfLong = JavaReflect.staticMethod("android.graphics.Color", "valueOf", argTypes("long"))
         }
-        if (sdk >= 29) {
+        if (js("ScriptInterface").isColorLongApiSupported()) {
             canvas.drawColorLong = JavaReflect.method("android.graphics.Canvas", "drawColor", argTypes("long"))
             canvas.drawColorWithBlendMode = JavaReflect.method("android.graphics.Canvas", "drawColor", argTypes("int", "android.graphics.BlendMode"))
             canvas.drawColorWithBlendModeLong = JavaReflect.method("android.graphics.Canvas", "drawColor", argTypes("long", "android.graphics.BlendMode"))

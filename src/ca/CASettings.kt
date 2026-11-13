@@ -876,7 +876,6 @@ private fun casBuildAppearance(api: dynamic, self: dynamic): dynamic {
     val bgImage = casObj()
     bgImage.name = "背景图片"
     bgImage.type = "custom"
-    bgImage.hidden = { -> casLt(js("android.os.Build.VERSION").SDK_INT, 16) }
     bgImage.get = { -> "点击选择" }
     bgImage.onclick = { ->
         api.showManageBgImage({ ->
@@ -1847,9 +1846,6 @@ private fun casPerformPaste(api: dynamic, cmd: dynamic, warnSvcNotRun: dynamic) 
                     } else {
                         return
                     }
-                }
-                if (casLt(js("android.os.Build.VERSION").SDK_INT, 18)) {
-                    casThrow("系统版本过低！请升级系统至Android 4.3及以上")
                 }
                 var node = svc.getRootInActiveWindow()
                 if (!casTruthy(node)) casThrow("无法获取窗口内容")

@@ -2321,7 +2321,7 @@ private fun caCustomIcon(api: dynamic, path: dynamic, size: dynamic, preview: dy
     val frm = caNewFrameLayout()
     val view = caNewImageView()
     var drawable: dynamic = js("null")
-    if (js("ScriptInterface").isAndroidSdkAtLeast(28)) {
+    if (js("ScriptInterface").isImageDecoderSupported()) {
         try {
             drawable = js("G.ImageDecoder").decodeDrawable(
                 js("G.ImageDecoder").createSource(caNewFile1(path)),
