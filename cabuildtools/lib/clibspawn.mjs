@@ -51,7 +51,6 @@ function main() {
 	}).filter(e => e != null);
 	writeIndex(index, config);
 	writeMap(map, config);
-	writeAuthorities(config);
 	writeVerifyKey(config);
 	writeInfo(config);
 	fs.writeFileSync("./index.lock.json", JSON.stringify(lockFile));
@@ -170,21 +169,6 @@ function writeMap(map, config) {
 	}));
 }
 
-function writeAuthorities(config) {
-	// console.log("Wrinting Authorities...");
-	// if (!libs.authorities) libs.authorities = {};
-	// for (i in libs.authorities) {
-	// 	if (!libs.authorities[i].startsWith("http")) {
-	// 		fs.copyFileSync(libs.authorities[i], libs.sourceDir + i + ".key");
-	// 		libs.authorities[i] = libs.sourceUrl + i + ".key";
-	// 	}
-	// }
-	// libs.authorities[libs.sourceId] = libs.verifyKey ? libs.sourceUrl + "verify.key" : undefined;
-	// fs.writeFileSync(libs.sourceDir + "authorities.json", JSON.stringify({
-	// 	sourceId : libs.sourceId,
-	// 	content : libs.authorities
-	// }));
-}
 
 function writeVerifyKey(config) {
 	var data, verifyPath;
