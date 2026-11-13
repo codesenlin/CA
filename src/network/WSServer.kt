@@ -4,10 +4,10 @@ import ca.kotlin.core.*
 
 
 /**
- * modules/network/WSServer.js 的 Kotlin/JS 版本。
+ * WSServer 的 Kotlin/JS 实现。
  *
- * WebSocket 服务器、事件订阅表、命令响应表与控制台都保持原 API；
- * onError 回调在原实现里读取动态 this.server，这里用薄 wrapper 保留。
+ * 传输、事件订阅和命令响应由 PEWS bridge 处理；
+ * 这里保留控制台、UI 和对外脚本 API。
  */
 private val wssApi: dynamic = js("({})")
 private val wssConsole: dynamic = js("({})")
