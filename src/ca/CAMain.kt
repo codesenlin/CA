@@ -575,10 +575,8 @@ private fun caBuildGenUi(self: dynamic, api: dynamic) {
     js("Common").applyStyle(api.con, "container_default")
 
     var hasBg = false
-    if (android.os.Build.VERSION.SDK_INT >= 16) {
-        self.bgImg = self.getBgImage()
-        hasBg = caTruthy(self.bgImg)
-    }
+    self.bgImg = self.getBgImage()
+    hasBg = caTruthy(self.bgImg)
     if (hasBg) {
         self.bgAlpha = caParseFloat(api.settings.bgAlpha)
         if (caIsNaN(self.bgAlpha)) self.bgAlpha = 0.75

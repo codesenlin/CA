@@ -154,7 +154,7 @@ private fun upCheckUpdate(statusListener: dynamic, silently: dynamic): dynamic {
 private fun upTestSupport(requirements: dynamic): dynamic {
     if (!upIsArray(requirements)) return null
     val err = js("[]")
-    val sdkInt = js("android.os.Build.VERSION.SDK_INT")
+    val sdkInt = js("ScriptInterface").getAndroidSdk()
     val abis = js("AndroidBridge").getABIs()
     upForInJs(requirements) { i: dynamic ->
         val e = upObject(requirements[i])

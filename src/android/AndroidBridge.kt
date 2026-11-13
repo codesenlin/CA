@@ -810,7 +810,7 @@ private fun abShowSettings(title: dynamic) {
         val tile = abEmptyObject()
         tile.name = "快捷设置开关"
         tile.type = "custom"
-        tile.hidden = { js("android.os.Build.VERSION.SDK_INT") < 24 }
+        tile.hidden = { !js("ScriptInterface").isTileServiceSupported() }
         tile.get = {
             val tileService = abApi.getTileService()
             tileService.service.name
@@ -858,11 +858,7 @@ private fun abTileSettingsClick(fset: dynamic) {
 private fun abGetAppIcon(): dynamic {
     val appi = abApplicationInfoJs("com.xero.ca", 128)
     val res = abResourcesForApplicationJs(appi)
-    return if (js("android.os.Build.VERSION.SDK_INT") >= 21) {
-        res.getDrawable(appi.icon, null)
-    } else {
-        res.getDrawable(appi.icon)
-    }
+    return res.getDrawable(appi.icon, null)
 }
 
 private fun abGetAppIconBadged(): dynamic {
@@ -1181,9 +1177,9 @@ private fun abCreatePendingIntent(type: dynamic, intent: dynamic, flagList0: dyn
     var requestCode = requestCode0
     if (!abIsArray(flagList)) flagList = abEmptyArray()
     if (abIsNaN(requestCode)) requestCode = 0
-    if (js("android.os.Build.VERSION.SDK_INT") >= 23) {
+    if (js("ScriptInterface").isPendingIntentFlagsSupported()) {
         if (flagList.includes("mutable")) {
-            if (js("android.os.Build.VERSION.SDK_INT") >= 31) {
+            if (js("ScriptInterface").isMutablePendingIntentSupported()) {
                 flags = abOr(flags, js("android.app.PendingIntent").FLAG_MUTABLE)
             }
         } else {
@@ -1201,7 +1197,7 @@ private fun abCreatePendingIntent(type: dynamic, intent: dynamic, flagList0: dyn
         flags = abOr(flags, js("android.app.PendingIntent").FLAG_ONE_SHOT)
     }
     if (type == "service" || type == "foregroundService") {
-        if (js("android.os.Build.VERSION.SDK_INT") > 26 && type == "foregroundService") {
+        if (js("ScriptInterface").isForegroundServicePendingIntentSupported() && type == "foregroundService") {
             return js("android.app.PendingIntent").getForegroundService(js("ctx"), requestCode, intent, flags)
         }
         return js("android.app.PendingIntent").getService(js("ctx"), requestCode, intent, flags)
@@ -1216,13 +1212,7 @@ private fun abCreatePendingIntent(type: dynamic, intent: dynamic, flagList0: dyn
 }
 
 private fun abGetABIs(): dynamic {
-    if (js("android.os.Build.VERSION.SDK_INT") >= 21) {
-        return js("android.os.Build.SUPPORTED_ABIS").map({ e: dynamic -> abString(e) })
-    }
-    val r = abEmptyArray()
-    r.push(abString(js("android.os.Build.CPU_ABI")))
-    r.push(abString(js("android.os.Build.CPU_ABI2")))
-    return r
+    return js("android.os.Build.SUPPORTED_ABIS").map({ e: dynamic -> abString(e) })
 }
 
 // ---------------- Uri / 文件 ----------------
@@ -1232,10 +1222,9 @@ private fun abUriToFile(uri0: dynamic): dynamic {
     var cursor: dynamic = null
     var selection: dynamic = null
     var selectionArgs: dynamic = null
-    val isKitKat = js("android.os.Build.VERSION.SDK_INT") >= 19
     if (!abIsUri(uri)) return null
     if (uri.getScheme().equalsIgnoreCase("content")) {
-        if (isKitKat && abIsDocumentUriJs(uri)) {
+        if (abIsDocumentUriJs(uri)) {
             if (abLooseEq(abString(uri.getAuthority()), "com.android.externalstorage.documents")) {
                 val docs = abString(abDocumentIdJs(uri)).split(":")
                 if (docs[0] == "primary") {
@@ -1353,7 +1342,7 @@ private fun abViewUri(uri: dynamic): dynamic {
 }
 
 private fun abCreateShortcut(intent: dynamic, name: dynamic, icon: dynamic) {
-    if (js("android.os.Build.VERSION.SDK_INT") >= 26) {
+    if (js("ScriptInterface").isShortcutSupported()) {
         abApi.doCreateShortcut(js("ctx"), intent, name, icon)
     } else {
         val i = abNewIntent1Js("com.android.launcher.action.INSTALL_SHORTCUT")

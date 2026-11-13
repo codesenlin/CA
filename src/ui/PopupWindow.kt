@@ -64,7 +64,7 @@ private val pwIsActivityJs: dynamic = js(
 )
 private val pwDpJs: dynamic = js("function (n) { return n * G.dp; }")
 private fun pwDp(n: Int): dynamic = pwDpJs(n)
-private val pwSdkJs: dynamic = js("function () { return android.os.Build.VERSION.SDK_INT; }")
+private val pwSdkJs: dynamic = js("function () { return ScriptInterface.isOverlayWindowTypeSupported(); }")
 private val pwGravityStartTopJs: dynamic = js(
     "function () { return G.Gravity.START | G.Gravity.TOP; }"
 )
@@ -190,7 +190,7 @@ private fun pwBuildLayoutParams(view: dynamic, attributes: dynamic): dynamic {
     p.gravity = attributes.gravity
     p.flags = pwApi.computeFlags(attributes, p.flags)
     p.type = if (pwTruthyJs(js("G.supportFloat"))) {
-        if (pwSdkJs() >= 26) {
+        if (pwSdkJs()) {
             js("G.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY")
         } else {
             js("G.WindowManager.LayoutParams.TYPE_PHONE")
@@ -339,7 +339,7 @@ private fun pwOtherGetMetrics(self: dynamic): dynamic = pwArray2Js(self.getWidth
 private fun pwConfigueWnd(popup: dynamic, attrs: dynamic): dynamic {
     popup.setWindowLayoutType(
         if (pwTruthyJs(js("G.supportFloat"))) {
-            if (pwSdkJs() >= 26) {
+            if (pwSdkJs()) {
                 js("G.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY")
             } else {
                 js("G.WindowManager.LayoutParams.TYPE_PHONE")

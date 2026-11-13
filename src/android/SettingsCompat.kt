@@ -25,21 +25,16 @@ private fun startSafely(intent: dynamic): Boolean {
 private fun showAppSettings() {
     val intent = js("new android.content.Intent()")
     intent.addFlags(js("android.content.Intent").FLAG_ACTIVITY_NEW_TASK)
-    if (settingsApi.SYSVER >= 9) {
-        intent.setAction("android.settings.APPLICATION_DETAILS_SETTINGS")
-        intent.setData(js("android.net.Uri").fromParts("package", js("ctx").getPackageName(), null))
-    } else {
-        intent.setAction(js("android.content.Intent").ACTION_VIEW)
-        intent.setClassName("com.android.settings", "com.android.settings.InstalledAppDetails")
-        intent.putExtra("com.android.settings.ApplicationPkgName", js("ctx").getPackageName())
-    }
+    intent.setAction("android.settings.APPLICATION_DETAILS_SETTINGS")
+    intent.setData(js("android.net.Uri").fromParts("package", js("ctx").getPackageName(), null))
     startSafely(intent)
 }
 
 private fun canDrawOverlays(): Boolean {
-    if (settingsApi.SYSVER >= 23) return js("android.provider.Settings").canDrawOverlays(js("ctx"))
-    if (settingsApi.SYSVER >= 18) return checkOp(js("ctx"), 24)
-    return true
+    if (js("ScriptInterface").isOverlaySettingsSupported()) {
+        return js("android.provider.Settings").canDrawOverlays(js("ctx"))
+    }
+    return checkOp(js("ctx"), 24)
 }
 
 private fun checkOp(context: dynamic, op: dynamic): Boolean {
@@ -50,19 +45,13 @@ private fun checkOp(context: dynamic, op: dynamic): Boolean {
 }
 
 private fun setMode(context: dynamic, op: dynamic, allowed: dynamic): Boolean {
-    if (settingsApi.SYSVER < 18 || settingsApi.SYSVER >= 21) return false
-    try {
-        context.getSystemService("appops").setMode(op, js("android.os.Binder").getCallingUid(), context.getPackageName(), allowed)
-        return true
-    } catch (e: dynamic) { js("Log").e(e) }
+    // minSdk 21 起不再支持旧 AppOps setMode 路径。
     return false
 }
 
 private fun manageDrawOverlays() {
-    if (settingsApi.SYSVER >= 18) {
-        if (manageDrawOverlaysForRom()) return
-    }
-    if (settingsApi.SYSVER >= 23) {
+    if (manageDrawOverlaysForRom()) return
+    if (js("ScriptInterface").isOverlaySettingsSupported()) {
         val intent = js("new android.content.Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION)")
         intent.setData(js("android.net.Uri").parse("package:" + js("ctx").getPackageName()))
         intent.addFlags(js("android.content.Intent").FLAG_ACTIVITY_NEW_TASK)
@@ -96,20 +85,13 @@ private fun showMiui(): Boolean {
     if (startSafely(intent)) return true
     intent.setClassName("com.miui.securitycenter", "com.miui.permcenter.permissions.PermissionsEditorActivity")
     if (startSafely(intent)) return true
-    if (settingsApi.SYSVER < 21) {
-        val i2 = js("new android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)")
-        i2.setData(js("android.net.Uri").fromParts("package", js("ctx").getPackageName(), null))
-        startSafely(i2)
-    }
     return false
 }
 
 private fun showEmui(): Boolean {
     val intent = js("new android.content.Intent()")
-    if (settingsApi.SYSVER >= 21) {
-        intent.setClassName("com.huawei.systemmanager", "com.huawei.systemmanager.addviewmonitor.AddViewMonitorActivity")
-        if (startSafely(intent)) return true
-    }
+    intent.setClassName("com.huawei.systemmanager", "com.huawei.systemmanager.addviewmonitor.AddViewMonitorActivity")
+    if (startSafely(intent)) return true
     intent.setClassName("com.huawei.systemmanager", "com.huawei.notificationmanager.ui.NotificationManagmentActivity")
     intent.putExtra("showTabsNumber", 1)
     if (startSafely(intent)) return true
@@ -138,18 +120,10 @@ private fun showVivo(): Boolean {
 }
 
 private fun showSmartisan(): Boolean {
-    if (settingsApi.SYSVER >= 23) return false
-    if (settingsApi.SYSVER >= 21) {
-        val intent = js("new android.content.Intent('com.smartisanos.security.action.SWITCHED_PERMISSIONS_NEW')")
-        intent.setClassName("com.smartisanos.security", "com.smartisanos.security.SwitchedPermissions")
-        intent.putExtra("index", 17)
-        return startSafely(intent)
-    }
-    val intent = js("new android.content.Intent('com.smartisanos.security.action.SWITCHED_PERMISSIONS')")
+    if (js("ScriptInterface").isOverlaySettingsSupported()) return false
+    val intent = js("new android.content.Intent('com.smartisanos.security.action.SWITCHED_PERMISSIONS_NEW')")
     intent.setClassName("com.smartisanos.security", "com.smartisanos.security.SwitchedPermissions")
-    val b = js("new android.os.Bundle()")
-    b.putStringArray("permission", js("([android.Manifest.permission.SYSTEM_ALERT_WINDOW])"))
-    intent.putExtras(b)
+    intent.putExtra("index", 17)
     return startSafely(intent)
 }
 
@@ -169,7 +143,7 @@ private fun show360(): Boolean {
 }
 
 fun installSettingsCompat() {
-    settingsApi.SYSVER = js("android.os.Build.VERSION.SDK_INT")
+    settingsApi.SYSVER = js("ScriptInterface").getAndroidSdk()
     settingsApi.ensureCanFloat = { silent: dynamic ->
         var ok = canDrawOverlays() || setMode(js("ctx"), 24, true)
         if (!ok && !silent) {

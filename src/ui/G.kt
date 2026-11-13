@@ -63,16 +63,8 @@ private fun gInitialize(self: dynamic): dynamic {
         }
     }
 
-    if (android.os.Build.VERSION.SDK_INT >= 21) {
-        self.style = "Material"
-        js("ctx").setTheme(android.R.style.Theme_Material_Light)
-    } else if (android.os.Build.VERSION.SDK_INT >= 11) {
-        self.style = "Holo"
-        js("ctx").setTheme(android.R.style.Theme_Holo_Light)
-    } else {
-        self.style = "Basic"
-        js("ctx").setTheme(android.R.style.Theme_Light)
-    }
+    self.style = "Material"
+    js("ctx").setTheme(android.R.style.Theme_Material_Light)
     return js("undefined")
 }
 

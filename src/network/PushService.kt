@@ -65,13 +65,11 @@ private fun pushString(v: dynamic): dynamic = pushStringJs(v)
 private fun pushLength(v: dynamic): Int = pushLengthJs(v)
 private fun pushParseInt(v: dynamic): dynamic = pushParseIntJs(v)
 private fun pushIsNaN(v: dynamic): Boolean = pushIsNaNNs(v)
-private fun pushSdkInt(): Int = js("android.os.Build.VERSION.SDK_INT")
-
 private fun pushOnCreate() {
     if (js("MapScript").host != "Android") return
     pushApi.nms = js("ctx").getSystemService(js("ctx").NOTIFICATION_SERVICE)
     if (!pushTruthy(pushApi.nms)) return
-    if (pushSdkInt() >= 26) {
+    if (js("ScriptInterface").isNotificationChannelSupported()) {
         pushApi.channel = pushNewNotificationChannelJs(
             "capush",
             "推送信息",
@@ -120,7 +118,7 @@ private fun pushGetIntent(post: dynamic): dynamic {
 private fun pushShowNotification(o: dynamic): dynamic {
     val id = pushParseInt(o.id)
     val builder: dynamic
-    if (pushSdkInt() >= 26) {
+    if (js("ScriptInterface").isNotificationChannelSupported()) {
         builder = pushNewNotificationBuilder2Js(js("ctx"), pushApi.channel.id)
     } else {
         builder = pushNewNotificationBuilder1Js(js("ctx"))
@@ -135,13 +133,7 @@ private fun pushShowNotification(o: dynamic): dynamic {
     if (pushTruthy(intent)) {
         builder.setContentIntent(pushCreatePendingIntentJs("activity", intent, pushArray1Js("updateCurrent"), id))
     }
-    val nof: dynamic
-    if (pushSdkInt() >= 16) {
-        nof = builder.build()
-    } else {
-        nof = builder.getNotification()
-    }
-    pushApi.nms.notify("capush", id, nof)
+      pushApi.nms.notify("capush", id, builder.build())
     return true
 }
 
