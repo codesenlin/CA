@@ -20,11 +20,11 @@ certs/
   release.signature     证书 DER（正式版异或密钥）
   debug.signature       内容与 release.signature 完全相同（AOSP testkey 只有一张证书）
 tools/
-  pack-for-cadroid.js   壳子脚本加密：main.js → gzip → 用证书 DER 异或 → script.js
+  pack-for-cadroid.js   壳子脚本加密：main.js → gzip → 用证书 DER 异或 → script.cjs
                         （可传参指定输出，默认写到 cadroid 的 assets）
 build/
   main.js               历史打包输入（1.3 MB，某个时间点的构建产物）
-  script.js             对应的加密产物
+  script.cjs            对应的加密产物
 ```
 
 ## 说明
