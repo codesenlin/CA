@@ -3,6 +3,7 @@ import path from "node:path";
 export default function (context, args) {
 	var root = path.resolve(context.shellConfig.shellPath, "./app"),
 		gradle = path.resolve(root, "build.gradle.kts"),
+		versionFile = path.resolve(root, "version.json"),
 		gradleConfig = context.gradleConfig = {};
 	if (!fs.existsSync(gradle)) gradle = path.resolve(root, "build.gradle");
 	var isKts = /\.kts$/.test(gradle);
@@ -11,12 +12,10 @@ export default function (context, args) {
 	gradleConfig.versionName = context.buildConfig.version;
 	gradleConfig.minSdkVersion = parseInt((s.match(/minSdk(?:Version)?\s*=?\s*(\d+)/) || [undefined, 1])[1]);
 	gradleConfig.shellVersion = parseInt((s.match(/SHELL_VERSION[^\d]*(\d+)/) || [undefined, 0])[1]);
-	if (isKts) {
-		s = s.replace(/versionCode\s*=\s*\d+/, "versionCode = " + gradleConfig.versionCode);
-		s = s.replace(/versionName\s*=\s*".*"/, "versionName = " + JSON.stringify(gradleConfig.versionName));
-	} else {
-		s = s.replace(/versionCode\s+\d+/, "versionCode " + gradleConfig.versionCode);
-		s = s.replace(/versionName\s+".*"/, "versionName " + JSON.stringify(gradleConfig.versionName));
-	}
+	// 版本号只写 app/version.json；app/build.gradle.kts 从该文件读取。
+	fs.writeFileSync(versionFile, JSON.stringify({
+		version: gradleConfig.versionName,
+		versionCode: gradleConfig.versionCode
+	}, null, "\t") + "\n");
 	fs.writeFileSync(gradle, s);
 }
