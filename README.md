@@ -1,6 +1,7 @@
 # 命令助手
 
 [![](https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/deepseek-ai/deepseek-harness)
+[![Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcodesenlin%2FCA%2Fcanary%2Fconfig%2Fbuild.json&query=%24.version&label=version&style=flat-square&color=ff69b4)](https://github.com/codesenlin/CA)
 
 ## 简介
 
@@ -353,3 +354,13 @@ npm run unpack -- build/libwork/pack/foo.lib -o build/libwork/unpack
 
 > 已移除原先"从 GitHub 自动下载远程拓展包"的机制（`modules/RemoteLibrary.js` 与
 > `libraries.json`）。
+
+## 致谢
+
+本项目在开发过程中使用或参考了以下开源项目，感谢作者与贡献者：
+
+- [MyAgent](https://github.com/mcpews/MyAgent) — WebSocket Agent 服务端实现，以 git subtree 方式集成
+- [PEWS-API](https://github.com/jocopa3/PEWS-API) — Minecraft WebSocket 协议 SDK，WSServer 协议层参考上游实现
+- [Java-WebSocket](https://github.com/TooTallNate/Java-WebSocket) — cadroid 侧的 WebSocket 传输层
+- [Rhino](https://github.com/mozilla/rhino) — Android 脚本引擎
+

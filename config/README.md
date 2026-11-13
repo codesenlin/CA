@@ -40,7 +40,7 @@
 - `cabuildtools/tasks/config/getBuildConfig.js` 读出来作为 `context.buildConfig`
 - 核心脚本的 `BuildConfig`（`src/core/BuildConfigData.kt` 生成的 JSON 内联）
 - `writeUpdateRelease` / `writeUpdateSnapshot` 写 `update.json`
-- `shellUpdateGradle` 用 `date` 算 cadroid 的 versionCode，写回它的 `app/build.gradle` / `app/build.gradle.kts`
+- `shellUpdateGradle` 用 `date` 算 cadroid 的 versionCode，写入它的 `app/version.json`；`app/build.gradle.kts` 从该文件读取版本
 
 `description` 支持换行（JSON 里写 `\n`），内容是给用户看的中文说明。
 

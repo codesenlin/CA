@@ -210,7 +210,7 @@ private fun caInitializeAfterAgreement(api: dynamic) {
         // 延迟到启动界面稳定后再预热，避免和首屏初始化抢 CPU
         js("Threads").run(caPrewarmJs(api))
         js("Common").toast(
-            "命令助手 " + api.version.join(".") + " by ProjectXero\n\n" + api.getTip(),
+            "命令助手 " + api.versionName + " by ProjectXero\n\n" + api.getTip(),
             1
         )
         api.fine = true
