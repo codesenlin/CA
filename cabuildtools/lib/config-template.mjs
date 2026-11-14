@@ -17,7 +17,7 @@ const CONFIG_FILES = ["build", "import", "publish", "shell", "update-sources"];
 
 /** 每个配置必须存在的顶层字段，缺失只警告，不阻塞构建 */
 const REQUIRED_KEYS = {
-	build: ["version", "versionCode", "date"],
+	build: ["versionSource", "date"],
 	import: [],
 	publish: ["method"],
 	shell: [],

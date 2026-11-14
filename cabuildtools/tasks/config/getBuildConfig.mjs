@@ -18,7 +18,16 @@ export default function (context, args) {
 		variants = args;
 	}
 	if (!channel) channel = variants == "release" || variants == "snapshot" ? "stable" : variants;
-	var config = Object.assign({}, require(path.resolve("./config/build.json")));
+	var configPath = path.resolve("./config/build.json");
+	var config = Object.assign({}, JSON.parse(fs.readFileSync(configPath, "utf-8")));
+	// 版本号是唯一来源：config 里的 versionSource 指向 data/version.json。
+	if (config.versionSource) {
+		var versionPath = path.resolve(path.dirname(configPath), config.versionSource);
+		var versionInfo = JSON.parse(fs.readFileSync(versionPath, "utf-8"));
+		if (versionInfo.version !== undefined) config.version = versionInfo.version;
+		if (versionInfo.versionCode !== undefined) config.versionCode = versionInfo.versionCode;
+		delete config.versionSource;
+	}
 	// 风味定义在 data/flavors/<名字>/：flavor.json 是元数据，data/*.json 是风味专属数据。
 	// data/flavors/default 是基线：所有风味都会先带上 default 的数据，再用自己的数据覆盖/合并。
 	var flavorRoot = path.resolve("./data/flavors");

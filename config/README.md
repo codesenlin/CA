@@ -38,8 +38,7 @@ node ./cabuildtools/main.mjs checkConfig
 
 ```json
 {
-	"version": "1.2.16",
-	"versionCode": [1, 2, 17],
+	"versionSource": "../data/version.json",
 	"date": "2026-11-08",
 	"licenceUpdate": "2019/9/21",
 	"description": "……"
@@ -48,8 +47,7 @@ node ./cabuildtools/main.mjs checkConfig
 
 | 字段 | 用途 |
 | --- | --- |
-| `version` | 显示用版本名，写进核心的 `BuildConfig.version`，也出现在「关于」面板 |
-| `versionCode` | 整数数组，Gradle 的 versionCode 与部分比较逻辑用 |
+| `versionSource` | 版本信息文件，相对 `config/` 解析；当前指向 `data/version.json` |
 | `date` | 发布日期，写进 `BuildConfig.date`、`.lib` 安装器文件名、`update.json` |
 | `licenceUpdate` | 许可协议的更新日期，变了才会重新弹协议 |
 | `description` | 更新说明，原样写进 `update.json` 和「新版本信息」对话框 |
@@ -60,6 +58,18 @@ node ./cabuildtools/main.mjs checkConfig
 - 核心脚本的 `BuildConfig`（`src/core/BuildConfigData.kt` 生成的 JSON 内联）
 - `writeUpdateRelease` / `writeUpdateSnapshot` 写 `update.json`
 - `shellUpdateGradle` 用 `date` 算 cadroid 的 versionCode，写入它的 `app/version.json`；`app/build.gradle.kts` 从该文件读取版本
+
+
+`data/version.json` 是版本号的唯一来源，包含 `version` 与 `versionCode`：
+
+```json
+{
+	"version": "1.2.16",
+	"versionCode": [1, 2, 17]
+}
+```
+
+README 的版本徽标也直接读取这个文件。
 
 `description` 支持换行（JSON 里写 `\n`），内容是给用户看的中文说明。
 
