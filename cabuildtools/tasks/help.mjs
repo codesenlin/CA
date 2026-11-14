@@ -27,6 +27,7 @@ const TASK_DESC = {
 	publishHotfix: "发布热更新包",
 	publishCLib: "发布内置命令库",
 	generateImport: "生成 import 用的 android.jar 索引",
+	checkConfig: "检查 config/ 并补全缺失配置",
 	clean: "清理 build 目录",
 	delay: "延时若干毫秒（调试流水线用）",
 	shellPrepareDebug: "准备调试版壳子资源"
@@ -100,7 +101,7 @@ const TASK_DETAIL = {
 		subcommands: [
 			["build", "构建 build/caaccel.jar"],
 			["test", "跑 caaccel/test 下的单测"],
-			["bench", "matchString 的 Java vs Rhino 基准"]
+			["bench", "matchString 的 Kotlin/JVM vs Rhino 基准"]
 		],
 		examples: [
 			"npm run caaccel",
@@ -135,6 +136,10 @@ const TASK_DETAIL = {
 	generateImport: {
 		usage: "generateImport",
 		note: "从 android.jar 生成 import 用的类索引。"
+	},
+	checkConfig: {
+		usage: "checkConfig",
+		note: "检查 config/ 下的 JSON，缺失时从 config/templates/ 复制。"
 	},
 	clean: {
 		usage: "clean",

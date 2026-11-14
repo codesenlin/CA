@@ -4,6 +4,7 @@ import process from "node:process";
 import fs from "node:fs";
 import pathUtils from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { ensureConfigs } from "./lib/config-template.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = pathUtils.dirname(__filename);
@@ -112,6 +113,8 @@ function executeTask(task, args) {
 	return result instanceof Promise ? result : Promise.resolve(result);
 }
 await initTasks(pathUtils.resolve(__dirname, "./tasks"));
+// 构建工具启动时先检查 config/：模板缺失警告，实际配置缺失从模板补全。
+ensureConfigs();
 if (pathUtils.resolve(process.argv[1] || "") === pathUtils.resolve(__filename)) {
 	procArgs();
 } else {

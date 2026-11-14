@@ -3,6 +3,9 @@
 `config/` 下全部是 **JSON 数据文件**，构建工具直接读，没有逻辑代码。
 这里记录每个字段的含义、谁在用、以及怎么覆盖——JSON 里不能写注释，说明都放这一份。
 
+实际使用的 `config/*.json` **不入库**；仓库只跟踪 `config/templates/`。
+首次构建或文件缺失时，`cabuildtools` 会从模板复制一份到本地。
+
 改完不需要重新安装什么，下一次构建就会生效。
 
 | 文件 | 内容 |
@@ -12,6 +15,22 @@
 | [`publish.json`](#publishjson) | 发布方式与目标 |
 | [`shell.json`](#shelljson) | 壳子打包相关路径（多数自动探测） |
 | [`import.json`](#importjson) | `generateImport` 用的 android.jar |
+
+## 模板与自动补全
+
+`config/templates/` 存放每份配置的模板。构建工具启动时会自动检查：
+
+1. 模板缺失 → 打印警告，跳过自动补全
+2. 实际配置缺失 → 从对应模板复制到 `config/<名字>.json`
+3. 实际配置已存在 → 不覆盖，只检查 JSON 是否可解析、必要字段是否齐全
+
+模板本身修改后，下一次构建才会用于补全；已有配置不会被模板覆盖。
+
+单独检查可以运行：
+
+```sh
+node ./cabuildtools/main.mjs checkConfig
+```
 
 ---
 
