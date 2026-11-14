@@ -25,5 +25,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build and test
+      - name: Build Kotlin/JS
+        run: npm run kotlin:js
+
+      - name: Generate build data
+        run: node ./cabuildtools/main.mjs buildSnapshot
+
+      - name: Run tests
         run: npm test
