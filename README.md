@@ -1,6 +1,9 @@
 # 命令助手
 
 [![](https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/deepseek-ai/deepseek-harness)
+[![CI](https://github.com/codesenlin/CA/actions/workflows/ci.yml/badge.svg?branch=canary)](https://github.com/codesenlin/CA/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/codesenlin/CA?style=flat-square&label=release&color=ff69b4)](https://github.com/codesenlin/CA/releases/latest)
+[![License](https://img.shields.io/github/license/codesenlin/CA?style=flat-square&label=license&color=blue)](LICENSE)
 [![Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcodesenlin%2FCA%2Fcanary%2Fconfig%2Fbuild.json&query=%24.version&label=version&style=flat-square&color=ff69b4)](https://github.com/codesenlin/CA)
 
 ## 简介
