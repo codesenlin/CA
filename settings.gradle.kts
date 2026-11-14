@@ -12,3 +12,5 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "ca-kotlin"
+
+include(":caaccel")

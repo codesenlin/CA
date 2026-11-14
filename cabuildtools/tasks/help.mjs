@@ -98,7 +98,7 @@ const TASK_DETAIL = {
 		npmUsage: "npm run caaccel -- [build|test|bench]",
 		note: "构建 / 测试 / 基准加速库，默认 build。",
 		subcommands: [
-			["build", "构建 build/caaccel/caaccel.jar"],
+			["build", "构建 build/caaccel.jar"],
 			["test", "跑 caaccel/test 下的单测"],
 			["bench", "matchString 的 Java vs Rhino 基准"]
 		],

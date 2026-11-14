@@ -155,7 +155,7 @@ O(n²) 去重（遍历整个候选表，3000 个 ID 级别）。搬到 Java 后�
 
 ### 加一个加速点
 
-1. `caaccel/src/top/projectxero/ca/accel/Accel.java` 加 static 方法（保持无状态）
+1. `caaccel/src/top/projectxero/ca/accel/Accel.kt` 的 companion object 加 `@JvmStatic` 方法（保持无状态）
 2. `caaccel/test/` 加用例，跑 `npm run caaccel -- test`
 3. `src/core/Accel.kt` 里加 JS 等价实现 + 分发分支
 4. 调用方加 `if (Accel.available()) return Accel.xxx(...)`
@@ -205,7 +205,7 @@ Java 侧没有任何静态引用。release 构建时 R8 会把它整个裁掉—
 
 **关键结论：QuickJS ≈ caaccel（差 5%）。**
 
-已经在 Java 里实现的加速点，换成 QuickJS 不会更快；而没加速的点，加一个 Java 实现
+已经在 Kotlin/JVM 里实现的加速点，换成 QuickJS 不会更快；而没加速的点，加一个 Kotlin/JVM 实现
 比换引擎便宜得多。
 
 ### 编译模式值不值得开
@@ -270,7 +270,7 @@ cadroid 仓库 [docs/quickjs-sidecar.md](https://github.com/codesenlin/cadroid/b
 **两个引擎在手机上都慢 4 倍左右**——差异来自运行环境（ART vs HotSpot、后台负载、
 散热），不是 desugaring。
 
-（早期版本说"Java 在手机上反而更快"是错的：那组数字拿的是另一段 Java 实现，
+（早期版本说"Java 在手机上反而更快"是错的：那组数字拿的是另一段 JVM 实现，
 不是同一段代码。跨设备比较必须先保证代码相同。）
 
 desugaring 只是把 `java.util.Objects.requireNonNull` 换成

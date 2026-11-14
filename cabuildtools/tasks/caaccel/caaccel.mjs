@@ -16,11 +16,11 @@ export default function (context, args) {
 			"  npm run caaccel -- <命令>",
 			"  node ./cabuildtools/main.mjs caaccel <命令>",
 			"",
-			"  build   构建 build/caaccel/caaccel.jar（纯 javac + jar）",
+			"  build   构建 build/caaccel.jar（Kotlin/JVM Gradle 模块）",
 			"  test    跑 caaccel/test 下的单测",
 			"  bench   matchString 的 Java vs Rhino 基准（需要 Rhino 1.9.2 jar）",
 			"",
-			"JDK 优先用 $JAVA_HOME/bin，没有就用 PATH 里的 javac/jar/java。"
+			"构建走 CA 根目录的 Gradle wrapper，需要 JDK。"
 		].join("\n"));
 		return;
 	}

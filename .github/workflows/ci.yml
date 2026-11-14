@@ -31,5 +31,8 @@ jobs:
       - name: Generate build data
         run: node ./cabuildtools/main.mjs buildSnapshot
 
+      - name: Test caaccel
+        run: ./gradlew :caaccel:caaccelTest --console=plain
+
       - name: Run tests
         run: npm test

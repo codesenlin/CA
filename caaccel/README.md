@@ -5,7 +5,7 @@
 
 ## 设计约束
 
-1. 纯 Java，不依赖 Android、不依赖 Rhino —— 可以单独在 JVM 上跑单测
+1. 纯 Kotlin/JVM，不依赖 Android、不依赖 Rhino —— 可以单独在 JVM 上跑单测
 2. 所有方法都是 static；除 `setIDTexts` 的 ID 列表缓存外无状态，Rhino 直接
    Callable 调用（列表重建时 JS 侧会重新 `setIDTexts`，不依赖跨列表状态）
 3. **每个方法在 `src/core/Accel.kt` 里都有一份语义等价的 JS 实现**
@@ -17,12 +17,12 @@ src/ca/CAAssistModule.kt       业务逻辑：决定"要过滤"
         │  Accel.filter(list, s)
         ▼
 src/core/Accel.kt           决策层：jar 在不在？方法有没有？
-        │                  有 → 调 Java；没有 → 跑自己的 JS 实现
+        │                  有 → 调 Kotlin/JVM；没有 → 跑自己的 JS 实现
         ▼
-caaccel/src/top/projectxero/ca/accel/Accel.java         加速层：可选。下载代码的人想快就在这里实现
+caaccel/src/top/projectxero/ca/accel/Accel.kt         加速层：可选。下载代码的人想快就在这里实现
 ```
 
-**想让某个操作变快**：在 `Accel.java` 里实现对应方法，重新 `npm run caaccel`，把 jar 放进
+**想让某个操作变快**：在 `Accel.kt` 里实现对应方法，重新 `npm run caaccel`，把 jar 放进
 `cadroid/app/libs/`。
 **不想管**：什么都不做。`Accel.js` 会走纯 JS 实现，功能完全一样。
 
@@ -50,7 +50,7 @@ caaccel/src/top/projectxero/ca/accel/Accel.java         加速层：可选。下
 ## 构建
 
 ```sh
-npm run caaccel        # 产出 build/caaccel/caaccel.jar
+npm run caaccel        # 产出 build/caaccel.jar
 npm run caaccel -- test    # 单测（test/ 下每个 *Test 都会跑）
 npm run caaccel -- bench   # 与 Rhino 的对比基准（需要 Rhino 1.9.2 jar）
 
@@ -58,8 +58,8 @@ npm run caaccel -- bench   # 与 Rhino 的对比基准（需要 Rhino 1.9.2 jar�
 node ./cabuildtools/main.mjs caaccel build|test|bench
 ```
 
-`cabuildtools/main.mjs caaccel` 需要 javac/jar/java：优先用 `$JAVA_HOME/bin`，没有就用 PATH 里的。
-`npm run caaccel -- bench` 会自动在 Gradle 缓存里找 `rhino-1.9.2.jar`（与 cadroid 当前依赖一致）。
+构建走 CA 根目录的 Gradle wrapper（caaccel 是独立 Kotlin/JVM 子项目），需要 JDK。
+基准的 Rhino 依赖由 caaccel/build.gradle.kts 管理。
 
 ## 接入 Android（可选）
 
@@ -73,15 +73,15 @@ node ./cabuildtools/main.mjs caaccel build|test|bench
    ```proguard
    -keep class top.projectxero.ca.accel.** { *; }
    ```
-   **这条必须有**：Accel 只被脚本通过 Rhino 反射调用，Java 侧没有静态引用，
+   **这条必须有**：Accel 只被脚本通过 Rhino 反射调用，JVM 侧没有静态引用，
    R8 会把它整个裁掉。
 
 不做 1-3 也能编译运行，只是没有加速。
 
 ## 新增加速点
 
-1. `Accel.java` 加 static 方法（无状态）
+1. `Accel.kt` 的 companion object 加 `@JvmStatic` 方法（无状态）
 2. `caaccel/test/` 加用例，跑 `npm run caaccel -- test`
-3. `src/core/Accel.kt` 加同名包装 + **JS 等价实现**（关键：没人实现 Java 时靠它）
+3. `src/core/Accel.kt` 加同名包装 + **JS 等价实现**（关键：没人实现加速层时靠它）
 4. 业务代码直接 `Accel.xxx(...)`，不需要判断 jar 在不在
 5. `app/proguard-rules.pro` 的 keep 规则已覆盖整个包，不用改
