@@ -814,7 +814,11 @@ private fun caIdIdListCacheKey(api: dynamic, names: dynamic): dynamic {
     return parts.join("|")
 }
 
+private fun caIdCacheEnabled(api: dynamic): Boolean =
+    !caIdStrictEq(api.settings.enableIdCache, false)
+
 private fun caIdLoadIDListDiskCache(api: dynamic, key: dynamic): dynamic {
+    if (!caIdCacheEnabled(api)) return null
     try {
         val text = js("SafeFileUtils").readText(caIdNewFile1(api.idListCachePath()), null)
         if (!caIdTruthy(text)) return null

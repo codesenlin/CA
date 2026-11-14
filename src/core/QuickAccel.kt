@@ -32,6 +32,11 @@ private val quickWorkerCallJs: dynamic = js("function (name, json) { return Scri
 private val quickLengthJs: dynamic = js("function (v) { return v.length | 0; }")
 
 private fun quickTruthy(v: dynamic): Boolean = quickTruthyJs(v)
+
+private val quickSettingEnabledJs: dynamic = js(
+    "function () { try { var s = CA.settings; return !(s && s.enableQuickWorker === false); } catch (e) { return true; } }"
+)
+private var quickNativeAvailable = false
 private fun quickIsArray(v: dynamic): Boolean = quickIsArrayJs(v)
 private fun quickIsObjectType(v: dynamic): Boolean = quickIsObjectTypeJs(v)
 private fun quickIsFunction(v: dynamic): Boolean = quickIsFunctionJs(v)
@@ -404,16 +409,19 @@ private fun runBenchImpl(n: dynamic) {
 }
 
 fun installQuickAccel() {
-    var available = false
-    try {
-        available = quickTruthy(quickWorkerAvailableJs())
+    quickNativeAvailable = try {
+        quickTruthy(quickWorkerAvailableJs())
     } catch (e: dynamic) {
-        available = false
+        false
     }
-    quickApi.available = available
+    quickApi.refreshAvailability = { ->
+        quickApi.available = quickNativeAvailable && quickTruthy(quickSettingEnabledJs())
+        js("undefined")
+    }
+    quickApi.refreshAvailability()
 
-    if (available) {
-        android.util.Log.i("Script", "QuickAccel: QuickJS worker 可用（quickjs-kt 16KB native）")
+    if (quickNativeAvailable && quickTruthy(quickSettingEnabledJs())) {
+      android.util.Log.i("Script", "QuickAccel: QuickJS worker 可用（quickjs-kt 16KB native）")
     }
 
     quickApi.benchSource = BENCH_SOURCE

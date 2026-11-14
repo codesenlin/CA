@@ -173,6 +173,10 @@ private fun caInitialize(api: dynamic) {
     try {
         api.plugin = js("Plugins").inject(api)
         api.load()
+        // 设置加载后再应用侧载开关；切换开关不会立刻换 worker，重启后生效。
+        if (js("typeof QuickAccel !== 'undefined'")) {
+            js("QuickAccel").refreshAvailability()
+        }
         // suppressAgreement：运行时重建（如“恢复默认数据”）不能走同步等待协议的路径，
         // 那会卡在主线程上等用户点同意，而设置页此时还没退场，弹窗出不来 → 死锁。
         // 这种情况由调用方在初始化完成后异步弹协议。
@@ -440,6 +444,8 @@ private fun caDefaultSettings(api: dynamic): dynamic {
     settings.deprecatedLibrarys = js("[]")
     settings.customExpression = js("[]")
     settings.quickBarActions = js("Object").copy(api.quickBarDefaultActions)
+    settings.enableIdCache = true
+    settings.enableQuickWorker = true
     return settings
 }
 

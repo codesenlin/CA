@@ -42,6 +42,11 @@ private val accelLookupQuickAccel: dynamic = js(
 )
 
 private fun accelTruthy(v: dynamic): Boolean = accelTruthyJs(v)
+
+private val accelSettingEnabledJs: dynamic = js(
+    "function () { try { var s = CA.settings; return !(s && s.enableJavaAccel === false); } catch (e) { return true; } }"
+)
+private fun accelActive(): Boolean = accelImpl != null && accelTruthy(accelSettingEnabledJs())
 private fun accelIsObject(v: dynamic): Boolean = accelIsObjectJs(v)
 private fun accelIsArray(v: dynamic): Boolean = accelIsArrayJs(v)
 private fun accelIsFunction(v: dynamic): Boolean = accelIsFunctionJs(v)
@@ -85,7 +90,7 @@ private fun syncCommandSnapshot(snap: dynamic) {
     commandKeys = ks
     commandDescs = ds
     commandSnapRef = snap
-    if (accelImpl != null) {
+    if (accelActive()) {
         try {
             accelImpl.setCommandSnapshot(ks, ds)
         } catch (e: dynamic) { }
@@ -210,7 +215,7 @@ private fun merge(r: dynamic, res: dynamic): dynamic {
 }
 
 private fun matchStringImpl(ps: dynamic, a: dynamic, r: dynamic): dynamic {
-    if (accelImpl != null && matchCacheSupported) {
+    if (accelActive() && matchCacheSupported) {
         try {
             syncMatchSource(a)
             return merge(r, accelImpl.matchCached(accelString(ps)))
@@ -218,7 +223,7 @@ private fun matchStringImpl(ps: dynamic, a: dynamic, r: dynamic): dynamic {
             matchCacheSupported = false
         }
     }
-    if (accelImpl != null) {
+    if (accelActive()) {
         try {
             return merge(r, accelImpl.matchString(accelString(ps), a))
         } catch (e: dynamic) { }
@@ -230,7 +235,7 @@ private fun matchStringImpl(ps: dynamic, a: dynamic, r: dynamic): dynamic {
 private fun filterImpl(arr: dynamic, s: dynamic): dynamic {
     val keep = js("[]")
     val p = accelString(s)
-    if (accelImpl != null) {
+    if (accelActive()) {
         try {
             return accelImpl.filter(arr, p)
         } catch (e: dynamic) { }
@@ -246,7 +251,7 @@ private fun filterImpl(arr: dynamic, s: dynamic): dynamic {
 
 private fun setFilterTextsImpl(texts: dynamic) {
     filterTextsCache = texts
-    if (accelImpl != null) {
+    if (accelActive()) {
         try {
             accelImpl.setFilterTexts(texts)
         } catch (e: dynamic) { }
@@ -257,7 +262,7 @@ private fun setFilterTextsImpl(texts: dynamic) {
 private fun filterTextsImpl(s: dynamic): dynamic {
     val p = accelString(s)
     val keep = js("[]")
-    if (accelImpl != null) {
+    if (accelActive()) {
         try {
             return accelImpl.filterTexts(p)
         } catch (e: dynamic) { }
@@ -282,7 +287,7 @@ private fun setIDTextsImpl(texts: dynamic) {
     if (texts === lastIDTexts) return
     lastIDTexts = texts
     idTextsCache = texts
-    if (accelImpl != null) {
+    if (accelActive()) {
         try {
             accelImpl.setIDTexts(texts)
         } catch (e: dynamic) { }
@@ -292,7 +297,7 @@ private fun setIDTextsImpl(texts: dynamic) {
 private fun filterIDTextsImpl(s: dynamic): dynamic {
     val p = accelString(s)
     val out = js("[]")
-    if (accelImpl != null) {
+    if (accelActive()) {
         try {
             val res = accelImpl.filterIDTexts(p)
             val n = accelLength(res)
@@ -318,7 +323,7 @@ private fun filterIDTextsImpl(s: dynamic): dynamic {
 private fun filterIDTextsRawImpl(s: dynamic): dynamic {
     val p = accelString(s)
     val out = js("[]")
-    if (accelImpl != null) {
+    if (accelActive()) {
         try {
             return accelImpl.filterIDTexts(p)
         } catch (e: dynamic) { }
@@ -336,7 +341,7 @@ private fun filterIDTextsRawImpl(s: dynamic): dynamic {
 
 private fun rangeIndicesImpl(n: dynamic): dynamic {
     val out = js("[]")
-    if (accelImpl != null) {
+    if (accelActive()) {
         try {
             return accelImpl.rangeIndices(n)
         } catch (e: dynamic) { }
@@ -352,7 +357,7 @@ private fun rangeIndicesImpl(n: dynamic): dynamic {
 
 private fun matchCommandNamesImpl(snap: dynamic, prefix: dynamic): dynamic {
     syncCommandSnapshot(snap)
-    if (accelImpl != null) {
+    if (accelActive()) {
         try {
             val res = accelImpl.matchCommandNames(accelString(prefix))
             val out = js("[]")
@@ -374,7 +379,7 @@ private fun matchCommandNamesImpl(snap: dynamic, prefix: dynamic): dynamic {
 }
 
 private fun compareVersionArrayImpl(a: dynamic, b: dynamic): dynamic {
-    if (accelImpl != null) {
+    if (accelActive()) {
         try {
             return accelImpl.compareVersionArray(a, b)
         } catch (e: dynamic) { }
@@ -393,7 +398,7 @@ private fun compareVersionArrayImpl(a: dynamic, b: dynamic): dynamic {
 
 /** 数组 enum 匹配：返回 { flags, length, canFinish }；有 jar 走 Java。 */
 private fun classifyArrayImpl(arr: dynamic, ps: dynamic): dynamic {
-    if (accelImpl != null) {
+    if (accelActive()) {
         try {
             val res = accelImpl.classifyArray(arr, accelString(ps))
             val result = js("({})")
@@ -434,7 +439,7 @@ private fun classifyArrayImpl(arr: dynamic, ps: dynamic): dynamic {
 
 /** 枚举候选分类：1=精确命中 2=模糊命中 0=不命中。 */
 private fun classifyImpl(keys: dynamic, descs: dynamic, ps: dynamic): dynamic {
-    if (accelImpl != null) {
+    if (accelActive()) {
         try {
             return accelImpl.classify(keys, descs, accelString(ps))
         } catch (e: dynamic) { }
@@ -458,7 +463,7 @@ private fun classifyImpl(keys: dynamic, descs: dynamic, ps: dynamic): dynamic {
 
 // 调试用：绕过候选源缓存，每次调用都直接走 Java matchString（模拟旧路径）
 private fun matchStringDirectImpl(ps: dynamic, a: dynamic, r: dynamic): dynamic {
-    if (accelImpl == null) return jsMatchString(ps, a, r)
+    if (!accelActive()) return jsMatchString(ps, a, r)
     return merge(r, accelImpl.matchString(accelString(ps), a))
 }
 
@@ -480,8 +485,8 @@ fun installAccel() {
         accelImpl = null
     }
 
-    accelApi.available = { accelImpl != null }
-    accelApi.version = { if (accelImpl != null) accelString(accelImpl.version()) else "js" }
+    accelApi.available = { accelActive() }
+    accelApi.version = { if (accelActive()) accelString(accelImpl.version()) else "js" }
     accelApi.matchString = { ps: dynamic, a: dynamic, r: dynamic -> matchStringImpl(ps, a, r) }
     accelApi.filter = { arr: dynamic, s: dynamic -> filterImpl(arr, s) }
     accelApi.setFilterTexts = { texts: dynamic -> setFilterTextsImpl(texts); js("undefined") }

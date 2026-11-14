@@ -308,12 +308,19 @@ private fun casBuildSettingsRoot(api: dynamic, self: dynamic) {
     })
     access.hidden = { -> !casLooseEq(js("MapScript").host, "Android") }
     root.push(access)
+      val performance = casNavItem("性能与兼容性", "加速、缓存、侧载、广告与统计", { _fset: dynamic ->
+        js("Common").showSettings("性能与兼容性", self.performance)
+        js("undefined")
+      })
+      performance.hidden = { -> !casLooseEq(js("MapScript").host, "Android") }
+      root.push(performance)
     root.push(casNavItem("关于命令助手", null, { _fset: dynamic ->
         js("Common").showSettings("关于", self.about)
         js("undefined")
     }))
     self.root = root
 
+      self.performance = casBuildPerformance(api, self)
     self.about = casBuildSettingsAbout(api)
     self.appearance = casBuildAppearance(api, self)
     self.intellisense = casBuildIntellisense(api, self)
@@ -341,6 +348,221 @@ private fun casTagItem(name: dynamic): dynamic {
     o.name = name
     o.type = "tag"
     return o
+}
+
+private fun casPerformanceBoolItem(
+    api: dynamic,
+    id: String,
+    name: String,
+    description: String,
+    onChange: dynamic
+): dynamic {
+    val o = casObj()
+    o.id = id
+    o.name = name
+    o.type = "boolean"
+    o.description = description
+    o.get = { -> !casLooseEq(api.settings[id], false) }
+    o.set = { v: dynamic ->
+        api.settings[id] = casBool(v)
+        if (casTruthy(onChange)) onChange(o)
+        js("undefined")
+    }
+    return o
+}
+
+private val casAccelAbisJs: dynamic = js(
+    "function () { try { return android.os.Build.SUPPORTED_ABIS.join('/'); } catch (e) { return '未知'; } }"
+)
+
+private fun casAccelJavaEnabled(api: dynamic): Boolean = !casLooseEq(api.settings.enableJavaAccel, false)
+
+private fun casAccelJavaAvailable(): Boolean = try {
+    casTruthy(js("Accel").available())
+} catch (e: dynamic) {
+    false
+}
+
+private fun casAccelQuickNative(): Boolean = try {
+    casTruthy(js("ScriptInterface").quickWorkerAvailable())
+} catch (e: dynamic) {
+    false
+}
+
+private fun casAccelQuickAvailable(): Boolean = try {
+    casTruthy(js("QuickAccel").available)
+} catch (e: dynamic) {
+    false
+}
+
+private fun casAccelCacheEnabled(api: dynamic): Boolean = !casLooseEq(api.settings.enableIdCache, false)
+
+private fun casAccelQuickEnabled(api: dynamic): Boolean = !casLooseEq(api.settings.enableQuickWorker, false)
+
+private fun casAccelConditions(api: dynamic): dynamic {
+    val android = casLooseEq(js("MapScript").host, "Android")
+    val javaEnabled = casAccelJavaEnabled(api)
+    val java = casAccelJavaAvailable()
+    val quickNative = casAccelQuickNative()
+    val cache = casAccelCacheEnabled(api)
+    val quick = casAccelQuickEnabled(api)
+    val lines = casArray()
+    lines.push((if (android) "✓" else "✗") + " Android 设备")
+    lines.push((if (javaEnabled) "✓" else "✗") + " Java 加速已启用")
+    lines.push((if (java) "✓" else "✗") + " caaccel.jar 已加载")
+    lines.push((if (quickNative) "✓" else "✗") + " QuickJS 原生库可用")
+    lines.push((if (cache) "✓" else "✗") + " ID 列表缓存已启用")
+    lines.push((if (quick) "✓" else "✗") + " 侧载加速已启用")
+    return lines.join("\n")
+}
+
+private fun casRefreshSettingsPage() {
+    try {
+        js("Common").showSettings.refreshText()
+    } catch (e: dynamic) {
+        js("erp")(e)
+    }
+}
+
+private fun casAdSupported(): Boolean = try {
+    casTruthy(js("ScriptInterface").isAdSupported())
+} catch (e: dynamic) {
+    false
+}
+
+private fun casAdsEnabled(): Boolean = try {
+    casTruthy(js("ScriptInterface").getAdsEnabled())
+} catch (e: dynamic) {
+    false
+}
+
+private fun casAnalyticsEnabled(): Boolean = try {
+    casTruthy(js("ScriptInterface").getAnalyticsEnabled())
+} catch (e: dynamic) {
+    false
+}
+
+private fun casPrefBoolItem(
+    name: String,
+    description: String,
+    getValue: dynamic,
+    setValue: dynamic,
+    onChange: dynamic
+): dynamic {
+    val o = casObj()
+    o.name = name
+    o.type = "boolean"
+    o.description = description
+    o.get = { -> casTruthy(getValue()) }
+    o.set = { v: dynamic ->
+        setValue(casBool(v))
+        if (casTruthy(onChange)) onChange(o)
+        js("undefined")
+    }
+    return o
+}
+
+private fun casBuildPerformance(api: dynamic, self: dynamic): dynamic {
+    val page = casArray()
+    page.push(casTagItem("适配信息"))
+
+    val info = casObj()
+    info.type = "text"
+    info.get = { ->
+        val sdk = try { js("ScriptInterface").getAndroidSdk() } catch (e: dynamic) { 0 }
+        val java = if (!casAccelJavaEnabled(api)) "已关闭" else if (casAccelJavaAvailable()) "可用" else "不可用"
+        val quickNative = if (casAccelQuickNative()) "可用" else "不可用"
+        val quickOn = if (casAccelQuickEnabled(api)) {
+            if (casAccelQuickAvailable()) "已启用" else "等待重启"
+        } else {
+            "已关闭"
+        }
+        val cache = if (casAccelCacheEnabled(api)) "已启用" else "已关闭"
+        "平台：Android SDK " + sdk + "\n" +
+            "CPU：" + casAccelAbisJs() + "\n" +
+            "Java 加速：" + java + "\n" +
+            "侧载加速：" + quickOn + "（原生库" + quickNative + "）\n" +
+            "ID 缓存：" + cache + "\n" +
+            "开屏广告：" + (if (casAdSupported()) (if (casAdsEnabled()) "已启用" else "已关闭") else "未装配") + "\n" +
+            "匿名统计：" + (if (casAnalyticsEnabled()) "已启用" else "已关闭")
+    }
+    page.push(info)
+    page.push(casTagItem("开关"))
+
+    val javaItem = casPerformanceBoolItem(
+        api, "enableJavaAccel", "启用 Java 加速",
+        "使用 caaccel.jar 执行匹配与过滤；关闭后回退到纯 JS"
+    ) {
+        casRefreshSettingsPage()
+    }
+    page.push(javaItem)
+
+    val cacheItem = casPerformanceBoolItem(
+        api, "enableIdCache", "启用 ID 列表缓存",
+        "缓存 ID 列表解析结果，减少重复构建"
+    ) {
+        casRefreshSettingsPage()
+    }
+    page.push(cacheItem)
+
+    val quickDescription = "在独立 QuickJS worker 中执行匹配计算"
+    val quickItem = casPerformanceBoolItem(
+        api, "enableQuickWorker", "启用 QuickJS 侧载", quickDescription
+    ) { item: dynamic ->
+        self.performanceRestartHint = true
+        item.description = quickDescription + "\n需要重启命令助手后生效"
+        casRefreshSettingsPage()
+    }
+    if (casTruthy(self.performanceRestartHint)) {
+        quickItem.description = quickDescription + "\n需要重启命令助手后生效"
+    }
+    page.push(quickItem)
+    page.push(casTagItem("广告与信息收集"))
+
+    val adsDescription = "启动时显示开屏广告；关闭后不再请求广告"
+    val adsItem = casPrefBoolItem(
+        "开屏广告",
+        adsDescription,
+        { js("ScriptInterface").getAdsEnabled() },
+        { v: dynamic -> js("ScriptInterface").setAdsEnabled(casBool(v)) },
+    ) { item: dynamic ->
+        self.adRestartHint = true
+        item.description = adsDescription + "\n需要重启命令助手后生效"
+        casRefreshSettingsPage()
+    }
+    adsItem.hidden = { -> !casAdSupported() }
+    if (casTruthy(self.adRestartHint)) {
+        adsItem.description = adsDescription + "\n需要重启命令助手后生效"
+    }
+    page.push(adsItem)
+
+    val analyticsItem = casPrefBoolItem(
+        "匿名统计",
+        "发送去标识化的页面使用与错误信息，用于改进命令助手",
+        { js("ScriptInterface").getAnalyticsEnabled() },
+        { v: dynamic -> js("ScriptInterface").setAnalyticsEnabled(casBool(v)) },
+    ) {
+        casRefreshSettingsPage()
+    }
+    page.push(analyticsItem)
+
+    page.push(casTagItem("启用条件"))
+
+    val conditions = casObj()
+    conditions.type = "text"
+    conditions.get = { -> casAccelConditions(api) }
+    page.push(conditions)
+
+    val status = casObj()
+    status.type = "text"
+    status.get = { ->
+        val android = casLooseEq(js("MapScript").host, "Android")
+        if (android && casAccelJavaEnabled(api) && casAccelJavaAvailable() &&
+            casAccelQuickNative() && casAccelCacheEnabled(api) && casAccelQuickEnabled(api)
+        ) "已可用" else "条件未满足"
+    }
+    page.push(status)
+    return page
 }
 
 private fun casBuildSettingsAbout(api: dynamic): dynamic {
