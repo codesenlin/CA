@@ -476,8 +476,9 @@ private fun abAddLibraryConfirm(t: dynamic, onReturn: dynamic, id: dynamic) {
 
 // ---------------- 校验 ----------------
 private fun abVerifyApk() {
-    if (abLooseEq(js("ctx").getPackageName(), "com.xero.ca")) {
-        // ok
+    val pkg = js("ctx").getPackageName()
+    if (abLooseEq(pkg, "com.xero.ca") || abLooseEq(pkg, "com.xero.ca.debug")) {
+        // ok：正式版与 .debug 调试版都允许
     } else {
         abThrowSecurityException("101")
     }
@@ -856,13 +857,13 @@ private fun abTileSettingsClick(fset: dynamic) {
 }
 
 private fun abGetAppIcon(): dynamic {
-    val appi = abApplicationInfoJs("com.xero.ca", 128)
+    val appi = abApplicationInfoJs(js("ctx").getPackageName(), 128)
     val res = abResourcesForApplicationJs(appi)
     return res.getDrawable(appi.icon, null)
 }
 
 private fun abGetAppIconBadged(): dynamic {
-    return abApplicationIconJs("com.xero.ca")
+    return abApplicationIconJs(js("ctx").getPackageName())
 }
 
 private fun abInitIcon() {
@@ -1432,7 +1433,7 @@ private fun abStartAccessibilitySvcByRoot(): dynamic {
             js("android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES")
         )
     ).split(":")
-    val t = "com.xero.ca/com.xero.ca.AccessibilitySvc"
+    val t = js("ctx").getPackageName() + "/com.xero.ca.AccessibilitySvc"
     val found = s.some({ e: dynamic -> abLooseEq(e, t) })
     if (abTruthy(found)) return true
     s.push(t)

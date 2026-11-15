@@ -196,7 +196,7 @@ private fun mcOnWSPlayerTravelled(json: dynamic) {
 // ---------------- 快捷方式 ----------------
 private fun mcCreateShortcut(name: dynamic, pkg: dynamic) {
     val sc: dynamic = mcShortcutIntentJs()
-    sc.setClassName("com.xero.ca", "com.xero.ca.MainActivity")
+    sc.setClassName(js("ctx").getPackageName(), "com.xero.ca.MainActivity")
     sc.setData(mcUriFromPartsJs("package", pkg, null))
     js("AndroidBridge").createShortcut(sc, name, mcSmallIconJs())
 }
