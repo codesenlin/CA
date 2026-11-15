@@ -1,0 +1,72 @@
+name: CodeQL
+
+on:
+  push:
+    branches: [canary, dev, beta, main]
+  pull_request:
+    branches: [canary, dev, beta, main]
+  schedule:
+    - cron: "23 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  security-events: write
+  packages: read
+  actions: read
+  contents: read
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: java-kotlin
+            build-mode: manual
+          - language: javascript-typescript
+            build-mode: none
+          - language: actions
+            build-mode: none
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Java
+        if: matrix.language == 'java-kotlin'
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Setup Node
+        if: matrix.language == 'java-kotlin'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+
+      - name: Install build dependencies
+        if: matrix.language == 'java-kotlin'
+        run: npm ci
+
+      - name: Build Kotlin/JS and build data
+        if: matrix.language == 'java-kotlin'
+        run: |
+          npm run kotlin:js
+          node ./cabuildtools/main.mjs buildSnapshot
+
+      - name: Build JVM sources
+        if: matrix.language == 'java-kotlin'
+        run: ./gradlew :caaccel:caaccelTest --no-daemon --no-build-cache --console=plain
+
+      - uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:${{ matrix.language }}
