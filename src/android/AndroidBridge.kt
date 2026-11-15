@@ -477,7 +477,7 @@ private fun abAddLibraryConfirm(t: dynamic, onReturn: dynamic, id: dynamic) {
 // ---------------- 校验 ----------------
 private fun abVerifyApk() {
     val pkg = js("ctx").getPackageName()
-    if (abLooseEq(pkg, "com.xero.ca") || abString(pkg).startsWith("com.xero.ca.")) {
+    if (abLooseEq(pkg, "com.xero.ca") || abLooseEq(pkg, "com.xero.ca.debug")) {
         // ok：正式版与 .debug 调试版都允许
     } else {
         abThrowSecurityException("101")

@@ -1,7 +1,7 @@
 # 风味构建（-huangyxHUTAO / -flavor）
 
 在**渠道**（stable / beta / dev / canary）之外，构建还可以叠一个**风味**。
-风味只改脚本内容、产物名与安装包名，不改构建形态（release / snapshot）与渠道：
+风味只改脚本内容和产物名，不改构建形态（release / snapshot）与渠道：
 
 - 默认主题（`data/theme.json` 里的主题 id）
 - 新用户的初始欢迎语（历史列表）
@@ -30,18 +30,6 @@ build/dist/命令助手(1.2.15-huangyxHUTAO).apk # huangyxHUTAO
 build/dist/命令助手(2026-10-31) stable-huangyxHUTAO.js
 build/outputs/debugApk/app-debug-huangyxHUTAO.apk
 ```
-
-包名规则：
-
-```
-标准正式版：com.xero.ca
-标准调试版：com.xero.ca.debug
-风味正式版：com.xero.ca.<风味名>
-风味调试版：com.xero.ca.<风味名>.debug
-```
-
-构建工具会把风味名通过 `-Pca.flavor=<风味名>` 传给 cadroid；
-直接运行 Gradle 时也可以手动加这个参数。
 
 ## 目录结构
 
