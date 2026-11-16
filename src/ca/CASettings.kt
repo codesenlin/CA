@@ -375,8 +375,6 @@ private val casAccelAbisJs: dynamic = js(
     "function () { try { return android.os.Build.SUPPORTED_ABIS.join('/'); } catch (e) { return '未知'; } }"
 )
 
-private fun casAccelJavaEnabled(api: dynamic): Boolean = !casLooseEq(api.settings.enableJavaAccel, false)
-
 private fun casAccelJavaAvailable(): Boolean = try {
     casTruthy(js("Accel").available())
 } catch (e: dynamic) {
@@ -389,33 +387,6 @@ private fun casAccelQuickNative(): Boolean = try {
     false
 }
 
-private fun casAccelQuickAvailable(): Boolean = try {
-    casTruthy(js("QuickAccel").available)
-} catch (e: dynamic) {
-    false
-}
-
-private fun casAccelCacheEnabled(api: dynamic): Boolean = !casLooseEq(api.settings.enableIdCache, false)
-
-private fun casAccelQuickEnabled(api: dynamic): Boolean = !casLooseEq(api.settings.enableQuickWorker, false)
-
-private fun casAccelConditions(api: dynamic): dynamic {
-    val android = casLooseEq(js("MapScript").host, "Android")
-    val javaEnabled = casAccelJavaEnabled(api)
-    val java = casAccelJavaAvailable()
-    val quickNative = casAccelQuickNative()
-    val cache = casAccelCacheEnabled(api)
-    val quick = casAccelQuickEnabled(api)
-    val lines = casArray()
-    lines.push((if (android) "✓" else "✗") + " Android 设备")
-    lines.push((if (javaEnabled) "✓" else "✗") + " Java 加速已启用")
-    lines.push((if (java) "✓" else "✗") + " caaccel.jar 已加载")
-    lines.push((if (quickNative) "✓" else "✗") + " QuickJS 原生库可用")
-    lines.push((if (cache) "✓" else "✗") + " ID 列表缓存已启用")
-    lines.push((if (quick) "✓" else "✗") + " 侧载加速已启用")
-    return lines.join("\n")
-}
-
 private fun casRefreshSettingsPage() {
     try {
         js("Common").showSettings.refreshText()
@@ -426,18 +397,6 @@ private fun casRefreshSettingsPage() {
 
 private fun casAdSupported(): Boolean = try {
     casTruthy(js("ScriptInterface").isAdSupported())
-} catch (e: dynamic) {
-    false
-}
-
-private fun casAdsEnabled(): Boolean = try {
-    casTruthy(js("ScriptInterface").getAdsEnabled())
-} catch (e: dynamic) {
-    false
-}
-
-private fun casAnalyticsEnabled(): Boolean = try {
-    casTruthy(js("ScriptInterface").getAnalyticsEnabled())
 } catch (e: dynamic) {
     false
 }
@@ -462,52 +421,78 @@ private fun casPrefBoolItem(
     return o
 }
 
+private fun casAndroidSdk(): Int = try {
+    js("ScriptInterface").getAndroidSdk() as Int
+} catch (e: dynamic) {
+    0
+}
+
+private fun casAnalyticsSupported(): Boolean = try {
+    casTruthy(js("ScriptInterface").isAnalyticsSupported())
+} catch (e: dynamic) {
+    false
+}
+
+private fun casPerformanceStatus(available: Boolean, reason: String): String =
+    if (available) "状态：可用" else "不可用：" + reason
+
 private fun casBuildPerformance(api: dynamic, self: dynamic): dynamic {
     val page = casArray()
-    page.push(casTagItem("适配信息"))
+    page.push(casTagItem("设备信息"))
 
     val info = casObj()
     info.type = "text"
     info.get = { ->
-        val sdk = try { js("ScriptInterface").getAndroidSdk() } catch (e: dynamic) { 0 }
-        val java = if (!casAccelJavaEnabled(api)) "已关闭" else if (casAccelJavaAvailable()) "可用" else "不可用"
-        val quickNative = if (casAccelQuickNative()) "可用" else "不可用"
-        val quickOn = if (casAccelQuickEnabled(api)) {
-            if (casAccelQuickAvailable()) "已启用" else "等待重启"
-        } else {
-            "已关闭"
-        }
-        val cache = if (casAccelCacheEnabled(api)) "已启用" else "已关闭"
-        "平台：Android SDK " + sdk + "\n" +
-            "CPU：" + casAccelAbisJs() + "\n" +
-            "Java 加速：" + java + "\n" +
-            "侧载加速：" + quickOn + "（原生库" + quickNative + "）\n" +
-            "ID 缓存：" + cache + "\n" +
-            "开屏广告：" + (if (casAdSupported()) (if (casAdsEnabled()) "已启用" else "已关闭") else "未装配") + "\n" +
-            "匿名统计：" + (if (casAnalyticsEnabled()) "已启用" else "已关闭")
+        "平台：Android SDK " + casAndroidSdk() + "\n" +
+            "CPU：" + casAccelAbisJs()
     }
     page.push(info)
-    page.push(casTagItem("开关"))
 
-    val javaItem = casPerformanceBoolItem(
-        api, "enableJavaAccel", "启用 Java 加速",
-        "使用 caaccel.jar 执行匹配与过滤；关闭后回退到纯 JS"
-    ) {
-        casRefreshSettingsPage()
+    page.push(casTagItem("集成信息"))
+    val integration = casObj()
+    integration.type = "text"
+    integration.get = { ->
+        val quick = if (casAccelQuickNative()) "原生库可用" else "原生库不可用"
+        "ID 缓存：\n内置\n\n" +
+            "Java 加速：\n" +
+            "caaccel.jar " + (if (casAccelJavaAvailable()) "已加载" else "未加载") + "\n\n" +
+            "QuickJS 侧载：\n" + quick + "\n需要 Android 7.0 及以上\n\n" +
+            "开屏广告：\n优量汇 SDK " + (if (casAdSupported()) "已装配" else "未装配") + "\n\n" +
+            "匿名统计：\nTalkingDataSDK " + (if (casAnalyticsSupported()) "已集成" else "未集成")
     }
-    page.push(javaItem)
+    page.push(integration)
+
+    page.push(casTagItem("功能状态"))
 
     val cacheItem = casPerformanceBoolItem(
         api, "enableIdCache", "启用 ID 列表缓存",
-        "缓存 ID 列表解析结果，减少重复构建"
+        casPerformanceStatus(true, "")
     ) {
         casRefreshSettingsPage()
     }
     page.push(cacheItem)
 
-    val quickDescription = "在独立 QuickJS worker 中执行匹配计算"
+    val javaAvailable = casAccelJavaAvailable()
+    val javaItem = casPerformanceBoolItem(
+        api, "enableJavaAccel", "启用 Java 加速" + (if (javaAvailable) "" else " ✗"),
+        casPerformanceStatus(javaAvailable, "caaccel.jar 未加载")
+    ) {
+        casRefreshSettingsPage()
+    }
+    page.push(javaItem)
+
+
+    val sdk = casAndroidSdk()
+    val quickNative = casAccelQuickNative()
+    val quickAvailable = sdk > 23 && quickNative
+    val quickReason = when {
+        sdk <= 23 -> "需要 Android 7.0（SDK 24）及以上"
+        !quickNative -> "QuickJS 原生库未加载"
+        else -> ""
+    }
+    val quickDescription = casPerformanceStatus(quickAvailable, quickReason)
     val quickItem = casPerformanceBoolItem(
-        api, "enableQuickWorker", "启用 QuickJS 侧载", quickDescription
+        api, "enableQuickWorker", "启用 QuickJS 侧载" + (if (quickAvailable) "" else " ✗"), quickDescription
     ) { item: dynamic ->
         self.performanceRestartHint = true
         item.description = quickDescription + "\n需要重启命令助手后生效"
@@ -519,9 +504,10 @@ private fun casBuildPerformance(api: dynamic, self: dynamic): dynamic {
     page.push(quickItem)
     page.push(casTagItem("广告与信息收集"))
 
-    val adsDescription = "启动时显示开屏广告；关闭后不再请求广告"
+    val adsSupported = casAdSupported()
+    val adsDescription = casPerformanceStatus(adsSupported, "未装配优量汇 SDK")
     val adsItem = casPrefBoolItem(
-        "开屏广告",
+        "开屏广告" + (if (adsSupported) "" else " ✗"),
         adsDescription,
         { js("ScriptInterface").getAdsEnabled() },
         { v: dynamic -> js("ScriptInterface").setAdsEnabled(casBool(v)) },
@@ -530,38 +516,21 @@ private fun casBuildPerformance(api: dynamic, self: dynamic): dynamic {
         item.description = adsDescription + "\n需要重启命令助手后生效"
         casRefreshSettingsPage()
     }
-    adsItem.hidden = { -> !casAdSupported() }
     if (casTruthy(self.adRestartHint)) {
         adsItem.description = adsDescription + "\n需要重启命令助手后生效"
     }
     page.push(adsItem)
 
+    val analyticsSupported = casAnalyticsSupported()
     val analyticsItem = casPrefBoolItem(
-        "匿名统计",
-        "发送去标识化的页面使用与错误信息，用于改进命令助手",
+        "匿名统计" + (if (analyticsSupported) "" else " ✗"),
+        casPerformanceStatus(analyticsSupported, "TalkingDataSDK 未集成"),
         { js("ScriptInterface").getAnalyticsEnabled() },
         { v: dynamic -> js("ScriptInterface").setAnalyticsEnabled(casBool(v)) },
     ) {
         casRefreshSettingsPage()
     }
     page.push(analyticsItem)
-
-    page.push(casTagItem("启用条件"))
-
-    val conditions = casObj()
-    conditions.type = "text"
-    conditions.get = { -> casAccelConditions(api) }
-    page.push(conditions)
-
-    val status = casObj()
-    status.type = "text"
-    status.get = { ->
-        val android = casLooseEq(js("MapScript").host, "Android")
-        if (android && casAccelJavaEnabled(api) && casAccelJavaAvailable() &&
-            casAccelQuickNative() && casAccelCacheEnabled(api) && casAccelQuickEnabled(api)
-        ) "已可用" else "条件未满足"
-    }
-    page.push(status)
     return page
 }
 
