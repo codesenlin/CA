@@ -324,7 +324,41 @@ private fun casBuildSettingsRoot(api: dynamic, self: dynamic) {
     self.about = casBuildSettingsAbout(api)
     self.appearance = casBuildAppearance(api, self)
     self.intellisense = casBuildIntellisense(api, self)
-    self.userdata = casBuildUserdata(api, self)
+      self.intellisenseParser = casArray()
+      val fullIntelli = self.intellisense
+      val fullCount = fullIntelli.length as Int
+      var beforeInput = true
+      var ii = 0
+      while (ii < fullCount) {
+          val item = fullIntelli[ii]
+          if (beforeInput && casLooseEq(item.type, "tag") && casLooseEq(item.name, "输入框")) {
+              beforeInput = false
+          }
+          if (beforeInput) {
+              self.intellisenseParser.push(item)
+          }
+          ii++
+      }
+      val parserDynamic = casObj()
+      parserDynamic.type = "dynamic"
+      parserDynamic.provider = { -> self.intellisenseParser }
+      self.intellisense = casArray()
+      self.intellisense.push(parserDynamic)
+      var si = 0
+      while (si < fullCount) {
+          val item = fullIntelli[si]
+          if (casLooseEq(item.type, "tag") && casLooseEq(item.name, "输入框")) {
+              self.intellisense.push(item)
+              si++
+              while (si < fullCount) {
+                  self.intellisense.push(fullIntelli[si])
+                  si++
+              }
+              break
+          }
+          si++
+      }
+      self.userdata = casBuildUserdata(api, self)
 }
 
 private fun casSpaceItem(height: Int): dynamic {
@@ -1096,12 +1130,140 @@ private fun casBuildAppearance(api: dynamic, self: dynamic): dynamic {
     return appearance
 }
 
+private fun casReloadIntellisenseSettings(self: dynamic) {
+    // 只刷新动态区，外层输入框/拓展包不重建。
+    js("Common").showSettings.refreshText()
+}
+
+private fun casChooserItem(text: dynamic, description: dynamic): dynamic {
+    val item = casObj()
+    item.text = text
+    item.description = description
+    return item
+}
+
+private fun casCHelperPackList(): dynamic {
+    val result = casArray()
+    try {
+        val names = js("ctx").getAssets().list("cpack")
+        val nameCount = names.length as Int
+        var i = 0
+        while (i < nameCount) {
+            val n = casString(names[i])
+            val m = js("new RegExp('^([a-z]+)-(vanilla|experiment)-(.+)\\.cpack$')").exec(n)
+            if (casTruthy(m)) {
+                val kind = casString(m[1])
+                val variant = casString(m[2])
+                val version = casString(m[3])
+                val item = casObj()
+                item.id = kind + "-" + variant
+                item.pack = n
+                val title = when {
+                    casLooseEq(kind, "release") -> "正式版"
+                    casLooseEq(kind, "beta") -> "测试版"
+                    casLooseEq(kind, "netease") -> "网易版"
+                    else -> kind
+                }
+                item.name = title + " " + version +
+                    (if (casLooseEq(variant, "experiment")) " 实验性玩法" else "")
+                result.push(item)
+            }
+            i++
+        }
+    } catch (e: dynamic) {
+        js("erp")(e)
+    }
+    return result
+}
+
+private fun casCHelperPackInfo(api: dynamic): dynamic {
+    val packs = casCHelperPackList()
+    val packCount = packs.length as Int
+    var i = 0
+    while (i < packCount) {
+        if (casLooseEq(packs[i].id, api.settings.chelperPack)) return packs[i]
+        i++
+    }
+    if ((packs.length as Int) > 0) return packs[0]
+    val fallback = casObj()
+    fallback.id = ""
+    fallback.pack = ""
+    fallback.name = "未找到内核资源"
+    return fallback
+}
+
+private fun casCHelperPackName(api: dynamic): String = casString(casCHelperPackInfo(api).pack)
+
 private fun casBuildIntellisense(api: dynamic, self: dynamic): dynamic {
     val intellisense = casArray()
+
+    intellisense.push(casTagItem("解析器"))
+
+    val iiEngine = casObj()
+    iiEngine.name = "命令引擎"
+    iiEngine.description = "选择命令解析与补全使用的引擎。"
+    iiEngine.type = "custom"
+    iiEngine.get = { ->
+        if (casLooseEq(api.settings.commandEngine, "chelper")) "CHelper（Alpha）" else "内置解析器"
+    }
+                            iiEngine.onclick = { ->
+        js("Common").showListChooser(casArray(
+            casChooserItem("内置解析器", "命令助手自带的解析器"),
+            casChooserItem("CHelper（Alpha）", "实验性，来自 Yancey/CHelper 的解析内核")
+        ), { i: dynamic ->
+            if (casLooseEq(i, 1)) {
+                try {
+                    if (!casTruthy(js("ScriptInterface").isCHelperAvailable())) {
+                        js("Common").toast("CHelper 内核资源缺失（.so 或 cpack）")
+                    } else {
+                        api.settings.commandEngine = "chelper"
+                        js("Common").toast("已切换为 CHelper（Alpha）")
+                    }
+                } catch (e: dynamic) {
+                    js("erp")(e)
+                    js("Common").toast("切换失败：" + e)
+                }
+            } else {
+                api.settings.commandEngine = "builtin"
+                js("Common").toast("已切换为内置解析器")
+            }
+            casReloadIntellisenseSettings(self)
+            js("undefined")
+        })
+        js("undefined")
+    }
+    intellisense.push(iiEngine)
+
+    val iiPack = casObj()
+    iiPack.name = "内核版本"
+    iiPack.description = "CHelper 使用的命令库版本，与拓展包无关。"
+    iiPack.type = "custom"
+    iiPack.hidden = { -> !casLooseEq(api.settings.commandEngine, "chelper") }
+    iiPack.get = { -> casCHelperPackInfo(api).name }
+                        iiPack.onclick = { ->
+        val packs = casCHelperPackList()
+        val options = casArray()
+        val count = packs.length as Int
+        var i = 0
+        while (i < count) {
+            options.push(casChooserItem(packs[i].name, packs[i].pack))
+            i++
+        }
+        js("Common").showListChooser(options, { index: dynamic ->
+            if (casGe(index, 0) && casLt(index, packs.length as Int)) {
+                api.settings.chelperPack = packs[index].id
+            }
+            casReloadIntellisenseSettings(self)
+            js("undefined")
+        })
+        js("undefined")
+    }
+    intellisense.push(iiPack)
 
     val iiMode = casObj()
     iiMode.name = "智能模式"
     iiMode.type = "custom"
+    iiMode.hidden = { -> casLooseEq(api.settings.commandEngine, "chelper") }
     iiMode.get = { ->
         val t = api.settings.iiMode
         if (casLooseEq(t, 1)) "初学者模式"
@@ -1118,7 +1280,12 @@ private fun casBuildIntellisense(api: dynamic, self: dynamic): dynamic {
     }
     intellisense.push(iiMode)
 
-    intellisense.push(casBoolSettingsItem("senseDelay", "启用多线程", "IntelliSense将不会即时输出结果以避免卡顿。", self))
+    val senseDelay = casBoolSettingsItem("senseDelay", "启用多线程", "IntelliSense将不会即时输出结果以避免卡顿。", self)
+    senseDelay.hidden = { -> casLooseEq(api.settings.commandEngine, "chelper") }
+    intellisense.push(senseDelay)
+
+    intellisense.push(casTagItem("输入框"))
+
     intellisense.push(casBoolSettingsItem("autoFormatCmd", "启用样式代码显示", "输入框会自动解释输入命令中的样式代码。", self))
 
     val pasteMode = casObj()

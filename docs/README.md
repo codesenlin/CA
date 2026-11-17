@@ -21,6 +21,7 @@
 | [data-and-accel.md](data-and-accel.md) | 数据外置、caaccel / QuickJS 加速与实测 |
 | [intellisense-selector.md](intellisense-selector.md) | 选择器补全返回值结构 |
 | [ISegment.md](ISegment.md) | ISegment 补全引擎说明 |
+| [chelper-engine.md](chelper-engine.md) | CHelper 内核接入、引擎互斥与候选回写约定 |
 
 ## 数据
 

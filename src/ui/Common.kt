@@ -1370,6 +1370,22 @@ private fun cSettingsRefreshText(self: dynamic): dynamic {
     return js("undefined")
 }
 
+private fun cSettingsReload(self: dynamic): dynamic {
+    try {
+        if (!cTruthy(self.current)) return js("undefined")
+        val source = if (cTruthy(self.current.source)) self.current.source else self.current.data
+        val filtered = source.filter({ e: dynamic ->
+            !(cTruthy(e.hidden) && cTruthy(e.hidden()))
+        })
+        self.current.data = filtered
+        self.current.last = filtered.map({ e: dynamic -> cSettingsLastValue(e) })
+        self.setData(self.current)
+    } catch (e: dynamic) {
+        js("erp")(e)
+    }
+    return js("undefined")
+}
+
 private fun cSettingsBooleanMaker(self: dynamic, holder: dynamic): dynamic {
     val hl = cNewLinearLayout()
     hl.setOrientation(js("G.LinearLayout.HORIZONTAL"))
@@ -1586,10 +1602,55 @@ private fun cSettingsLayoutBinder(self: dynamic, holder: dynamic, e: dynamic): d
     return js("undefined")
 }
 
+private fun cSettingsDynamicMaker(self: dynamic, holder: dynamic): dynamic {
+    val container = cNewLinearLayout()
+    container.setOrientation(js("G.LinearLayout.VERTICAL"))
+    container.setLayoutParams(cNewAbsParams(-1, -2))
+    holder.container = container
+    return container
+}
+
+private fun cSettingsDynamicBinder(self: dynamic, holder: dynamic, e: dynamic): dynamic {
+    val container = holder.container
+    container.removeAllViews()
+    val items = if (cTruthy(e.provider)) e.provider() else e.items
+    val filtered = items.filter({ child: dynamic ->
+        !(cTruthy(child.hidden) && cTruthy(child.hidden()))
+    })
+    cForIn(filtered, { key: dynamic ->
+        val child = filtered[key]
+        val type = cString(child.type)
+        val typeHandler = self.adapterTypes[type]
+        if (cTruthy(typeHandler)) {
+            val childHolder = js("({})")
+            val view = typeHandler.maker(childHolder)
+            typeHandler.binder(childHolder, child)
+            container.addView(view, cNewLinearParams2(-1, -2))
+            if (type == "boolean" && cTruthy(childHolder.box)) {
+                view.setOnClickListener(cClickListener({ _v: dynamic ->
+                    childHolder.box.performClick()
+                    true
+                }))
+            } else if ((type == "custom" || type == "layout") && cTruthy(child.onclick)) {
+                view.setOnClickListener(cClickListener({ _v: dynamic ->
+                    try {
+                        child.onclick({ self.refreshText(); js("undefined") })
+                    } catch (err: dynamic) {
+                        js("erp")(err)
+                    }
+                    true
+                }))
+            }
+        }
+        js("undefined")
+    })
+    return js("undefined")
+}
+
 private fun cSettingsLastValue(e: dynamic): dynamic {
     val type = e.type
     if (type == "boolean" || type == "seekbar") return e.get()
-    if (type == "custom" || type == "space" || type == "tag" || type == "text") return js("null")
+    if (type == "custom" || type == "space" || type == "tag" || type == "text" || type == "dynamic") return js("null")
     return js("undefined")
 }
 
@@ -1684,6 +1745,15 @@ private fun cSettingsInit(self: dynamic): dynamic {
         js("undefined")
     }
     types["layout"] = layoutType
+
+    val dynamicType = js("({})")
+    dynamicType.maker = { holder: dynamic -> cSettingsDynamicMaker(self, holder) }
+    dynamicType.binder = { holder: dynamic, e: dynamic ->
+        cSettingsDynamicBinder(self, holder, e)
+        js("undefined")
+    }
+    types["dynamic"] = dynamicType
+
     self.adapterTypes = types
 
     self.setData = { data: dynamic -> cSettingsSetData(self, data); js("undefined") }
@@ -1766,15 +1836,16 @@ private fun cSettingsInit(self: dynamic): dynamic {
     return js("undefined")
 }
 
-private fun cShowSettingsImpl(self: dynamic, title: dynamic, data: dynamic, callback: dynamic): dynamic {
+private fun cShowSettingsImpl(self: dynamic, title: dynamic, data: dynamic, callback: dynamic, replace: dynamic): dynamic {
     try {
         if (!cTruthy(self.linear)) cSettingsInit(self)
         val filtered = data.filter({ e: dynamic ->
             !(cTruthy(e.hidden) && cTruthy(e.hidden()))
         })
-        if (cTruthy(self.current)) self.stack.push(self.current)
+        if (cTruthy(self.current) && !cTruthy(replace)) self.stack.push(self.current)
         self.current = js("({})")
         self.current.title = title
+        self.current.source = data
         self.current.data = filtered
         self.current.last = filtered.map({ e: dynamic -> cSettingsLastValue(e) })
         self.current.callback = callback
@@ -1786,8 +1857,8 @@ private fun cShowSettingsImpl(self: dynamic, title: dynamic, data: dynamic, call
     return js("undefined")
 }
 
-private fun cShowSettings(self: dynamic, title: dynamic, data: dynamic, callback: dynamic): dynamic {
-    js("G").ui({ cShowSettingsImpl(self, title, data, callback); js("undefined") })
+private fun cShowSettings(self: dynamic, title: dynamic, data: dynamic, callback: dynamic, replace: dynamic): dynamic {
+    js("G").ui({ cShowSettingsImpl(self, title, data, callback, replace); js("undefined") })
     return js("undefined")
 }
 
@@ -3030,7 +3101,20 @@ fun installCommon() {
         cShowSlider(self, args[0])
     }
     commonApi.showSettings = cMakeSelfJs { self: dynamic, args: dynamic ->
-        cShowSettings(self, args[0], args[1], args[2])
+        cShowSettings(self, args[0], args[1], args[2], args[3])
+    }
+    commonApi.reloadSettings = cMakeSelfJs { self: dynamic, _args: dynamic ->
+        try {
+            if (cTruthy(self.current)) {
+                cShowSettings(self, self.current.title, self.current.source, self.current.callback, true)
+            }
+        } catch (e: dynamic) {
+            js("erp")(e)
+        }
+        js("undefined")
+    }
+    commonApi.refreshSettings = cMakeSelfJs { self: dynamic, _args: dynamic ->
+        cSettingsRefreshText(self)
     }
     commonApi.showFileDialog = cMakeSelfJs { self: dynamic, args: dynamic ->
         cShowFileDialog(self, args[0])

@@ -428,7 +428,20 @@ private fun caBuildGenUi(self: dynamic, api: dynamic) {
         js("undefined")
     }
     self.pointerChanged = { _p: dynamic ->
-        // 即将支持
+        // 光标移动/点击不会触发 textUpdate；CHelper 模式下需要主动重算一次候选。
+        try {
+            if (caLooseEq(api.settings.commandEngine, "chelper") &&
+                !caTruthy(api._chelperApplying)
+            ) {
+                caGenCHelperSuggest(
+                    api,
+                    caString(api.cmd.getText()),
+                    api.cmd.getSelectionStart() as Int
+                )
+            }
+        } catch (e: dynamic) {
+            js("erp")(e)
+        }
         js("undefined")
     }
     self.spanWatcher = caNewSpanWatcher(
@@ -678,6 +691,14 @@ private fun caGenCmdClick(self: dynamic, api: dynamic) {
         api.cmd.setFocusableInTouchMode(true)
         api.cmd.setText(api.cmdstr)
         self.activate(true)
+    }
+    // 点击输入框但光标位置没变时不会触发 spanWatcher，这里主动刷新一次 CHelper 候选。
+    if (caLooseEq(api.settings.commandEngine, "chelper") && !caTruthy(api._chelperApplying)) {
+        try {
+            caGenCHelperSuggest(api, caString(api.cmd.getText()), api.cmd.getSelectionStart() as Int)
+        } catch (e: dynamic) {
+            js("erp")(e)
+        }
     }
 }
 
@@ -950,9 +971,211 @@ private fun caGenGostate3(self: dynamic, api: dynamic, st: CaGenTextState) {
     self.clear.setVisibility(js("G.View.GONE"))
 }
 
+private fun caCHelperPackFile(api: dynamic): String {
+    return try {
+        val names = js("ctx").getAssets().list("cpack")
+        val count = names.length as Int
+        val prefer = caString(api.settings.chelperPack)
+        var first = ""
+        var i = 0
+        while (i < count) {
+            val n = caString(names[i])
+            if (n.endsWith(".cpack")) {
+                if (first.isEmpty()) first = n
+                if (n == prefer || n == prefer + ".cpack") return n
+            }
+            i++
+        }
+        first
+    } catch (e: dynamic) {
+        ""
+    }
+}
+
+private fun caGenCHelperSuggest(api: dynamic, cmd: String, cursor: Int) {
+    // 输入法/点击事件会排队多个查询；如果文本或光标已经变了，旧查询直接丢弃，
+    // 否则会出现“光标还在 initiator 中间”这一类瞬时错误。
+    if (!caLooseEq(cmd, caString(api.cmd.getText())) ||
+        !caLooseEq(cursor, api.cmd.getSelectionStart())
+    ) {
+        return
+    }
+    val pack = caCHelperPackFile(api)
+    if (pack.isEmpty()) {
+        js("Common").toast("没有找到 CHelper 内核资源")
+        return
+    }
+    val raw = caString(js("ScriptInterface").chelperQuery(pack, cmd, cursor)) as String
+    val parts = raw.split("\u0001")
+    val structure = parts.getOrElse(0) { "" }
+    val hint = parts.getOrElse(1) { "" }
+    val error = parts.getOrElse(2) { "" }
+    val suggestions = parts.getOrElse(3) { "" }
+    val promptText = if (error.isNotEmpty()) error else hint
+    val prompt = if (promptText.isEmpty()) structure else structure + "\n" + promptText
+    val input = caArray()
+    val output = caObject()
+    if (suggestions.isNotEmpty()) {
+        val items = suggestions.split("\u0002")
+        val firstToken = cmd.trimStart().substringBefore(' ')
+        val duplicateCommand = firstToken.isNotEmpty() && cmd.length > firstToken.length
+        var i = 0
+        while (i < items.size) {
+            val item = items[i]
+            input.push(item)
+            val index = i
+            val isDuplicate = duplicateCommand &&
+                (item == firstToken || item.startsWith("$firstToken - "))
+            output[item] = {
+                // 保留 "?" 候选本身，但命令名已经输入过时不再重复应用，
+                // 避免变成 "? ? "。
+                if (isDuplicate) {
+                    js("Common").toast("命令名已经输入")
+                } else {
+                var applied = false
+                try {
+                    api._chelperApplying = true
+                    val result = js("ScriptInterface").chelperApplySuggestion(pack, cmd, cursor, index)
+                    if (caTruthy(result) && caTruthy(result.length) && (result.length as Int) >= 2) {
+                        var nextText = caString(result[0]).toString()
+                        var nextCursor = js("parseInt")(caString(result[1]), 10) as Int
+                        val addSpace = caTruthy(result.length) && (result.length as Int) >= 3 &&
+                            caLooseEq(caString(result[2]), "1")
+                        // 不要对所有候选都补空格：@ 这类符号候选补空格会变成
+                        // “camera @ ”，解析器会报“意外的空格”。只跟随 CHelper 的
+                        // isAddSpace 标记。
+                        if (addSpace && nextText.isNotEmpty() && !nextText.endsWith(" ") &&
+                            nextCursor == nextText.length
+                        ) {
+                            nextText += " "
+                            nextCursor += 1
+                        }
+                        // Core 有时会给出 isAddSpace=true，但应用后解析器又认为
+                        // 这个尾空格是“多余部分”（例如 "? aimassist "）。应用前
+                        // 先校验一次新文本，只有确实报错时才去掉尾空格。
+                        if (nextText.endsWith(" ")) {
+                            try {
+                                val probe = caString(
+                                    js("ScriptInterface").chelperQuery(pack, nextText, nextCursor)
+                                ) as String
+                                val probeError = probe.split("\u0001").getOrElse(2) { "" }
+                                if (probeError.contains("多余部分") ||
+                                    probeError.contains("意外的空格")
+                                ) {
+                                    nextText = nextText.dropLast(1)
+                                    if (nextCursor > nextText.length) nextCursor = nextText.length
+                                }
+                            } catch (e: dynamic) {
+                                js("erp")(e)
+                            }
+                        }
+                        api.cmd.setText(nextText)
+                        api.cmd.setSelection(nextCursor)
+                        applied = true
+                    }
+                } catch (e: dynamic) {
+                    js("erp")(e)
+                } finally {
+                    api._chelperApplying = false
+                }
+                if (applied) {
+                    // 应用候选后继续显示下一个位置的候选，不必再等用户敲空格。
+                    // 同样要等 setText/setSelection 落位，否则 ReadOnly 的 Selection 还会
+                    // 指在旧位置，@initiator 之类会被解析成“字符多余”。
+                    api.cmd.post(caNewRunnable({
+                        try {
+                            if (caLooseEq(api.settings.commandEngine, "chelper") &&
+                                !caTruthy(api._chelperApplying)
+                            ) {
+                                // 点击候选后 TextView 可能把光标重置到旧位置；
+                                // 补空格后强制把光标放到文本末尾再查询。
+                                val end = api.cmd.getText().length() as Int
+                                if (!caLooseEq(api.cmd.getSelectionStart(), end)) {
+                                    api.cmd.setSelection(end)
+                                }
+                                caGenCHelperSuggest(
+                                    api,
+                                    caString(api.cmd.getText()),
+                                    api.cmd.getSelectionStart() as Int
+                                )
+                            }
+                        } catch (e: dynamic) {
+                            js("erp")(e)
+                        }
+                        js("undefined")
+                    }))
+                }
+                js("undefined")
+                }
+            }
+            i++
+        }
+    }
+    val intelli = js("CA").IntelliSense
+    intelli.engine = "chelper"
+    intelli.prompt = caArray(prompt)
+    intelli.help = ""
+    intelli.input = input
+    intelli.output = output
+    try {
+        if (!caTruthy(intelli.ui)) {
+            // 正常流程是先 showAssist() 再 show()；CHelper 在 textUpdate 里提前接管，
+            // 需要补建辅助面板，否则 showAssist.initContent 尚未挂上。
+            api.showAssist()
+            intelli.show()
+        }
+        intelli.apply()
+    } catch (e: dynamic) {
+        js("erp")(e)
+    }
+}
+
+private fun caGenCHelperChrome(self: dynamic, api: dynamic, s: dynamic) {
+    // CHelper 模式不会再走 caGenGostate1，右侧复制/清除按钮的字样需要单独维护。
+    val hasText = caTruthy(s.length())
+    self.copy.setText(if (caLooseEq(api.settings.pasteMode, 2)) "粘贴" else "复制")
+    if (!hasText) self.copy.setText("关闭")
+    self.add.setVisibility(if (hasText) js("G.View.GONE") else js("G.View.VISIBLE"))
+    self.clear.setVisibility(
+        if (hasText && caTruthy(api.settings.showClearButton)) {
+            js("G.View.VISIBLE")
+        } else {
+            js("G.View.GONE")
+        }
+    )
+}
+
 private fun caGenTextUpdate(self: dynamic, api: dynamic, st: CaGenTextState, s: dynamic): dynamic {
     s.setSpan(self.spanWatcher, 0, s.length(), js("G.Spanned.SPAN_INCLUSIVE_EXCLUSIVE"))
     api.cmdstr = caString(s)
+    if (caLooseEq(api.settings.commandEngine, "chelper")) {
+        caGenCHelperChrome(self, api, s)
+        // 应用候选触发的 setText 也要拦住：否则会掉进下面的内置解析器分支，
+        // 用旧的 CA 语法表把 @initiator 渲染成“字符多余”，覆盖掉 CHelper 的结果。
+        if (caTruthy(api._chelperApplying)) {
+            return js("undefined")
+        }
+        // TextWatcher 触发时 Selection 可能还没更新；直接读 getSelectionStart()
+        // 会拿到上一帧光标，快速输入 @a/@n 时解析结果会落后一个字符。
+        // post 到下一轮 UI 消息，等光标落位后再查询。
+        api.cmd.post(caNewRunnable({
+            try {
+                if (caLooseEq(api.settings.commandEngine, "chelper") &&
+                    !caTruthy(api._chelperApplying)
+                ) {
+                    caGenCHelperSuggest(
+                        api,
+                        caString(api.cmd.getText()),
+                        api.cmd.getSelectionStart() as Int
+                    )
+                }
+            } catch (e: dynamic) {
+                js("erp")(e)
+            }
+            js("undefined")
+        }))
+        return js("undefined")
+    }
     if ((caLooseEq(api.settings.iiMode, 1) || caLooseEq(api.settings.iiMode, 3)) &&
         caTruthy(api.Assist.active)
     ) {
