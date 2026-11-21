@@ -230,6 +230,7 @@ build/outputs/debugApk/app-debug.apk
 | 点候选无反应/错误 | 候选显示序号与 Core 序号错位 | 过滤时保留原始 index |
 | `? ?` 被追加 | Core 重复给出 `?` 候选 | 重复命令候选提示，不应用 |
 | `camera @ ` 报意外空格 | 无条件补空格 | 只按 `isAddSpace`，再用查询结果兜底 |
+| 切换引擎后设置已生效但界面不刷新 | 设置页只在 `showSettings` 时过滤 `hidden`，`fset`/`notifyChange` 只重绑文本 | 用动态区和 `Common.showSettings.refreshText()`，见第 9 节 |
 
 ### 7.1 这些问题分别属于哪一层
 
@@ -249,6 +250,76 @@ build/outputs/debugApk/app-debug.apk
 - `? ?` 是**候选重复/索引**问题，不是内置解析器参与。
 - `[object Object]` 和 `toInt` 是 **JNI/JS 类型边界**问题，与选哪个引擎无关。
 - `initContent` 是 **UI 初始化顺序**问题。
+
+
+## 9. 设置页：静态快照与动态区
+
+设置页不是普通的响应式界面。`Common.showSettings` 在进入页面时会把整个数组做一次 `hidden()` 过滤，生成快照；之后：
+
+- `fset()` / `notifyChange()` 只重新绑定可见行
+- 不会重新执行 `hidden()`
+- 不会重新执行 `get()`
+
+所以会出现“设置已经写进 `api.settings`，但当前页面还显示旧值，返回再进才更新”的现象。
+
+### 9.1 动态项
+
+`Common` 的设置框架现在支持：
+
+```kotlin
+{
+    type = "dynamic",
+    provider = { -> arrayOfSettingItems }
+}
+```
+
+`dynamic` 项只渲染 `provider()` 返回的子项。`Common.showSettings.refreshText()` 会重新执行当前页的 `notifyChange()`，动态区重新构建子项，而外层的输入框、拓展包不参与重建。
+
+### 9.2 智能补全的布局
+
+```text
+智能补全
+  ├─ [dynamic] 解析器
+  │    ├─ 命令引擎
+  │    ├─ 内核版本
+  │    ├─ 智能模式
+  │    └─ 启用多线程
+  ├─ 输入框
+  └─ 拓展包
+```
+
+- `self.intellisenseParser` 是解析器数组，作为 `provider` 的返回值
+- `self.intellisense` 只保留一个 `dynamic` 项 + 输入框/拓展包静态项
+- 命令引擎、内核版本的选择列表都放在动态区里
+
+切换引擎/内核版本后的刷新：
+
+```kotlin
+api.settings.commandEngine = "chelper"
+Common.showSettings.refreshText()
+```
+
+不要调用：
+
+```kotlin
+Common.refreshSettings()
+```
+
+`refreshSettings` 是另一个函数对象，拿不到 `showSettings` 的 `popup` 等状态，会报：
+
+```text
+TypeError: 无法读取 undefined 的属性 “showing”
+```
+
+### 9.3 判定方法
+
+如果切换后：
+
+- `api.settings` 已经变了
+- 返回上一页再进入，显示正确
+
+说明设置本身没问题，是当前设置页的快照没有重新计算；优先检查动态区 `provider` 和 `refreshText()` 调用。
+
 
 ## 8. 验证
 
